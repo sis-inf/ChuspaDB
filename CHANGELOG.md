@@ -20,6 +20,7 @@ y este proyecto adhiere a [SemVer](https://semver.org/spec/v2.0.0.html).
 ### Corregido
 - Flujo de integración de Pull Requests apuntando correctamente a la rama `dev`.
 - Limpieza y reestructuración de archivos sueltos y temporales en la raíz del proyecto.
+- Validación de usuario y contraseña en `ConexionDAOPostgreSQL` antes de abrir conexiones PostgreSQL 
 
 ### Cambiado
 - Refactorizaciones estructurales y optimizaciones de rendimiento aplicadas a lo largo del sprint actual.
