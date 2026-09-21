@@ -72,6 +72,14 @@ public class ConexionDAOPostgreSQL implements IConexionDAO {
         if (conexion.getBasedatos() == null || conexion.getBasedatos().isBlank()) {
             throw new ErrorConexion("El nombre de la base de datos no puede estar vacío.");
         }
+        if (conexion.getUsuario() == null || conexion.getUsuario().isBlank()) {
+            throw new ErrorConexion("El usuario de PostgreSQL no puede estar vacío.");
+        }
+
+        if (conexion.getPassword() == null || conexion.getPassword().isBlank()) {
+            throw new ErrorConexion("La contraseña de PostgreSQL no puede estar vacía.");
+        }
+        
         String url = construirUrl(conexion);
         return DriverManager.getConnection(url,
                 conexion.getUsuario(),
