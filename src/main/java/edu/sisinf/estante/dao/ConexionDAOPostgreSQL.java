@@ -117,8 +117,8 @@ public class ConexionDAOPostgreSQL implements IConexionDAO {
         try (Connection conn = abrir(conexion)) {
             return conn.isValid(3);
         } catch (Exception e) {
-            logger.error("Error al probar la conexión con PostgreSQL para host: {}",conexion.getHost(),e);
-            return false;
+          logger.error("Error al probar la conexión con PostgreSQL para host: {}", conexion.getHost(), e);
+          return false;
         }
     }
 }
