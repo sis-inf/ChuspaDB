@@ -12,6 +12,10 @@ Para el despliegue del sistema, asegúrese de contar con:
 ## 2. Clonación del Repositorio
 Obtenga el código fuente del motor de base de datos mediante Git:
 ```bash
+git clone https://github.com/sis-inf/estante.git
+cd estante
+```
+
 ## 3. Instalación en Linux (Ubuntu)
 
 ### Instalar Java 17
@@ -136,5 +140,3 @@ Una vez configurado el entorno:
 ```bash
 mvn javafx:run
 ```
-
-
