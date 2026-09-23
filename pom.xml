@@ -16,7 +16,7 @@
         <junit.version>6.1.2</junit.version>
         <mockito.version>5.10.0</mockito.version>
         <poi.version>5.2.5</poi.version>
-        <checkstyle.version>10.21.4</checkstyle.version>
+        <checkstyle.version>14.1.0</checkstyle.version>
     </properties>
 
     <dependencies>
