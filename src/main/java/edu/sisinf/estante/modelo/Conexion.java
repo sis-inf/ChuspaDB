@@ -26,7 +26,6 @@ public class Conexion {
     private List<String> etiquetas = new ArrayList<>();
 
     public Conexion() {
-        this.puerto = 3306;
     }
 
     public Conexion(String nombre, String host, Integer puerto,
