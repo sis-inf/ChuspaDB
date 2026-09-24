@@ -101,6 +101,71 @@ public class DialogoNuevaConexionController {
     // --------------------------------------------------------
 
     /**
+     * Valida los campos obligatorios del formulario según el motor seleccionado.
+     *
+     * @return {@code true} si el formulario es válido; {@code false} en caso contrario
+     */
+    public boolean validarFormulario() {
+        String error = obtenerErrorValidacion();
+
+        if (error == null) {
+            return true;
+        }
+
+        etiquetaEstado.setText("❌ " + error);
+        etiquetaEstado.setStyle("-fx-text-fill: #e74c3c;");
+        return false;
+    }
+
+    /**
+     * Obtiene el primer error de validación encontrado.
+     *
+     * @return mensaje de error o {@code null} si los datos son válidos
+     */
+    private String obtenerErrorValidacion() {
+        TipoMotor motor = comboMotor.getValue();
+
+        if (motor == null) {
+            return "Seleccione un motor de base de datos.";
+        }
+
+        if (campoNombre.getText() == null || campoNombre.getText().isBlank()) {
+            return "El nombre de la conexión es obligatorio.";
+        }
+
+        if (motor == TipoMotor.SQLITE) {
+            if (campoBaseDatos.getText() == null || campoBaseDatos.getText().isBlank()) {
+                return "El archivo de SQLite es obligatorio.";
+            }
+            return null;
+        }
+
+        if (campoHost.getText() == null || campoHost.getText().isBlank()) {
+            return "El host es obligatorio.";
+        }
+
+        if (campoUsuario.getText() == null || campoUsuario.getText().isBlank()) {
+            return "El usuario es obligatorio.";
+        }
+
+        String puertoTexto = campoPuerto.getText();
+        if (puertoTexto == null || puertoTexto.isBlank()) {
+            return "El puerto es obligatorio.";
+        }
+
+        try {
+            int puerto = Integer.parseInt(puertoTexto.strip());
+            if (puerto < 1 || puerto > 65535) {
+                return "El puerto debe estar entre 1 y 65535.";
+            }
+        } catch (NumberFormatException e) {
+            return "El puerto debe ser un número válido.";
+        }
+
+        return null;
+    }
+
+    /**
      * Construye un objeto {@link Conexion} con los valores actuales del formulario.
      *
      * <ul>

@@ -260,6 +260,10 @@ public class App extends Application {
 
     try {
 
+        if (!controller.validarFormulario()) {
+            return;
+        }
+
         Conexion conexion =
                 controller.construirConexion();
 
@@ -298,6 +302,10 @@ public class App extends Application {
             controller.getBotonGuardar().setOnAction(event -> {
 
                 try {
+
+                    if (!controller.validarFormulario()) {
+                        return;
+                    }
 
                     Conexion conexion =
                             controller.construirConexion();
