@@ -25,7 +25,7 @@ public class Conexion {
      */
     private List<String> etiquetas = new ArrayList<>();
 
-    public Conexion() {
+    public Conexion() {  
     }
 
     public Conexion(String nombre, String host, Integer puerto,
@@ -60,7 +60,16 @@ public class Conexion {
     public void setPassword(String password)   { this.password = password; }
 
     public TipoMotor getTipoMotor()             { return tipoMotor; }
-    public void setTipoMotor(TipoMotor motor)   { this.tipoMotor = motor; }
+    public void setTipoMotor(TipoMotor motor)   
+    { this.tipoMotor = motor;
+      if(motor == TipoMotor.MYSQL)
+      {
+          this.puerto = 3306;
+      }else
+      {
+          this.puerto = null;
+      }
+    }
 
     /**
      * Indica si la conexión debe usar SSL/TLS.
