@@ -256,44 +256,8 @@ public class App extends Application {
             dialog.initModality(Modality.APPLICATION_MODAL);
 
             dialog.setScene(new Scene(root));
-            controller.getBotonProbar().setOnAction(event -> {
-
-    try {
-
-        Conexion conexion =
-                controller.construirConexion();
-
-        IConexionDAO dao =
-                daos.get(conexion.getTipoMotor());
-
-        long inicio =
-                System.currentTimeMillis();
-
-        boolean ok =
-                dao.probar(conexion);
-
-        long tiempo =
-                System.currentTimeMillis() - inicio;
-
-        controller
-                .getEtiquetaEstado()
-                .setText(
-                        (ok ? "✅ " : "❌ ")
-                                + (ok ? "Conexión exitosa" : "Conexión fallida")
-                                + " ("
-                                + tiempo
-                                + " ms)"
-                );
-
-    } catch (Exception e) {
-
-        controller
-                .getEtiquetaEstado()
-                .setText(
-                        "❌ " + obtenerMensajeError(e)
-                );
-    }
-});
+            // El botón Probar se registra solo en el FXML (handleProbarConexion).
+            controller.setDaos(daos);
 
             controller.getBotonGuardar().setOnAction(event -> {
 
