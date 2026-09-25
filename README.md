@@ -15,7 +15,6 @@ Gestor de base de datos con interfaz gráfica desarrollado en Java y JavaFX.
 
 * CSV
 * JSON
-* Excel
 
 ✍️ **Editor SQL**
 
