@@ -15,6 +15,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Servicio para importar datos desde un archivo CSV a una tabla existente.
@@ -24,6 +25,8 @@ import java.util.List;
  * el error se registra y la importación continúa con la siguiente.
  */
 public class ImportadorCSV {
+
+    private static final Pattern IDENTIFICADOR_SEGURO = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
 
     /**
      * Importa los datos del CSV a la tabla indicada.
@@ -83,8 +86,12 @@ public class ImportadorCSV {
                 numeroLinea++;
             }
 
+        } catch (ErrorPersistencia e) {
+            throw e;
         } catch (IOException e) {
             throw new ErrorPersistencia("Error al leer el archivo CSV: " + e.getMessage(), e);
+        } catch (SQLException e) {
+            throw new ErrorPersistencia("Error de base de datos al importar CSV: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new ErrorPersistencia("Error al importar CSV: " + e.getMessage(), e);
         }
@@ -96,6 +103,11 @@ public class ImportadorCSV {
      * Construye la sentencia INSERT con placeholders para cada columna.
      */
     private String construirInsert(String tabla, String[] columnas) {
+        validarIdentificador(tabla, "tabla");
+        for (String columna : columnas) {
+            validarIdentificador(columna, "columna");
+        }
+
         StringBuilder sb = new StringBuilder("INSERT INTO ");
         sb.append(tabla).append(" (");
 
@@ -112,6 +124,16 @@ public class ImportadorCSV {
         sb.append(")");
 
         return sb.toString();
+    }
+
+    /**
+     * Verifica que un identificador SQL solo contenga caracteres seguros.
+     */
+    private void validarIdentificador(String identificador, String tipo) {
+        if (identificador == null || !IDENTIFICADOR_SEGURO.matcher(identificador).matches()) {
+            throw new ErrorPersistencia(
+                    "Identificador de " + tipo + " inválido: " + identificador);
+        }
     }
 
     /**

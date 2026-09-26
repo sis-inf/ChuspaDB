@@ -1,4 +1,4 @@
-package com.estante.servicio;
+package edu.sisinf.estante.servicio;
 
 import java.util.List;
 import java.util.StringJoiner;

@@ -5,8 +5,12 @@
 
 <HBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml"
+      fx:controller="edu.sisinf.estante.controller.BarraEstadoController"
       spacing="10"
       style="-fx-padding: 5; -fx-background-color: #e0e0e0;">
+    <Label fx:id="labelConexion" text="Sin conexión"/>
+    <Label fx:id="labelTiempo" text=""/>
+    <Label fx:id="labelFilas" text=""/>
+    <Label fx:id="labelMensaje" text=""/>
 
-    <Label text="Barra de estado"/>
 </HBox>

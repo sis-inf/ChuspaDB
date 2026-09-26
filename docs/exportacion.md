@@ -105,7 +105,7 @@ Características previstas:
 * Compatibilidad con LibreOffice Calc.
 * Posibilidad de resaltar encabezados mediante formato de columnas.
 
-La disponibilidad de estas características depende de la versión implementada del sistema.
+Actualmente la exportación a Excel no está implementada en el sistema.
 
 
 ---
@@ -127,7 +127,7 @@ id,nombre,correo
 * No dejar encabezados vacíos.
 * Evitar filas incompletas.
 
-La disponibilidad de la funcionalidad de importación depende de la versión utilizada. 
+Actualmente la importación de datos soporta archivos CSV. 
 
 
 ## Límites

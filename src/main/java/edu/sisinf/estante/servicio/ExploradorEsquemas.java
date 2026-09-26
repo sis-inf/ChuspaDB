@@ -13,6 +13,9 @@ import edu.sisinf.estante.core.ErrorQuery;
  */
 public class ExploradorEsquemas {
 
+    // Prefijo utilizado por el driver JDBC de SQLite para la deteccion de la URL de conexion.
+    private static final String SQLITE_URL_PREFIX = "jdbc:sqlite:";
+
     /**
      * Lista los esquemas (catálogos) visibles en la conexión.
      */
@@ -23,7 +26,7 @@ public class ExploradorEsquemas {
             String url = metaData.getURL();
 
             // Criterio: Detección de SQLite
-            if (url != null && url.startsWith("jdbc:sqlite:")) {
+            if (url != null && url.startsWith(SQLITE_URL_PREFIX)) {
                 esquemas.add(new Esquema("main",new ArrayList<>()));
             } else {
                 // Criterio: Otros motores (MySQL) usando TABLE_CAT

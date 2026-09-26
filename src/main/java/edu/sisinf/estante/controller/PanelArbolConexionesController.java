@@ -38,8 +38,7 @@ public class PanelArbolConexionesController {
 
             if (seleccionado != null
                     && seleccionado.getValue() instanceof String valor
-                    && !valor.equals("(cargando...)")
-                    && !valor.equals("Conexiones")) {
+                    && arbol.getTreeItemLevel(seleccionado) == 3) {
                 if (onTablaClick != null) {
                     onTablaClick.accept(valor);
                 }
@@ -95,6 +94,8 @@ public class PanelArbolConexionesController {
         this.onConexionDoubleClick = callback;
     }
 
+    // Nivel 3 = tabla (raiz 0 > conexion 1 > esquema 2 > tabla 3). Sin consumidor:
+    // App.java no llama a setOnTablaClick y aun no crea nodos de tabla.
     public void setOnTablaClick(Consumer<String> callback) {
         this.onTablaClick = callback;
     }

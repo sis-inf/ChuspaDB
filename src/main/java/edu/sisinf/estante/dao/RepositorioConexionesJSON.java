@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -47,7 +48,7 @@ public class RepositorioConexionesJSON
     public Optional<Conexion> buscarPorId(String id) {
         return listar()
                 .stream()
-                .filter(c -> c.getId().equals(id))
+                .filter(c -> Objects.equals(c.getId(), id))
                 .findFirst();
     }
 
@@ -82,7 +83,7 @@ public class RepositorioConexionesJSON
         List<Conexion> conexiones = listar();
         boolean encontrada = false;
         for (int i = 0; i < conexiones.size(); i++) {
-            if (conexiones.get(i).getId().equals(conexion.getId())) {
+            if (Objects.equals(conexiones.get(i).getId(), conexion.getId())) {
                 conexiones.set(i, conexion);
                 encontrada = true;
                 break;
@@ -98,7 +99,7 @@ public class RepositorioConexionesJSON
     @Override
     public void eliminar(String id) throws ErrorPersistencia {
         List<Conexion> conexiones = listar();
-        boolean eliminada = conexiones.removeIf(c -> c.getId().equals(id));
+        boolean eliminada = conexiones.removeIf(c -> Objects.equals(c.getId(), id));
         if (!eliminada) {
             throw new ErrorPersistencia(
                     "No existe una conexion con id: " + id);

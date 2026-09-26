@@ -11,7 +11,7 @@ Este documento detalla la estructura y las nuevas clases incorporadas al sistema
 * **GestorFavoritos**: Componente de lógica de negocio que administra las acciones sobre los favoritos (agregar, eliminar, listar).
 
 ### 2. Módulo de Motor SQL y Validación
-* **ValidadorSQL**: Componente encargado de verificar la sintaxis y seguridad de las sentencias SQL antes de su ejecución.
+* **SqlValidator**: Componente encargado de verificar la sintaxis y seguridad de las sentencias SQL antes de su ejecución.
 * **GeneradorSQL**: Abstracción para la construcción dinámica de consultas SQL de manera segura.
 * **ConexionTester**: Utilidad para verificar la disponibilidad, latencia y estado de las conexiones a las bases de datos.
 
@@ -36,7 +36,7 @@ classDiagram
     class FavoritoQuery
     class GestorFavoritos
     
-    class ValidadorSQL
+    class SqlValidator
     class GeneradorSQL
     class ConexionTester
     
@@ -48,5 +48,5 @@ classDiagram
 
     HistorialQuerys "1" --> "*" EntradaHistorial
     GestorFavoritos "1" --> "*" FavoritoQuery
-    GeneradorSQL --> ValidadorSQL
+    GeneradorSQL --> SqlValidator
     ConexionDAOPostgreSQL ..> ConexionTester

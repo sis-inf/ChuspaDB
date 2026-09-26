@@ -11,6 +11,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         java-version: [17, 21]
+
     steps:
       - name: Verificar descripción del PR
         shell: bash
@@ -22,6 +23,7 @@ jobs:
           echo "✅ PR tiene descripción"
 
       - name: Verificar que referencia un issue
+        if: "!contains(github.event.pull_request.labels.*.name, 'skip-issue-check')"
         shell: bash
         run: |
           if ! echo "${{ github.event.pull_request.body }}" | grep -qi "closes #\|fixes #\|refs #"; then
@@ -32,7 +34,9 @@ jobs:
 
       - name: Checkout del repositorio
         uses: actions/checkout@v4
-        
+        with:
+          fetch-depth: 0
+
       - name: Verificar actualización de CHANGELOG.md
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-changelog')"
         run: |
@@ -49,11 +53,12 @@ jobs:
           fi
 
           echo "✅ Verificación de CHANGELOG.md correcta"
+
       - name: Verificar estructura Maven
         run: bash scripts/verificar_estructura.sh
 
       - name: Configurar Java JDK ${{ matrix.java-version }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.java-version }}
           distribution: 'temurin'
@@ -73,7 +78,7 @@ jobs:
 
       - name: Subir reporte Checkstyle
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: checkstyle-report-java-${{ matrix.java-version }}-${{ matrix.os }}
           path: target/checkstyle-result.xml
@@ -81,7 +86,7 @@ jobs:
 
       - name: Subir reporte JaCoCo
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jacoco-report-${{ matrix.java-version }}-${{ matrix.os }}
           path: target/site/jacoco/

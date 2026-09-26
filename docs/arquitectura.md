@@ -1,262 +1,135 @@
 # Arquitectura del Sistema - Proyecto Estante
 
+## Propósito de este documento
+
+Este documento es la **fuente principal de arquitectura** del proyecto. Resume la estructura general del sistema, las responsabilidades de sus capas y el flujo de datos entre ellas.
+
+Para detalles específicos consulta:
+
+- [Arquitectura MVC](arquitectura-mvc.md): relación entre vistas FXML, controladores y flujo de interacción.
+- [Arquitectura de paquetes Java](arquitectura-paquetes.md): responsabilidades de los paquetes y reglas de dependencia.
+
 ## Descripción general
 
-El sistema está diseñado bajo una arquitectura en capas que separa la presentación, la lógica de negocio y el acceso a datos. Esta organización permite mantener un código modular, escalable y fácil de mantener.
+Estante es un gestor de bases de datos con interfaz gráfica JavaFX. Permite conectarse a SQLite, MySQL y PostgreSQL, explorar esquemas, ejecutar consultas SQL y exportar resultados.
 
-La aplicación funciona como un gestor de bases de datos con interfaz gráfica JavaFX que permite conectarse a múltiples motores de base de datos (SQLite, MySQL, PostgreSQL), ejecutar consultas SQL y exportar resultados en distintos formatos.
+La aplicación separa presentación, lógica de negocio, acceso a datos y modelo para reducir el acoplamiento y facilitar mantenimiento, pruebas y evolución.
 
-Actualmente el proyecto se encuentra en desarrollo activo, con múltiples módulos incorporados durante el sprint actual.
-
----
-
-# Objetivos de la arquitectura
-
-La arquitectura del sistema busca:
-
-- Separar responsabilidades entre componentes
-- Facilitar el mantenimiento del código
-- Permitir escalabilidad futura
-- Reducir el acoplamiento entre módulos
-- Facilitar pruebas y depuración
-- Mantener una estructura organizada del proyecto
-
----
-
-## Tecnologías utilizadas
-
-| Tecnología      | Versión  | Descripción |
-|----------------|---------|-------------|
-| Java           | 17/21   | Lenguaje principal de la aplicación |
-| JavaFX         | 21.0.2  | Framework de interfaz gráfica |
-| SQLite         | 3.46.0  | Motor de base de datos embebido |
-| MySQL          | 8.x     | Motor de base de datos relacional |
-| PostgreSQL     | 15+     | Motor de base de datos relacional |
-| JDBC           | -       | Conector entre Java y bases de datos |
-| Maven          | 3.x     | Herramienta de gestión de dependencias |
-| Apache POI     | 5.2.5   | Generación de archivos Excel |
-| RichTextFX     | 0.11.2  | Editor de código con resaltado de sintaxis |
-| Jackson        | 2.16.1  | Serialización/deserialización JSON |
-| JaCoCo         | 0.8.11  | Cobertura de tests |
-| SpotBugs       | 4.8.6.6 | Análisis estático de bugs |
-
----
-
-# Arquitectura general
-
-El sistema sigue una arquitectura MVC (Model-View-Controller) con capas bien definidas.
-
-## Diagrama general
+## Arquitectura general
 
 ```text
-+---------------------------+
-|      Usuario              |
-|    (Interfaz JavaFX)      |
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-|  Capa de Presentación     |
-|  Controllers JavaFX       |
-|  Vistas FXML              |
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-|  Capa de Servicios        |
-|  EjecutorQuery            |
-|  EjecutorQueryAsync       |
-|  ExploradorEsquemas       |
-|  ExportadorCSV            |
-|  ExportadorJSON           |
-|  ExportadorExcel          |
-|  ImportadorCSV            |
-|  HistorialQuerys          |
-|  ValidadorSQL             |
-|  GeneradorSQL             |
-|  GestorFavoritos          |
-|  ConexionTester           |
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-|  Capa de Acceso a Datos   |
-|  IConexionDAO             |
-|  ConexionDAOSQLite        |
-|  ConexionDAOMySQL         |
-|  ConexionDAOPostgreSQL    |
-|  IRepositorioConexiones   |
-|  RepositorioConexionesJSON|
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-|  Bases de Datos           |
-|  SQLite / MySQL /         |
-|  PostgreSQL               |
-+---------------------------+
+Usuario
+  |
+  v
+Presentación (JavaFX / FXML / Controllers)
+  |
+  v
+Servicios
+  |
+  v
+Acceso a datos (DAO / repositorios)
+  |
+  v
+SQLite / MySQL / PostgreSQL
 ```
 
----
+## Capas del sistema
 
-# Capas del sistema
+### 1. Presentación
 
-## 1. Capa de Presentación
+Responsable de la interacción con el usuario.
 
-Responsable de la interacción entre el usuario y el sistema mediante JavaFX.
+Componentes reales destacados:
 
-### Controllers
+- `App`: punto de entrada y coordinación general.
+- `VentanaPrincipalController`: ventana principal.
+- `PanelArbolConexionesController`: navegación de conexiones, esquemas y tablas.
+- `PanelEditorSQLController`: edición y ejecución de SQL.
+- `PanelResultadoQueryController`: presentación de resultados.
+- `DialogoNuevaConexionController`: creación y edición de conexiones.
 
-- `App` — Punto de entrada, orquesta paneles y handlers
-- `VentanaPrincipalController` — Controller de la ventana principal
-- `PanelArbolConexionesController` — Árbol de conexiones con filtrado dinámico
-- `PanelEditorSQLController` — Editor SQL con resaltado de sintaxis
-- `PanelResultadoQueryController` — Muestra resultados de queries
-- `PanelHistorialController` — Historial de queries ejecutadas
-- `PanelInfoTablaController` — Información de columnas de tablas
-- `PanelEstadisticasController` — Panel de estadísticas
-- `BarraEstadoController` — Barra de estado inferior
-- `DialogoNuevaConexionController` — Diálogo para crear conexiones
-- `DialogoConfirmacionDML` — Confirmación de queries destructivas
+La relación detallada entre FXML y controladores está documentada en [arquitectura-mvc.md](arquitectura-mvc.md).
 
----
+### 2. Servicios
 
-## 2. Capa de Servicios
+Contiene la lógica de aplicación que utilizan los controladores.
 
-Contiene la lógica de negocio del sistema.
+Ejemplos reales:
 
-### Servicios existentes
+- `EjecutorQuery`: ejecución de consultas SQL.
+- `EjecutorQueryAsync`: ejecución asíncrona.
+- `ExploradorEsquemas`: exploración mediante metadatos JDBC.
+- `GeneradorSQL` y `GeneradorCreateTable`: generación de SQL.
+- `ImportadorCSV`: importación de datos CSV.
+- `ExportadorCSV` y `ExportadorJSON`: exportación de resultados.
+- `GestorFavoritos`: gestión de consultas favoritas.
+- `HistorialQuerys`: historial de consultas.
+- `SqlValidator`: validación de SQL.
 
-- `EjecutorQuery` — Ejecuta queries SQL síncronamente
-- `EjecutorQueryAsync` — Ejecuta queries en hilo de fondo con JavaFX Task
-- `ExploradorEsquemas` — Lista esquemas, tablas y columnas vía JDBC Metadata
-- `ExportadorCSV` — Exporta ResultadoQuery a archivo CSV
-- `ExportadorJSON` — Exporta ResultadoQuery a archivo JSON
-- `ExportadorExcel` — Exporta ResultadoQuery a archivo .xlsx con Apache POI
-- `ImportadorCSV` — Importa datos desde CSV a una tabla existente
-- `HistorialQuerys` — Registro FIFO de las últimas 50 queries ejecutadas
-- `ValidadorSQL` — Valida y clasifica sentencias SQL
-- `GeneradorSQL` — Genera sentencias SQL (CREATE TABLE, etc.)
-- `GestorFavoritos` — Gestiona queries marcadas como favoritas
-- `GeneradorCreateTable` — Genera DDL CREATE TABLE desde metadata
+### 3. Acceso a datos
 
----
+Encapsula la comunicación con motores y la persistencia local.
 
-## 3. Capa de Acceso a Datos
+- `IConexionDAO`: contrato de acceso a motores.
+- `ConexionDAOMySQL`: implementación MySQL.
+- `ConexionDAOPostgreSQL`: implementación PostgreSQL.
+- `ConexionDAOSQLite`: implementación SQLite.
+- `IRepositorioConexiones`: contrato de persistencia de conexiones.
+- `RepositorioConexionesJSON`: persistencia local de conexiones en JSON.
 
-Encargada de la comunicación con las bases de datos mediante JDBC.
+### 4. Modelo
 
-### Interfaces
+Representa los datos manejados por el sistema.
 
-- `IConexionDAO` — Interfaz para abrir conexiones JDBC
-- `IRepositorioConexiones` — Interfaz para persistir conexiones
+- `Conexion`
+- `TipoMotor`
+- `ResultadoQuery`
+- `Esquema`
+- `Tabla`
+- `Columna`
+- `ColumnaInfo`
+- `EntradaHistorial`
+- `ImportacionResultado`
+- `FavoritoQuery`
 
-### Implementaciones DAO
+La organización exacta por paquetes y sus dependencias se encuentra en [arquitectura-paquetes.md](arquitectura-paquetes.md).
 
-- `ConexionDAOSQLite` — Conexión a SQLite
-- `ConexionDAOMySQL` — Conexión a MySQL
-- `ConexionDAOPostgreSQL` — Conexión a PostgreSQL
+## Flujo general de datos
 
-### Repositorios
+1. El usuario interactúa con una vista JavaFX.
+2. El controlador recibe la acción.
+3. El controlador delega la operación a un servicio.
+4. El servicio utiliza un DAO o repositorio cuando necesita acceder a datos.
+5. El DAO se comunica con SQLite, MySQL o PostgreSQL mediante JDBC.
+6. El resultado se transforma en objetos del modelo.
+7. El controlador actualiza la vista.
 
-- `RepositorioConexionesJSON` — Persiste conexiones en archivo JSON local
+Para el recorrido detallado de una consulta SQL, consulta [arquitectura-mvc.md](arquitectura-mvc.md).
 
----
+## Tecnologías principales
 
-## 4. Capa de Modelo
+| Tecnología | Uso |
+|---|---|
+| Java | Lenguaje principal |
+| JavaFX / FXML | Interfaz gráfica |
+| JDBC | Acceso a bases de datos |
+| SQLite | Motor embebido |
+| MySQL | Motor relacional |
+| PostgreSQL | Motor relacional |
+| Maven | Compilación y dependencias |
+| Jackson | Persistencia JSON |
+| SLF4J | Logging |
+| JUnit / Mockito | Pruebas |
 
-Define las entidades del dominio.
+## Principios arquitectónicos
 
-### Modelos
+- Separación de responsabilidades entre presentación, servicios, DAO y modelo.
+- Dependencias dirigidas desde capas superiores hacia capas inferiores.
+- Acceso a motores encapsulado detrás de `IConexionDAO`.
+- Persistencia de conexiones encapsulada detrás de `IRepositorioConexiones`.
+- Uso de modelos de dominio para transportar información entre componentes.
+- Evitar que las vistas FXML contengan lógica de negocio.
 
-- `Conexion` — Datos de una conexión a base de datos
-- `TipoMotor` — Enum: SQLITE, MYSQL, POSTGRESQL
-- `ResultadoQuery` — Resultado de una query (lectura, escritura o error)
-- `Esquema` — Representa un esquema de base de datos
-- `Tabla` — Representa una tabla dentro de un esquema
-- `Columna` — Representa una columna de una tabla
-- `ColumnaInfo` — Record con info detallada de columna (nombre, tipo, nullable, default)
-- `EntradaHistorial` — Record de una query ejecutada en el historial
-- `ImportacionResultado` — Record con resultado de importación CSV
-- `FavoritoQuery` — Query marcada como favorita
+## Extensibilidad
 
----
-
-## Flujo de datos
-
-1. El usuario interactúa con la interfaz JavaFX.
-2. El controller recibe la acción y la delega al servicio correspondiente.
-3. El servicio ejecuta la lógica de negocio.
-4. Si requiere datos, el DAO abre una conexión JDBC y ejecuta la query.
-5. La base de datos procesa la consulta y retorna resultados.
-6. El servicio transforma los resultados en objetos del modelo.
-7. El controller actualiza la vista con los datos recibidos.
-
----
-
-# Gestión de dependencias
-
-El proyecto utiliza `Maven` para:
-
-- Administración de librerías
-- Compilación del proyecto
-- Gestión de dependencias
-- Estandarización de builds
-- Ejecución de tests y reportes de cobertura
-
----
-
-## Decisiones técnicas
-
-### Uso de Java 17/21
-
-Se eligió Java por:
-
-- Portabilidad multiplataforma
-- Amplio ecosistema
-- Records para modelos inmutables
-- Pattern matching y switch expressions
-
-### Uso de JavaFX
-
-Se seleccionó JavaFX por:
-
-- Integración nativa con Java
-- FXML para separar vista de lógica
-- Componentes ricos (TreeView, TableView, CodeArea)
-
-### Soporte multi-motor
-
-Se soportan SQLite, MySQL y PostgreSQL mediante el patrón DAO, permitiendo agregar nuevos motores sin modificar la lógica de negocio.
-
----
-
-# Escalabilidad futura
-
-La arquitectura actual permite incorporar:
-
-- Soporte para más motores (Oracle, SQL Server)
-- Sistema de autenticación de usuarios
-- Optimización de queries con explain plan
-- Soporte para múltiples conexiones simultáneas
-- Reportes y estadísticas avanzadas
-- Plugins de exportación adicionales
-
----
-
-# Estado actual del sistema
-
-El proyecto se encuentra en desarrollo activo. Durante el sprint actual se incorporaron los siguientes módulos:
-
-- `ExportadorJSON` — Exportación a JSON
-- `ExportadorExcel` — Exportación a Excel con Apache POI
-- `ImportadorCSV` — Importación desde CSV
-- `HistorialQuerys` — Historial de queries
-- `ValidadorSQL` — Validación de sentencias SQL
-- `GeneradorSQL` — Generación de SQL
-- `GestorFavoritos` — Gestión de favoritos
-- `ConexionDAOPostgreSQL` — Soporte para PostgreSQL
-- `PanelHistorialController` — Panel de historial en UI
-- `PanelInfoTablaController` — Panel de información de tabla
-- Resaltado de sintaxis SQL en el editor
-- Ejecución asíncrona de queries con spinner
+La arquitectura permite incorporar nuevos motores de base de datos mediante nuevas implementaciones de `IConexionDAO`, así como nuevos servicios de importación, exportación y análisis sin concentrar toda la lógica en los controladores.

@@ -70,12 +70,8 @@ public class PanelEditorSQLController {
         areaSQL.textProperty().addListener((obs, oldText, newText) ->
             areaSQL.setStyleSpans(0, calcularResaltado(newText))
         );
-
         areaSQL.getStylesheets().add(
-            "data:text/css," +
-            ".keyword { -fx-fill: #0000cc; -fx-font-weight: bold; }" +
-            ".string  { -fx-fill: #008000; }" +
-            ".comment { -fx-fill: #808080; -fx-font-style: italic; }"
+            getClass().getResource("/css/estante.css").toExternalForm()
         );
     }
 
