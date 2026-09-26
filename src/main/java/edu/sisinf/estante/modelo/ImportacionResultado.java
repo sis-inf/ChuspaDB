@@ -11,6 +11,6 @@ import java.util.List;
  */
 public record ImportacionResultado(
         int filasInsertadas,
-        int fillasFallidas,
+        int filasFallidas,        
         List<String> errores
 ) {}
