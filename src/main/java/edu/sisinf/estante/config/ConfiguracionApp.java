@@ -84,13 +84,17 @@ public class ConfiguracionApp {
     
     private static Path directorioEjecutable() {
         try {
-            return Paths.get(
-                ConfiguracionApp.class
-                        .getProtectionDomain()
-                        .getCodeSource()
-                        .getLocation()
-                        .toURI())
-                .getParent();
+            Path path = Paths.get(
+            ConfiguracionApp.class
+                    .getProtectionDomain()
+                    .getCodeSource()
+                    .getLocation()
+                    .toURI());
+                    if (!path.toString().endsWith(".jar")) {
+            return path.getParent(); // si no es JAR, devolvemos igual el directorio
+        }
+         return path.getParent();
+            
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
