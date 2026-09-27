@@ -5,13 +5,13 @@ import java.util.List;
 public class Tabla {
     private String nombre;
     private String esquema;
-    private List<Columna> columnas;
+    private List<ColumnaInfo> columnas;
 
     //Constructor sin argumentos requerido por Jackson
     public Tabla() {}
 
     //Constructor con todos los campos
-    public Tabla(String nombre, String esquema, List<Columna> columnas) {
+    public Tabla(String nombre, String esquema, List<ColumnaInfo> columnas) {
         this.nombre = nombre;
         this.esquema = esquema;
         this.columnas = columnas;
@@ -24,6 +24,6 @@ public class Tabla {
     public String getEsquema() { return esquema; }
     public void setEsquema(String esquema) { this.esquema = esquema; }
 
-    public List<Columna> getColumnas() { return columnas; }
-    public void setColumnas(List<Columna> columnas) { this.columnas = columnas; }
+    public List<ColumnaInfo> getColumnas() { return columnas; }
+    public void setColumnas(List<ColumnaInfo> columnas) { this.columnas = columnas; }
 }

@@ -11,7 +11,7 @@ Este documento describe el ciclo de vida de una consulta SQL desde que el usuari
            │
            ▼
 ┌──────────────────────┐
-│ ValidadorSQL verifica│
+│ SqlValidator verifica│
 │ la consulta          │
 └──────────┬───────────┘
            │
@@ -63,7 +63,7 @@ Este documento describe el ciclo de vida de una consulta SQL desde que el usuari
            │
            ▼
 ┌──────────────────────┐
-│ ValidadorSQL o       │
+│ SqlValidator o       │
 │ EjecutorQueryAsync   │
 │ detecta un error     │
 └──────────┬───────────┘
@@ -90,7 +90,7 @@ Este documento describe el ciclo de vida de una consulta SQL desde que el usuari
 ## Resumen
 
 1. El usuario escribe una consulta SQL.
-2. La consulta es validada por `ValidadorSQL`.
+2. La consulta es validada por `SqlValidator`.
 3. Si la operación corresponde a una instrucción DML, se solicita confirmación mediante `DialogoConfirmacionDML`.
 4. La ejecución se realiza mediante `EjecutorQueryAsync` en un hilo de segundo plano.
 5. La consulta se registra en el historial mediante `HistorialQuerys.agregar()`.

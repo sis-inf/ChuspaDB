@@ -6,8 +6,15 @@ Para ejecutar el proyecto necesitas:
 
 - Java JDK
 - Maven
-- PostgreSQL
 - Git
+  
+El sistema permite configurar diferentes motores de base de datos:
+
+- SQLite
+- MySQL
+- PostgreSQL
+  
+PostgreSQL no es un requisito obligatorio. Solo debe utilizarse si el usuario selecciona esa configuración específica de base de datos.
 
 ---
 

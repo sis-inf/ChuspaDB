@@ -20,7 +20,7 @@ import java.util.List;
  *
  * <p>Utiliza {@link DatabaseMetaData} para inspeccionar columnas, tipos y restricciones
  * de clave primaria, y luego construye una cadena CREATE TABLE sintácticamente correcta
- * para el motor de base de datos objetivo (MySQL o SQLite).</p>
+ * para el motor de base de datos objetivo (MySQL, PostgreSQL o SQLite).</p>
  *
  * <p>Útil para ingeniería inversa: replicar la estructura de una tabla en otro
  * servidor o guardar el esquema como un script.</p>
@@ -36,7 +36,7 @@ public class GeneradorCreateTable {
      * @param tableName nombre de la tabla a la que se le aplicará ingeniería inversa
      * @param conexion  datos de conexión utilizados para abrir la sesión JDBC
      * @param dao       implementación del DAO que coincide con el motor objetivo
-     * @param motor     motor de base de datos objetivo (MYSQL o SQLITE)
+     * @param motor     motor de base de datos objetivo (MYSQL, POSTGRESQL o SQLITE)
      * @return cadena DDL que comienza con {@code CREATE TABLE tableName (}
      * @throws SQLException si no se puede recuperar la metadatos
      */
@@ -98,7 +98,8 @@ public class GeneradorCreateTable {
                 String sqlType = buildSqlType(typeName, columnSize, motor);
                 String nullConstraint = "NO".equals(nullable) ? " NOT NULL" : "";
 
-                definitions.add("    " + columnName + " " + sqlType + nullConstraint);
+                definitions.add("    " + quoteIdentifier(columnName, motor) + " "
+                        + sqlType + nullConstraint);
             }
         }
 
@@ -129,6 +130,10 @@ public class GeneradorCreateTable {
             return "NUMERIC";
         }
 
+        if (motor == TipoMotor.POSTGRESQL) {
+            return buildPostgresqlType(upperType, columnSize);
+        }
+
         // MySQL: mantiene el tipo original con tamaño cuando corresponda
         if ((upperType.contains("VARCHAR") || upperType.contains("CHAR"))
                 && columnSize > 0) {
@@ -136,6 +141,42 @@ public class GeneradorCreateTable {
         }
 
         return typeName;
+    }
+
+    /**
+     * Convierte tipos comunes de JDBC y otros motores a tipos válidos de PostgreSQL.
+     */
+    private static String buildPostgresqlType(String upperType, int columnSize) {
+        if (upperType.contains("SMALLSERIAL")) return "SMALLSERIAL";
+        if (upperType.contains("BIGSERIAL"))   return "BIGSERIAL";
+        if (upperType.contains("SERIAL"))      return "SERIAL";
+        if (upperType.contains("BOOL") || upperType.equals("BIT")) return "BOOLEAN";
+        if (upperType.contains("TEXT")
+                || upperType.contains("CLOB")
+                || upperType.contains("LONGVARCHAR")) return "TEXT";
+        if (upperType.contains("VARCHAR")
+                || upperType.contains("CHARACTER VARYING")) {
+            return columnSize > 0 ? "VARCHAR(" + columnSize + ")" : "VARCHAR";
+        }
+        if (upperType.contains("CHAR") || upperType.contains("BPCHAR")) {
+            return columnSize > 0 ? "CHAR(" + columnSize + ")" : "CHAR";
+        }
+        if (upperType.contains("BIGINT") || upperType.equals("INT8")) return "BIGINT";
+        if (upperType.contains("SMALLINT")
+                || upperType.contains("TINYINT")
+                || upperType.equals("INT2")) return "SMALLINT";
+        if (upperType.contains("INT") || upperType.equals("INT4")) return "INTEGER";
+        if (upperType.contains("BLOB")
+                || upperType.contains("BINARY")
+                || upperType.contains("VARBINARY")) return "BYTEA";
+        if (upperType.contains("DOUBLE") || upperType.equals("FLOAT8")) {
+            return "DOUBLE PRECISION";
+        }
+        if (upperType.contains("FLOAT")
+                || upperType.contains("REAL")
+                || upperType.equals("FLOAT4")) return "REAL";
+        if (upperType.contains("DATETIME")) return "TIMESTAMP";
+        return upperType;
     }
 
     /**
@@ -152,13 +193,15 @@ public class GeneradorCreateTable {
                                    List<String> primaryKeys,
                                    TipoMotor motor) {
         StringBuilder ddl = new StringBuilder();
-        ddl.append("CREATE TABLE ").append(tableName).append(" (\n");
+        ddl.append("CREATE TABLE ").append(quoteIdentifier(tableName, motor)).append(" (\n");
 
         ddl.append(String.join(",\n", columnDefinitions));
 
         if (!primaryKeys.isEmpty()) {
             ddl.append(",\n    PRIMARY KEY (")
-               .append(String.join(", ", primaryKeys))
+               .append(String.join(", ", primaryKeys.stream()
+                       .map(primaryKey -> quoteIdentifier(primaryKey, motor))
+                       .toList()))
                .append(")");
         }
 
@@ -171,5 +214,15 @@ public class GeneradorCreateTable {
         ddl.append(";");
 
         return ddl.toString();
+    }
+
+    /**
+     * Aplica las comillas de identificador apropiadas para cada motor.
+     */
+    private static String quoteIdentifier(String identifier, TipoMotor motor) {
+        if (motor == TipoMotor.MYSQL) {
+            return "`" + identifier.replace("`", "``") + "`";
+        }
+        return "\"" + identifier.replace("\"", "\"\"") + "\"";
     }
 }

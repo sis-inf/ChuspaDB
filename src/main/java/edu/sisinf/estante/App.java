@@ -13,6 +13,9 @@ import edu.sisinf.estante.servicio.ExploradorEsquemas;
 import edu.sisinf.estante.servicio.ExportadorCSV;
 import edu.sisinf.estante.util.SqlValidator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -31,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 
 public class App extends Application {
+
+    private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     private Connection conexionActiva;
 
@@ -285,7 +290,7 @@ public class App extends Application {
         controller
                 .getEtiquetaEstado()
                 .setText(
-                        "❌ " + e.getMessage()
+                        "❌ " + obtenerMensajeError(e)
                 );
     }
 });
@@ -309,7 +314,7 @@ public class App extends Application {
 
                     controller
                             .getEtiquetaEstado()
-                            .setText(e.getMessage());
+                            .setText(obtenerMensajeError(e));
                 }
             });
 
@@ -320,7 +325,7 @@ public class App extends Application {
             mostrarError(
                     "Error",
                     "No se pudo abrir el diálogo",
-                    e.getMessage()
+                    obtenerMensajeError(e)
             );
         }
     }
@@ -368,7 +373,7 @@ public class App extends Application {
             mostrarError(
                     "Error de conexión",
                     "No se pudo abrir la conexión",
-                    e.getMessage()
+                    obtenerMensajeError(e)
             );
 
         } catch (Exception e) {
@@ -376,7 +381,7 @@ public class App extends Application {
             mostrarError(
                     "Error",
                     "Error inesperado",
-                    e.getMessage()
+                    obtenerMensajeError(e)
             );
         }
     }
@@ -441,7 +446,7 @@ public class App extends Application {
             mostrarError(
                     "Error SQL",
                     "No se pudo ejecutar la query",
-                    e.getMessage()
+                    obtenerMensajeError(e)
             );
         }
     }
@@ -477,9 +482,19 @@ public class App extends Application {
             mostrarError(
                     "Error exportando",
                     "No se pudo exportar CSV",
-                    e.getMessage()
+                    obtenerMensajeError(e)
             );
         }
+    }
+
+    private String obtenerMensajeError(Exception e) {
+
+        logger.error("Error en la interfaz de usuario", e);
+
+        String mensaje = e.getMessage();
+        return (mensaje == null || mensaje.isBlank())
+                ? "Ocurrió un error inesperado. Consulte los logs para más detalles."
+                : mensaje;
     }
 
     private void mostrarError(

@@ -31,7 +31,7 @@ Gestor de base de datos con interfaz gráfica desarrollado en Java y JavaFX.
 
 ## ¿Qué es?
 
-Estante es una aplicación que permite conectarse, explorar y administrar bases de datos MySQL mediante una interfaz gráfica intuitiva desarrollada con Java y JavaFX.
+Estante es una aplicación que permite conectarse, explorar y administrar bases de datos utilizando motores como MySQL, SQLite y PostgreSQL mediante una interfaz gráfica desarrollada con Java y JavaFX.
 
 ## ¿Para quién es?
 
@@ -55,13 +55,12 @@ Estante ayuda a resolver:
 
 - Java 17 o superior
 - JavaFX SDK compatible con tu versión de Java
-- Un servidor MySQL en ejecución (local o remoto)
-# Pasos
-
-
+- Un motor de base de datos compatible configurado (MySQL, SQLite o PostgreSQL según la configuración utilizada)
+  
+## Pasos
 ```bash
 # 1. Clona el repositorio:
-git clone https://github.com/tu-usuario/estante.git
+git clone https://github.com/sis-inf/estante.git
 cd estante
 
 # 2. Compila el proyecto:
@@ -86,30 +85,5 @@ Ver [CONTRIBUTING.md](CONTRIBUTING.md)
 ## Licencia
 MIT — ver [LICENSE](LICENSE)
 
-# Estante 📚
 
-> Sistema de gestión y organización para bibliotecas y colecciones personales.
-
-<!-- Badge del CI -->
-[![validar-pr](https://github.com/sis-inf/estante/actions/workflows/validar-pr.yml/badge.svg)](https://github.com/sis-inf/estante/actions/workflows/validar-pr.yml)
-
----
-
-## 🚀 Características Principal
-El sistema cuenta con un motor flexible y soporte robusto para la gestión de datos:
-* **Compatibilidad Multi-Base de Datos:** Soporte completo para motores relacionales como **MySQL**, **SQLite** y **PostgreSQL**.
-* **Exportación de Datos:** Herramientas integradas para exportar tus reportes y colecciones directamente a formatos **CSV**, **JSON** y **Excel**.
-
----
-
-## 🛠️ Compilación Rápida
-
-Para compilar y ejecutar este proyecto de forma local utilizando Maven, ejecuta los siguientes comandos en tu terminal:
-
-```bash
-# 1. Compilar el proyecto y descargar dependencias
-mvn compile
-
-# 2. Levantar la aplicación con JavaFX
-mvn javafx:run
 

@@ -117,7 +117,7 @@ public class ConnectionProvider {
         throw new IllegalArgumentException("La sentencia SQL no puede ser nula.");
     }
 
-    if (sql.trim().toUpperCase().startsWith("SELECT")) {
+    if (SqlValidator.esLectura(sql)) {
         throw new IllegalArgumentException(
                 "executeUpdate() no permite sentencias SELECT de selección. " +
                 "Use executeSelect() para consultas. Sentencia rechazada: [" + sql + "]"

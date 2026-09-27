@@ -4,17 +4,17 @@
 |---|---|
 | Proyecto | Estante |
 | Versión | 1.0 |
-| Motor de Base de Datos | MySQL |
+| Motores de Base de Datos soportados | SQLite, MySQL, PostgreSQL (`TipoMotor`) |
 | Tecnología | Java + JavaFX |
-| Fecha | Mayo 2026 |
+| Última actualización | 2026-06-13 |
 
 ---
 
 # Descripción General
 
-Este documento describe la estructura de la base de datos interna del sistema **Estante**, un gestor visual de bases de datos MySQL desarrollado en Java y JavaFX.
+Este documento describe las estructuras de datos reales utilizadas por el sistema **Estante**, un gestor visual de bases de datos desarrollado en Java y JavaFX que soporta tres motores: SQLite, MySQL y PostgreSQL (enum `TipoMotor`).
 
-El objetivo de este diccionario es definir de manera clara las tablas, atributos, relaciones, restricciones y reglas de negocio utilizadas por el sistema para la administración de conexiones, ejecución de consultas SQL y almacenamiento del historial de operaciones.
+El sistema no mantiene tablas SQL propias: persiste las conexiones y las consultas favoritas en archivos JSON, y mantiene el historial de consultas ejecutadas únicamente en memoria durante la sesión. El objetivo de este diccionario es definir de manera clara esos archivos JSON, records y reglas de negocio utilizados por el sistema para la administración de conexiones, la ejecución de consultas SQL y el registro temporal del historial de operaciones.
 
 ---
 
@@ -32,63 +32,51 @@ El objetivo de este diccionario es definir de manera clara las tablas, atributos
 
 ---
 
-# Tabla: CONEXIONES
+# conexiones.json
 
-Almacena los perfiles de conexión a bases de datos MySQL configurados por el usuario. Permite guardar conexiones frecuentes y reutilizarlas desde la interfaz gráfica del sistema.
+Almacena los perfiles de conexión configurados por el usuario. Permite guardar conexiones frecuentes y reutilizarlas desde la interfaz gráfica del sistema.
 
-| Nombre Campo | Tipo de Dato | Descripción | Restricciones |
-|---|---|---|---|
-| `id_conexion` | INTEGER | Identificador único del perfil de conexión | PK, AUTOINCREMENT |
-| `nombre` | VARCHAR(100) | Nombre descriptivo de la conexión | NOT NULL |
-| `host` | VARCHAR(150) | Dirección IP o nombre del servidor MySQL | NOT NULL |
-| `puerto` | INTEGER | Puerto de conexión del servidor MySQL | NOT NULL, DEFAULT 3306 |
-| `base_datos` | VARCHAR(100) | Nombre de la base de datos | NOT NULL |
-| `usuario` | VARCHAR(100) | Usuario de autenticación MySQL | NOT NULL, INDEX |
-| `contrasena` | VARCHAR(255) | Contraseña cifrada de acceso | NOT NULL |
-| `fecha_registro` | DATETIME | Fecha y hora de registro de la conexión | NOT NULL |
-
----
-
-# Tabla: HISTORIAL_CONSULTAS
-
-Registra todas las consultas SQL ejecutadas dentro del sistema. Permite al usuario consultar operaciones anteriores y revisar errores de ejecución.
-
-| Nombre Campo | Tipo de Dato | Descripción | Restricciones |
-|---|---|---|---|
-| `id_consulta` | INTEGER | Identificador único del historial | PK, AUTOINCREMENT |
-| `id_conexion` | INTEGER | Referencia a la conexión utilizada | FK → CONEXIONES(id_conexion), NOT NULL |
-| `sentencia_sql` | TEXT | Consulta SQL ejecutada por el usuario | NOT NULL |
-| `estado` | VARCHAR(20) | Estado de ejecución de la consulta | NOT NULL, CHECK (estado IN ('EXITOSA', 'ERROR')) |
-| `mensaje_error` | TEXT | Mensaje de error generado durante la ejecución | NULL |
-| `fecha_ejecucion` | DATETIME | Fecha y hora exacta de ejecución | NOT NULL, INDEX |
-| `tiempo_respuesta_ms` | INTEGER | Tiempo de respuesta en milisegundos | NULL |
+| Campo       | Descripción                                                           |
+| ----------- | ---------------------------------------------------------------------- |
+| `id`        | Identificador único de la conexión                                    |
+| `nombre`    | Nombre descriptivo de la conexión                                     |
+| `host`      | Dirección del servidor                                                |
+| `puerto`    | Puerto de conexión                                                    |
+| `basedatos` | Nombre de la base de datos                                            |
+| `usuario`   | Usuario de acceso                                                     |
+| `password`  | Contraseña de acceso                                                  |
+| `tipoMotor` | Motor de base de datos (`TipoMotor`: `SQLITE`, `MYSQL`, `POSTGRESQL`) |
+| `usarSSL`   | Indica si la conexión utiliza SSL                                     |
+| `etiquetas` | Lista de etiquetas asociadas a la conexión                            |
 
 ---
 
-# Record: FAVORITO_QUERY
+# favoritos.json
 
-Almacena consultas SQL marcadas como favoritas por el usuario para reutilizarlas rápidamente.
+Almacena las consultas SQL marcadas como favoritas por el usuario para reutilizarlas rápidamente. Corresponde al record `FavoritoQuery` (`edu.sisinf.estante.modelo.FavoritoQuery`).
 
-| Nombre Campo     | Tipo de Dato | Descripción                                   | Restricciones |
-| ---------------- | ------------ | --------------------------------------------- | ------------- |
-| `nombre`         | VARCHAR(100) | Nombre descriptivo de la consulta favorita    | NOT NULL      |
-| `sql`            | TEXT         | Sentencia SQL almacenada                      | NOT NULL      |
-| `motor`          | VARCHAR(50)  | Motor de base de datos asociado a la consulta | NOT NULL      |
-| `fecha_creacion` | DATETIME     | Fecha y hora de creación del favorito         | NOT NULL      |
+| Campo           | Descripción                                  |
+| --------------- | ---------------------------------------------- |
+| `nombre`        | Nombre descriptivo de la consulta favorita     |
+| `sql`           | Sentencia SQL almacenada                       |
+| `motor`         | Motor de base de datos asociado (`TipoMotor`)  |
+| `fechaCreacion` | Fecha y hora de creación del favorito          |
 
 ---
 
-# Record: ENTRADA_HISTORIAL
+# Historial de consultas (no persistente)
 
-Representa una entrada individual del historial de consultas ejecutadas por el usuario.
+El historial de consultas ejecutadas **no se persiste**: se mantiene únicamente en memoria interna durante la sesión y se pierde al cerrar la aplicación.
+
+Mientras la aplicación está en ejecución, cada consulta genera un `EntradaHistorial` (`edu.sisinf.estante.modelo.EntradaHistorial`) con la siguiente forma:
 
 | Nombre Campo  | Tipo de Dato | Descripción                                       | Restricciones |
-| ------------- | ------------ | ------------------------------------------------- | ------------- |
-| `timestamp`   | DATETIME     | Fecha y hora de ejecución de la consulta          | NOT NULL      |
-| `query`       | TEXT         | Consulta SQL ejecutada                            | NOT NULL      |
-| `base_datos`  | VARCHAR(100) | Base de datos sobre la que se ejecutó la consulta | NOT NULL      |
-| `duracion_ms` | INTEGER      | Tiempo de ejecución en milisegundos               | NOT NULL      |
-| `exitosa`     | BOOLEAN      | Indica si la ejecución fue exitosa                | NOT NULL      |
+| ------------- | ------------ | -------------------------------------------------- | ------------- |
+| `timestamp`   | BIGINT       | Momento de ejecución de la query (epoch en milisegundos) | NOT NULL      |
+| `query`       | TEXT         | Consulta SQL ejecutada                             | NOT NULL      |
+| `base_datos`  | VARCHAR(100) | Base de datos o conexión activa al ejecutar la consulta | NOT NULL      |
+| `duracion_ms` | BIGINT       | Tiempo de ejecución en milisegundos                | NOT NULL      |
+| `exitosa`     | BOOLEAN      | Indica si la ejecución fue exitosa                 | NOT NULL      |
 
 ---
 
@@ -105,43 +93,15 @@ Contiene información descriptiva sobre una columna de una tabla de base de dato
 
 ---
 
-# Record: RESULTADO_PRUEBA
-
-Almacena el resultado obtenido durante la ejecución de pruebas o validaciones del sistema.
-
-| Nombre Campo    | Tipo de Dato | Descripción                                      | Restricciones |
-| --------------- | ------------ | ------------------------------------------------ | ------------- |
-| `nombre_prueba` | VARCHAR(100) | Nombre de la prueba ejecutada                    | NOT NULL      |
-| `estado`        | VARCHAR(20)  | Resultado de la prueba (EXITOSA o FALLIDA)       | NOT NULL      |
-| `mensaje`       | TEXT         | Mensaje descriptivo del resultado obtenido       | NULL          |
-| `duracion_ms`   | INTEGER      | Tiempo de ejecución de la prueba en milisegundos | NOT NULL      |
-
----
-
 # Record: IMPORTACION_RESULTADO
 
 Representa el resultado de una operación de importación de datos desde archivos externos.
 
-| Nombre Campo           | Tipo de Dato | Descripción                                                | Restricciones |
-| ---------------------- | ------------ | ---------------------------------------------------------- | ------------- |
-| `archivo`              | VARCHAR(255) | Nombre del archivo importado                               | NOT NULL      |
-| `registros_procesados` | INTEGER      | Cantidad total de registros procesados                     | NOT NULL      |
-| `registros_importados` | INTEGER      | Cantidad de registros importados correctamente             | NOT NULL      |
-| `errores`              | INTEGER      | Cantidad de errores detectados durante la importación      | NOT NULL      |
-| `mensaje`              | TEXT         | Información adicional sobre el resultado de la importación | NULL          |
-
----
-# Relaciones entre Tablas
-
-```text
-CONEXIONES (1) ───────────< (N) HISTORIAL_CONSULTAS
-```
-
-## Descripción de Relaciones
-
-- Una conexión puede registrar múltiples consultas ejecutadas.
-- Cada registro del historial pertenece a una única conexión.
-- La relación entre ambas tablas se establece mediante el campo `id_conexion`.
+| Nombre Campo      | Tipo de Dato   | Descripción                                          | Restricciones |
+| ------------------ | -------------- | ----------------------------------------------------- | ------------- |
+| `filasInsertadas`  | INTEGER        | Número de filas insertadas exitosamente                | NOT NULL      |
+| `filasFallidas`    | INTEGER        | Número de filas que fallaron                            | NOT NULL      |
+| `errores`          | List\<String\> | Lista de mensajes de error, uno por fila fallida        | NULL          |
 
 ---
 
@@ -152,7 +112,7 @@ CONEXIONES (1) ───────────< (N) HISTORIAL_CONSULTAS
 - Las contraseñas almacenadas deben mantenerse cifradas.
 - El sistema debe mostrar mensajes de error comprensibles para el usuario final.
 - El historial de consultas debe ser accesible desde la interfaz principal.
-- Las consultas SQL ejecutadas deben almacenarse junto con su tiempo de respuesta.
+- Las consultas SQL ejecutadas deben registrarse en el historial de la sesión junto con su tiempo de respuesta.
 - El sistema debe permitir reutilizar conexiones previamente guardadas.
 - El tiempo máximo recomendado de respuesta para consultas simples es de 2 segundos.
 
@@ -161,8 +121,6 @@ CONEXIONES (1) ───────────< (N) HISTORIAL_CONSULTAS
 # Consideraciones Técnicas
 
 - Se recomienda utilizar consultas parametrizadas para prevenir ataques de SQL Injection.
-- Los campos `usuario` y `fecha_ejecucion` deben indexarse para optimizar búsquedas.
-- El historial de consultas puede requerir políticas de limpieza periódica dependiendo del volumen de registros.
 - Las contraseñas no deben almacenarse en texto plano.
 - El sistema debe validar previamente la conectividad antes de guardar un perfil de conexión.
 

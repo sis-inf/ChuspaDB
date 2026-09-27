@@ -1,4 +1,4 @@
-# 📚 Estructura de la carpeta `src`
+
 
 # 📂 Estructura de la carpeta `src`
 
@@ -107,7 +107,6 @@ Contiene funciones auxiliares reutilizables.
 Clases principales:
 
 * SqlValidator
-* ValidadorSQL
 * LoggerConsole
 * StringUtils
 * Responsabilidades:

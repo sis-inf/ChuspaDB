@@ -244,5 +244,8 @@ Para mantener la consistencia del código y la estructura del proyecto, se utili
 ```
 pre-commit install
 ```
+## skip-issue-check
 
+ Utilizar esta etiqueta en Pull Requests de mantenimiento ( actualización de dependencias, formateo de código) que no requieren un Issue asociado. Omite la verificación de CI que bloquea PRs sin referencia a Issues.
+ 
 **¡Gracias por contribuir al proyecto!**

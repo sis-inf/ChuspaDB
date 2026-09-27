@@ -50,7 +50,7 @@ public class ConexionDAOMySQL implements IConexionDAO {
         return String.format("jdbc:mysql://%s:%s/%s?%s",
                 conexion.getHost(),
                 puerto,
-                conexion.getBaseDatos(),
+                conexion.getBasedatos(),
                 params);
     }
 
@@ -62,18 +62,21 @@ public class ConexionDAOMySQL implements IConexionDAO {
         if (conexion.getHost() == null || conexion.getHost().isBlank()) {
             throw new ErrorConexion("El host no puede estar vacío.");
         }
-        if (conexion.getBaseDatos() == null || conexion.getBaseDatos().isBlank()) {
+        if (conexion.getBasedatos() == null || conexion.getBasedatos().isBlank()) {
             throw new ErrorConexion("El nombre de la base de datos no puede estar vacío.");
         }
 
         String url = construirUrl(conexion);
         return DriverManager.getConnection(url,
                 conexion.getUsuario(),
-                conexion.getContrasena());
+                conexion.getPassword());
     }
 
     @Override
-    public List<String> getTablas(String nombreBaseDatos) throws SQLException {
+    public List<String> getTablas(String nombreBaseDatos) throws SQLException, ErrorConexion {
+         if (nombreBaseDatos == null || !nombreBaseDatos.matches("[a-zA-Z0-9_]+")) {
+            throw new ErrorConexion("Nombre de base de datos inválido: " + nombreBaseDatos);
+        }
         List<String> tablas = new ArrayList<>();
 
         String url = String.format("jdbc:mysql://localhost:%s/%s?%s",
