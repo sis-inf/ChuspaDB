@@ -8,7 +8,9 @@ Para ejecutar el proyecto necesitas:
 - Maven
 - Git
   
-El sistema permite configurar diferentes motores de base de datos:
+El motor de base de datos es configurable según la necesidad del usuario.
+
+Motores soportados:
 
 - SQLite
 - MySQL
