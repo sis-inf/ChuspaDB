@@ -6,8 +6,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 
 import java.sql.Connection;
@@ -51,20 +49,22 @@ public class PanelInfoTablaController {
                                 : ""
                 ));
     }
-
+    
     /**
      * Carga la información de columnas de la tabla indicada.
      *
      * @param tabla     nombre de la tabla
+     * @param esquema   nombre del esquema
      * @param conexion  conexión JDBC activa
-     */    
-public void mostrarTabla(String tabla, String esquema, Connection conexion) {
-    labelNombreTabla.setText("Tabla: " + tabla);
-    tablaColumnas.getItems().clear(); 
-    List<ColumnaInfo> columnas = explorador.getColumnas(conexion, esquema, tabla);
-    tablaColumnas.getItems().setAll(columnas);
-}
+     */
+    public void mostrarTabla(String tabla, String esquema, Connection conexion) {
+        labelNombreTabla.setText("Tabla: " + tabla);
+        tablaColumnas.getItems().clear();
 
+        List<ColumnaInfo> columnas = explorador.getColumnas(conexion, esquema, tabla);
+        tablaColumnas.getItems().setAll(columnas);
+    }
+    
     /**
      * Limpia el panel cuando no hay tabla seleccionada.
      */
