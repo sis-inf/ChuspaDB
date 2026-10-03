@@ -51,8 +51,8 @@ public class ConnectionProvider {
      * @param connection conexión JDBC activa sobre la que se ejecuta la consulta
      * @param sql        sentencia SQL de lectura (debe ser SELECT)
      * @return {@link QueryResult} con las columnas y filas del resultado
-     * @throws IllegalArgumentException si la sentencia no es un SELECT
-     * @throws ErrorQuery               si ocurre un error durante la ejecución SQL
+     * @throws IllegalArgumentException si la sentencia no es un SELECT válido (por ejemplo, un INSERT, UPDATE o DELETE)
+     * @throws ErrorQuery               si ocurre un error SQL durante la ejecución de la consulta
      */
     public static QueryResult executeSelect(Connection connection, String sql) throws IllegalArgumentException, ErrorQuery {
         if (!SqlValidator.esLectura(sql)) {
@@ -107,8 +107,8 @@ public class ConnectionProvider {
      * @param connection conexión JDBC activa sobre la que se ejecuta la sentencia
      * @param sql        sentencia SQL de escritura (INSERT, UPDATE o DELETE)
      * @return número de filas afectadas por la sentencia
-     * @throws IllegalArgumentException si la sentencia es un SELECT
-     * @throws ErrorQuery               si ocurre un error durante la ejecución SQL
+     * @throws IllegalArgumentException si la sentencia es nula o es un SELECT
+     * @throws ErrorQuery               si ocurre un error SQL durante la ejecución de la sentencia
      */
  public static int executeUpdate(Connection connection, String sql)
         throws IllegalArgumentException, ErrorQuery {
