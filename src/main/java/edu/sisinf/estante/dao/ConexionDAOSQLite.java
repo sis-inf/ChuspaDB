@@ -99,7 +99,7 @@ public class ConexionDAOSQLite implements IConexionDAO {
         try (Connection conn = abrir(conexion)) {
             return conn.isValid(3);
         } catch (Exception e) {
-            logger.error("Error al probar la conexión con SQLite en: {}", conexion.getBaseDatos(), e);
+            logger.error("Error al probar la conexión con SQLite en: {}", conexion.getBasedatos(), e);
             return false;
         }
     }

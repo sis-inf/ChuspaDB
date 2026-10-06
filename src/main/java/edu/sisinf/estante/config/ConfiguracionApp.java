@@ -79,7 +79,24 @@ public class ConfiguracionApp {
         }
     }
     private static boolean modoPortable() {
+        if (!fuenteEsJar()) {
+            return false;
+        }
         return Files.exists(directorioEjecutable().resolve(PORTABLE_FLAG));
+    }
+
+    private static boolean fuenteEsJar() {
+        try {
+            String ruta = ConfiguracionApp.class
+                    .getProtectionDomain()
+                    .getCodeSource()
+                    .getLocation()
+                    .toURI()
+                    .toString();
+            return ruta.toLowerCase().endsWith(".jar");
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
     
     private static Path directorioEjecutable() {

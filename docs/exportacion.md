@@ -2,7 +2,7 @@
 
 ## Introducción
 
-Estante dispone de mecanismos de exportación de resultados de consultas. La documentación del proyecto contempla los formatos CSV, JSON y Excel para el intercambio y análisis de datos.
+Estante dispone de mecanismos de exportación de resultados de consultas. Actualmente la aplicación soporta los formatos CSV y JSON para el intercambio y análisis de datos.
 
 ---
 
@@ -12,7 +12,7 @@ Estante dispone de mecanismos de exportación de resultados de consultas. La doc
 | ------- | -------------------------------------------------------------------------- | ------------------------------------------------------- |
 | CSV     | Intercambio de datos entre aplicaciones y hojas de cálculo.                | No conserva tipos de datos avanzados ni formato visual. |
 | JSON    | Integración con aplicaciones y servicios que consumen datos estructurados. | Puede resultar menos legible para usuarios no técnicos. |
-| Excel   | Análisis y visualización de datos en hojas de cálculo.                     | Puede requerir software compatible para su apertura.    |
+| Excel | No disponible actualmente en la aplicación. | La exportación a Excel no está implementada. |
 
 ---
 
@@ -95,18 +95,8 @@ Ejemplo:
 
 # Exportar a Excel
 
-## Exportar a Excel
-
-Según la documentación de diseño del proyecto, el componente ExportadorExcel está orientado a la generación de archivos compatibles con hojas de cálculo.
-
-Características previstas:
-
-* Compatibilidad con Microsoft Excel.
-* Compatibilidad con LibreOffice Calc.
-* Posibilidad de resaltar encabezados mediante formato de columnas.
-
-La disponibilidad de estas características depende de la versión implementada del sistema.
-
+Actualmente la exportación a Excel no está implementada en el sistema.
+La aplicación no genera archivos Excel. La exportación disponible corresponde únicamente a los formatos CSV y JSON.
 
 ---
 
@@ -127,7 +117,8 @@ id,nombre,correo
 * No dejar encabezados vacíos.
 * Evitar filas incompletas.
 
-La disponibilidad de la funcionalidad de importación depende de la versión utilizada. 
+Actualmente la importación de datos soporta archivos CSV.
+Los archivos deben mantener una estructura con encabezados y columnas consistentes.
 
 
 ## Límites
@@ -143,5 +134,4 @@ Para conjuntos de datos muy grandes se recomienda aplicar filtros, paginación o
 
 * Utilizar CSV para intercambio simple de información.
 * Utilizar JSON para integraciones y procesamiento automático de datos.
-* Utilizar Excel cuando se requiera análisis en hojas de cálculo.
 * Verificar los datos antes de compartir archivos exportados.

@@ -2,3 +2,17 @@
     -fx-font-family: "Arial";
     -fx-font-size: 14px;
 }
+
+.keyword {
+    -fx-fill: #0000cc;
+    -fx-font-weight: bold;
+}
+
+.string {
+    -fx-fill: #008000;
+}
+
+.comment {
+    -fx-fill: #808080;
+    -fx-font-style: italic;
+}

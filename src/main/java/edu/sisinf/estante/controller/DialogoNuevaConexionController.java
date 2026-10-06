@@ -1,5 +1,6 @@
 package edu.sisinf.estante.controller;
 
+import edu.sisinf.estante.dao.IConexionDAO;
 import edu.sisinf.estante.modelo.Conexion;
 import edu.sisinf.estante.modelo.TipoMotor;
 import javafx.fxml.FXML;
@@ -11,15 +12,17 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
+import java.util.Map;
+
 /**
  * Controller del diálogo modal para crear una nueva conexión.
  *
- * <p>Este controller es deliberadamente "tonto": no contiene lógica de persistencia
- * ni de prueba de conexión. Solo gestiona la UI y construye el objeto {@link Conexion}
- * con los datos ingresados por el usuario.</p>
+ * <p>Este controller no contiene lógica de persistencia. Gestiona la UI y construye
+ * el objeto {@link Conexion} con los datos ingresados por el usuario.</p>
  *
- * <p>Los handlers de los botones "Probar" y "Guardar" se inyectan desde fuera
- * del controller para mantener bajo el acoplamiento con los servicios.</p>
+ * <p>El handler de "Guardar" se inyecta desde fuera del controller. El de "Probar"
+ * está registrado en el FXML ({@code onAction="#handleProbarConexion"}) y prueba la
+ * conexión real con el DAO recibido en {@link #setDaos}.</p>
  */
 public class DialogoNuevaConexionController {
 
@@ -42,6 +45,9 @@ public class DialogoNuevaConexionController {
 
     /** Resultado del diálogo. Es null si el usuario canceló. */
     private Conexion conexionResultado;
+
+    /** DAOs por motor, inyectados desde App para probar la conexión. */
+    private Map<TipoMotor, IConexionDAO> daos;
 
     // --------------------------------------------------------
     // Initialization
@@ -101,6 +107,71 @@ public class DialogoNuevaConexionController {
     // --------------------------------------------------------
 
     /**
+     * Valida los campos obligatorios del formulario según el motor seleccionado.
+     *
+     * @return {@code true} si el formulario es válido; {@code false} en caso contrario
+     */
+    public boolean validarFormulario() {
+        String error = obtenerErrorValidacion();
+
+        if (error == null) {
+            return true;
+        }
+
+        etiquetaEstado.setText("❌ " + error);
+        etiquetaEstado.setStyle("-fx-text-fill: #e74c3c;");
+        return false;
+    }
+
+    /**
+     * Obtiene el primer error de validación encontrado.
+     *
+     * @return mensaje de error o {@code null} si los datos son válidos
+     */
+    private String obtenerErrorValidacion() {
+        TipoMotor motor = comboMotor.getValue();
+
+        if (motor == null) {
+            return "Seleccione un motor de base de datos.";
+        }
+
+        if (campoNombre.getText() == null || campoNombre.getText().isBlank()) {
+            return "El nombre de la conexión es obligatorio.";
+        }
+
+        if (motor == TipoMotor.SQLITE) {
+            if (campoBaseDatos.getText() == null || campoBaseDatos.getText().isBlank()) {
+                return "El archivo de SQLite es obligatorio.";
+            }
+            return null;
+        }
+
+        if (campoHost.getText() == null || campoHost.getText().isBlank()) {
+            return "El host es obligatorio.";
+        }
+
+        if (campoUsuario.getText() == null || campoUsuario.getText().isBlank()) {
+            return "El usuario es obligatorio.";
+        }
+
+        String puertoTexto = campoPuerto.getText();
+        if (puertoTexto == null || puertoTexto.isBlank()) {
+            return "El puerto es obligatorio.";
+        }
+
+        try {
+            int puerto = Integer.parseInt(puertoTexto.strip());
+            if (puerto < 1 || puerto > 65535) {
+                return "El puerto debe estar entre 1 y 65535.";
+            }
+        } catch (NumberFormatException e) {
+            return "El puerto debe ser un número válido.";
+        }
+
+        return null;
+    }
+
+    /**
      * Construye un objeto {@link Conexion} con los valores actuales del formulario.
      *
      * <ul>
@@ -156,68 +227,56 @@ public class DialogoNuevaConexionController {
     }
 
     /**
-     * Devuelve el botón "Probar" para que la integración le conecte su handler.
+     * Registra la acción que debe ejecutarse al presionar el botón "Guardar".
      *
-     * @return botón Probar
+     * @param accion acción de guardado definida por la integración
      */
-    public Button getBotonProbar() {
-        return botonProbar;
+    public void setOnGuardar(Runnable accion) {
+        botonGuardar.setOnAction(event -> accion.run());
     }
 
     /**
-     * Devuelve el botón "Guardar" para que la integración le conecte su handler.
+     * Muestra un mensaje en el área de estado del diálogo.
      *
-     * @return botón Guardar
+     * @param mensaje mensaje que se mostrará al usuario
      */
-    public Button getBotonGuardar() {
-        return botonGuardar;
+    public void mostrarEstado(String mensaje) {
+        etiquetaEstado.setText(mensaje);
     }
 
     /**
-     * Devuelve la etiqueta de estado para que la integración muestre mensajes al usuario.
+     * Establece los DAOs por motor que usa el botón "Probar".
      *
-     * @return etiqueta de estado
+     * @param daos DAOs de conexión indexados por motor
      */
-    public Label getEtiquetaEstado() {
-        return etiquetaEstado;
+    public void setDaos(Map<TipoMotor, IConexionDAO> daos) {
+        this.daos = daos;
     }
+
+    /**
+     * Handler del botón "Probar", registrado en el FXML
+     * ({@code onAction="#handleProbarConexion"}).
+     * Valida el formulario y prueba la conexión real con el DAO del motor seleccionado.
+     */
     @FXML
-private void handleProbarConexion() {
-    try {
-        // 1. Capturar el tiempo de inicio
-        long startTime = System.currentTimeMillis();
-        
-        // 2. Extraer los datos ingresados en el formulario
-        String nombre = campoNombre.getText();
-        String motor = (comboMotor.getValue() != null) ? comboMotor.getValue().toString() : "";
-        String host = campoHost.getText();
-        String puerto = campoPuerto.getText();
-        String baseDatos = campoBaseDatos.getText();
-        String usuario = campoUsuario.getText();
-        String password = campoPassword.getText();
-
-        // 3. Construir el objeto Conexion (Ajusta los parámetros según tu constructor real)
-        // Ejemplo: Conexion conexion = new Conexion(nombre, motor, host, puerto, baseDatos, usuario, password);
-        
-        // 4. Ejecutar la prueba con el ConexionTester del proyecto
-        // boolean esExitosa = ConexionTester.probar(conexion);
-        boolean esExitosa = true; // TODO: Descomenta lo de arriba y usa tu clase real aquí
-
-        // 5. Calcular el tiempo total en milisegundos
-        long tiempoMs = System.currentTimeMillis() - startTime;
-
-        // 6. Mostrar el resultado con el ícono y los milisegundos solicitados
-        if (esExitosa) {
-            etiquetaEstado.setText("✅ Conexión exitosa (" + tiempoMs + " ms)");
-            etiquetaEstado.setStyle("-fx-text-fill: #2ecc71;"); // Verde amigable
-        } else {
-            etiquetaEstado.setText("❌ Falló la conexión (" + tiempoMs + " ms)");
-            etiquetaEstado.setStyle("-fx-text-fill: #e74c3c;"); // Rojo amigable
+    private void handleProbarConexion() {
+        if (!validarFormulario()) {
+            return;
         }
 
-    } catch (Exception e) {
-        etiquetaEstado.setText("❌ Error al intentar probar: " + e.getMessage());
-        etiquetaEstado.setStyle("-fx-text-fill: #e74c3c;");
+        try {
+            Conexion conexion = construirConexion();
+            IConexionDAO dao = daos.get(conexion.getTipoMotor());
+
+            long inicio = System.currentTimeMillis();
+            boolean ok = dao.probar(conexion);
+            long tiempo = System.currentTimeMillis() - inicio;
+
+            etiquetaEstado.setText(
+                    (ok ? "✅ Conexión exitosa" : "❌ Conexión fallida")
+                            + " (" + tiempo + " ms)");
+        } catch (Exception e) {
+            etiquetaEstado.setText("❌ " + e.getMessage());
+        }
     }
-}
 }

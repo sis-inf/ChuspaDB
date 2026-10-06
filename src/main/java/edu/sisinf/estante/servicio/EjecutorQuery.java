@@ -33,10 +33,10 @@ private static final Logger logger = LoggerFactory.getLogger(EjecutorQuery.class
         try {
             // 2. Clasificación: Determinar el tipo de query
             // (Si SqlValidator devuelve un Enum, asegúrate de usar .name() o .toString() según corresponda)
-            String tipoQuery = SqlValidator.tipo(sql).toString();
+            SqlValidator.TipoQuery tipoQuery =  SqlValidator.tipo(sql);
 
             // 3. Ramificación según el tipo
-            if ("SELECT".equalsIgnoreCase(tipoQuery)) {
+            if (tipoQuery == SqlValidator.TipoQuery.SELECT) {
                 
                 // --- Ejecución como lectura ---
                 // Uso de try-with-resources para garantizar el cierre

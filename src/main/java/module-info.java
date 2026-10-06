@@ -12,10 +12,15 @@ module edu.sisinf.estante {
     requires javafx.controls;
     requires javafx.fxml;
     requires java.sql;
+    requires mysql.connector.j;
+    requires org.postgresql.jdbc;
+    requires org.xerial.sqlitejdbc;
+    uses java.sql.Driver;
 
     // ── Dependencias de terceros ──────────────────────────────────────────────
     requires com.fasterxml.jackson.databind;
     requires org.slf4j;
+    requires org.apache.poi.ooxml;
 
     // ── Apertura por reflexión (FXML + Jackson) ───────────────────────────────
 

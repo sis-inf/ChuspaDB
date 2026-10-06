@@ -1,86 +1,70 @@
 # Arquitectura de Paquetes Java
 
-Este documento describe la estructura de paquetes del proyecto, sus responsabilidades y las reglas de dependencia entre ellos.
+Este documento complementa la [arquitectura general](arquitectura.md) y describe cómo se organiza el código Java por paquetes. La aplicación del patrón MVC se detalla en [arquitectura-mvc.md](arquitectura-mvc.md).
 
-## Tabla de Paquetes
+## Paquetes principales
 
-| Paquete | Responsabilidad | ¿Qué tipo de clases contiene? | Ejemplo |
-|---------|-----------------|------------------------------|---------|
-| `modelo` | Define las entidades y objetos de dominio del negocio. | Clases POJO (Plain Old Java Object), entidades, DTOs. | `Usuario`, `Producto`, `Pedido` |
-| `core` | Contiene la lógica de negocio central y algoritmos independientes de la infraestructura. | Clases con algoritmos, utilidades matemáticas, validadores. | `Calculadora`, `Validador`, `Contrato` |
-| `dao` | Acceso a datos. Abstrae la persistencia (base de datos, archivos, APIs). | Interfaces DAO, implementaciones JDBC, repositorios. | `UsuarioDAO`, `ProductoDAOImpl` |
-| `servicio` | Orquesta la lógica de negocio, coordina DAOs y modelos. | Clases de servicio, fachadas, casos de uso. | `UsuarioServicio`, `PedidoServicio` |
-| `util` | Funciones auxiliares reutilizables en cualquier capa. | Helpers, formatters, constantes, manejadores de fechas. | `DateUtil`, `StringUtil`, `Formato` |
-| `vista` | Presentación de la interfaz de usuario (consola, GUI, web). | Clases de UI, pantallas, formularios, renderizadores. | `VentanaPrincipal`, `PanelLogin` |
-| `controller` | Recibe entrada del usuario, delega al servicio y devuelve respuesta a la vista. | Controladores, handlers, listeners de eventos. | `UsuarioController`, `LoginController` |
+| Paquete | Responsabilidad | Ejemplos reales del proyecto |
+|---|---|---|
+| `modelo` | Entidades y estructuras de datos del dominio | `Conexion`, `ResultadoQuery`, `Tabla`, `TipoMotor` |
+| `core` | Componentes centrales y errores de dominio | `ConnectionProvider`, `ErrorConexion`, `ErrorQuery`, `ErrorPersistencia` |
+| `dao` | Acceso a motores y persistencia | `IConexionDAO`, `ConexionDAOMySQL`, `ConexionDAOPostgreSQL`, `ConexionDAOSQLite`, `RepositorioConexionesJSON` |
+| `servicio` | Casos de uso y lógica de aplicación | `EjecutorQuery`, `EjecutorQueryAsync`, `ExploradorEsquemas`, `GeneradorSQL`, `GestorFavoritos` |
+| `util` | Utilidades reutilizables | `SqlValidator` |
+| `controller` | Coordinación entre vistas y lógica | `PanelEditorSQLController`, `PanelArbolConexionesController`, `DialogoNuevaConexionController` |
+| `config` | Configuración de la aplicación | `ConfiguracionApp` |
+| `dto` | Objetos de transferencia utilizados entre componentes | clases DTO definidas en el paquete `edu.sisinf.estante.dto` |
 
-## Diagrama de Arquitectura en Capas
-┌─────────────────────────────────────┐
-│            VISTA                    │
-│  (Interfaz de usuario: consola,     │
-│   GUI, web, renderizadores)         │
-└─────────────┬───────────────────────┘
-│ llama a
-┌─────────────▼───────────────────────┐
-│          CONTROLLER                 │
-│  (Recibe entrada, valida básica,    │
-│   delega al servicio)               │
-└─────────────┬───────────────────────┘
-│ llama a
-┌─────────────▼───────────────────────┐
-│          SERVICIO                   │
-│  (Lógica de negocio, orquesta       │
-│   DAOs y modelos)                   │
-└─────────────┬───────────────────────┘
-│ llama a
-┌─────────────▼───────────────────────┐
-│            DAO                      │
-│  (Acceso a datos, persistencia,     │
-│   consultas a base de datos)        │
-└─────────────┬───────────────────────┘
-│ llama a
-┌─────────────▼───────────────────────┐
-│     CORE / MODELO                   │
-│  (Entidades de dominio, algoritmos,  │
-│   validaciones independientes)      │
-└─────────────────────────────────────┘
-▲
-│ usa
-┌─────────────┴───────────────────────┐
-│            UTIL                     │
-│  (Helpers, formatters, constantes   │
-│   compartidas por todas las capas)  │
-└─────────────────────────────────────┘
+Las vistas se almacenan como recursos FXML bajo `src/main/resources/fxml`; no forman un paquete Java `vista`.
 
-## Reglas de Dependencia
+## Flujo de dependencias
 
-Las flechas indican qué paquete **puede importar** a cuál. **Nunca** en dirección contraria.
+```text
+FXML
+  |
+  v
+controller
+  |
+  v
+servicio
+  |
+  +------> core
+  |
+  +------> modelo
+  |
+  v
+dao
+  |
+  v
+JDBC / archivos JSON
+```
 
-| Paquete | Puede importar | **NO** puede importar |
-|---------|----------------|----------------------|
-| `vista` | `controller`, `util` | `servicio`, `dao`, `core`, `modelo` |
-| `controller` | `servicio`, `util`, `modelo` | `dao`, `vista` |
-| `servicio` | `dao`, `core`, `modelo`, `util` | `vista`, `controller` |
-| `dao` | `core`, `modelo`, `util` | `servicio`, `vista`, `controller` |
-| `core` | `modelo`, `util` | `vista`, `controller`, `servicio`, `dao` |
-| `modelo` | `util` | `vista`, `controller`, `servicio`, `dao`, `core` |
-| `util` | *(ninguno)* | `vista`, `controller`, `servicio`, `dao`, `core`, `modelo` |
+El diagrama representa el flujo habitual, no una regla de que todas las clases deban atravesar cada paquete en cada operación.
 
-### Principios clave
+## Reglas de organización
 
-1. **Dependencias solo hacia abajo.** Una capa superior puede usar la inferior, nunca al revés.
-2. **`util` es independiente.** No debe importar ningún otro paquete del proyecto (solo librerías externas).
-3. **`modelo` es puro.** Solo contiene datos, sin lógica de negocio ni acceso a infraestructura.
-4. **`core` no conoce la infraestructura.** Algoritmos y validaciones independientes de base de datos o UI.
+1. Los controladores coordinan la interacción con la UI y delegan la lógica reutilizable.
+2. Los servicios implementan casos de uso y pueden trabajar con modelos, componentes `core` y DAO.
+3. Los DAO encapsulan JDBC y persistencia; la UI no debe acceder directamente a ellos.
+4. Los modelos no deben depender de controladores ni vistas.
+5. Las utilidades deben mantenerse independientes de detalles de la interfaz.
+6. La configuración de la aplicación pertenece a `config`.
+7. Los recursos FXML permanecen separados del código Java.
 
-## ¿Dónde crear mi clase?
+## Ejemplos de ubicación
 
-| Si tu clase... | Va en el paquete |
-|----------------|------------------|
-| Representa un dato/entidad del negocio | `modelo` |
-| Accede a base de datos o archivos | `dao` |
-| Tiene lógica de negocio compleja | `servicio` |
-| Es un algoritmo reutilizable sin dependencias | `core` |
-| Muestra información al usuario | `vista` |
-| Recibe clicks/inputs del usuario | `controller` |
-| Es una función helper usada en varios lugares | `util` |
+| Si el componente... | Ubicación | Ejemplo real |
+|---|---|---|
+| Representa una conexión o resultado | `modelo` | `Conexion`, `ResultadoQuery` |
+| Abre conexiones JDBC | `dao` | `ConexionDAOMySQL` |
+| Persiste conexiones en JSON | `dao` | `RepositorioConexionesJSON` |
+| Ejecuta una consulta | `servicio` | `EjecutorQuery` |
+| Genera SQL | `servicio` | `GeneradorSQL` |
+| Valida SQL reutilizable | `util` | `SqlValidator` |
+| Atiende eventos del editor | `controller` | `PanelEditorSQLController` |
+| Gestiona configuración | `config` | `ConfiguracionApp` |
+| Define una vista | `src/main/resources/fxml` | `PanelEditorSQL.fxml` |
+
+## Fuente principal
+
+Las decisiones arquitectónicas generales, las capas y el flujo de datos se documentan en [arquitectura.md](arquitectura.md). Este archivo se limita a la estructura de paquetes para evitar que la misma arquitectura se mantenga duplicada en varios documentos.

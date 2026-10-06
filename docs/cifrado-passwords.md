@@ -2,36 +2,27 @@
 
 ## Descripción
 
-El proyecto utiliza cifrado AES para proteger las contraseñas de conexión almacenadas. Este mecanismo evita que las credenciales queden expuestas en texto plano y proporciona una capa adicional de seguridad para la configuración.
+Actualmente el proyecto **no cifra** las contraseñas de conexión. `RepositorioConexionesJSON` serializa cada `Conexion` con Jackson tal cual, por lo que el campo `password` queda guardado en **texto plano** dentro de `conexiones.json` (en `<user.home>/.estante/`).
 
-## Esquema de cifrado
+Este estado es consistente con lo indicado en `docs/limitaciones.md`.
 
-El algoritmo AES (Advanced Encryption Standard) permite cifrar la información utilizando una clave secreta compartida entre el proceso de cifrado y el de descifrado.
+## Estado del cifrado
 
-Su propósito es proteger los datos almacenados frente a accesos no autorizados.
+El cifrado de contraseñas no está implementado. Figura como **Planificado** en `docs/roadmap.md`.
 
-## Derivación de la clave
-
-La clave utilizada para el cifrado se deriva a partir de una contraseña o secreto configurado por el usuario o el entorno.
-
-La derivación garantiza que la clave tenga el formato y longitud adecuados para ser utilizada por el algoritmo AES.
+La idea prevista es cifrar el password con AES antes de persistirlo, usando una clave derivada de un secreto del usuario o del entorno. Nada de esto existe todavía en el código.
 
 ## ¿Qué protege?
 
-Este mecanismo ayuda a proteger:
-
-- Contraseñas almacenadas.
-- Credenciales de conexión.
-- Configuración sensible guardada en disco.
+Por ahora, nada: cualquier persona con acceso de lectura a `conexiones.json` puede ver las contraseñas guardadas.
 
 ## Limitaciones
 
-Es importante conocer las limitaciones del enfoque:
+Mientras no exista el cifrado:
 
-- No protege las contraseñas mientras están siendo utilizadas en memoria.
-- No reemplaza una correcta gestión de secretos.
-- La seguridad depende de mantener protegida la clave utilizada para el cifrado.
-- No evita accesos no autorizados si un atacante obtiene la clave de cifrado.
+- Las contraseñas se guardan en disco en texto plano.
+- La única protección es el permiso de lectura del archivo en el sistema operativo.
+- No se deben compartir ni versionar copias de `conexiones.json`.
 
 ## Recomendaciones
 

@@ -1,10 +1,12 @@
 # Tema oscuro y tema claro
 
+**Tema oscuro: no implementado.** Actualmente la aplicación solo cuenta con el tema claro. El tema oscuro descrito en este documento es una funcionalidad planificada, no disponible hoy. Ver [roadmap.md](roadmap.md).
+
 ## Descripción
 
-La aplicación permite utilizar un tema claro o un tema oscuro para adaptar la apariencia de la interfaz según las preferencias del usuario.
+La aplicación utiliza actualmente un tema claro fijo para la interfaz. Se planea en el futuro permitir alternar a un tema oscuro según las preferencias del usuario.
 
-## Tema claro
+## Tema claro (actual)
 
 El tema claro presenta una interfaz con fondos claros y texto oscuro, ofreciendo una apariencia limpia y adecuada para entornos con buena iluminación.
 
@@ -20,11 +22,11 @@ El tema claro presenta una interfaz con fondos claros y texto oscuro, ofreciendo
 └─────────────────────────────┘
 ```
 
-## Tema oscuro
+## Tema oscuro (planificado)
 
-El tema oscuro utiliza fondos oscuros y texto claro para reducir el brillo de la pantalla y mejorar la comodidad visual en ambientes con poca iluminación.
+El tema oscuro utilizaría fondos oscuros y texto claro para reducir el brillo de la pantalla y mejorar la comodidad visual en ambientes con poca iluminación. Esta funcionalidad aún no ha sido implementada.
 
-**Representación en texto:**
+**Representación en texto (diseño planeado):**
 
 ```text
 ┌─────────────────────────────┐
@@ -36,15 +38,6 @@ El tema oscuro utiliza fondos oscuros y texto claro para reducir el brillo de la
 └─────────────────────────────┘
 ```
 
-## Cómo cambiar entre temas
-
-Para cambiar el tema:
-
-1. Abrir la configuración de la aplicación.
-2. Buscar la opción de apariencia o tema.
-3. Seleccionar **Tema claro** o **Tema oscuro** según la preferencia del usuario.
-4. Los cambios se aplicarán automáticamente.
-
 ## Notas
 
-La disponibilidad de los temas depende de la configuración de la aplicación y permite al usuario elegir la apariencia que le resulte más cómoda.
+Por el momento la aplicación no ofrece un selector de tema. Esta opción se agregará cuando el tema oscuro esté implementado.
