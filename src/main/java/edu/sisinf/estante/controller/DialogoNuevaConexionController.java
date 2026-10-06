@@ -227,31 +227,21 @@ public class DialogoNuevaConexionController {
     }
 
     /**
-     * Devuelve el botón "Probar". Su handler ya está registrado en el FXML
-     * ({@code onAction="#handleProbarConexion"}).
+     * Registra la acción que debe ejecutarse al presionar el botón "Guardar".
      *
-     * @return botón Probar
+     * @param accion acción de guardado definida por la integración
      */
-    public Button getBotonProbar() {
-        return botonProbar;
+    public void setOnGuardar(Runnable accion) {
+        botonGuardar.setOnAction(event -> accion.run());
     }
 
     /**
-     * Devuelve el botón "Guardar" para que la integración le conecte su handler.
+     * Muestra un mensaje en el área de estado del diálogo.
      *
-     * @return botón Guardar
+     * @param mensaje mensaje que se mostrará al usuario
      */
-    public Button getBotonGuardar() {
-        return botonGuardar;
-    }
-
-    /**
-     * Devuelve la etiqueta de estado para que la integración muestre mensajes al usuario.
-     *
-     * @return etiqueta de estado
-     */
-    public Label getEtiquetaEstado() {
-        return etiquetaEstado;
+    public void mostrarEstado(String mensaje) {
+        etiquetaEstado.setText(mensaje);
     }
 
     /**

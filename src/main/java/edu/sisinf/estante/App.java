@@ -269,7 +269,7 @@ public class App extends Application {
             // El botón Probar se registra solo en el FXML (handleProbarConexion).
             controller.setDaos(daos);
 
-            controller.getBotonGuardar().setOnAction(event -> {
+            controller.setOnGuardar(() -> {
 
                 try {
 
@@ -290,9 +290,7 @@ public class App extends Application {
 
                 } catch (Exception e) {
 
-                    controller
-                            .getEtiquetaEstado()
-                            .setText(obtenerMensajeError(e));
+                    controller.mostrarEstado(obtenerMensajeError(e));
                 }
             });
 
