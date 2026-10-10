@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="edu.sisinf.estante.controller.PanelEstadisticasController"
+      spacing="16"
+      style="-fx-padding: 20;">
+
+    <Label text="Estadísticas de la sesión"
+           style="-fx-font-size: 16; -fx-font-weight: bold;"/>
+
+    <GridPane hgap="20" vgap="10">
+
+        <Label text="Total de queries:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <Label fx:id="labelTotalQueries" text="0" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="Queries exitosas:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <Label fx:id="labelExitosas" text="0" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <Label text="Queries fallidas:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <Label fx:id="labelFallidas" text="0" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+        <Label text="Tiempo promedio (ms):" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <Label fx:id="labelTiempoPromedio" text="0 ms" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <Label text="Máximo de filas retornadas:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <Label fx:id="labelMaxFilas" text="0" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+    </GridPane>
+
+</VBox>
