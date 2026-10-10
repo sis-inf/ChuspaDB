@@ -433,13 +433,13 @@ public class App extends Application {
 
     private void manejarErrorQuery(Throwable error) {
 
-        mostrarError(
-                "Error SQL",
-                "No se pudo ejecutar la query",
-                obtenerMensajeError(error)
-        );
+        ResultadoQuery resultado =
+                ResultadoQuery.deError(
+                        obtenerMensajeError(error),
+                        0
+                );
 
-        editorController.ocultarSpinner();
+        manejarResultadoQuery(resultado);
     }
 
     private void exportarCSV(ResultadoQuery resultado) {

@@ -19,7 +19,7 @@ if [ ! -z "$ARCHIVOS_FXML" ]; then
     ERROR=1
 fi
 
-PAQUETES_TEST=$(find src/test/java -type d | sed 's#src/test/java/##' | grep -v "^$")
+PAQUETES_TEST=$(find src/test/java -mindepth 1 -type d | sed 's#src/test/java/##' | grep -v "^$")
 
 for PAQUETE in $PAQUETES_TEST; do
     if [ ! -d "src/main/java/$PAQUETE" ]; then

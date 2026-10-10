@@ -39,6 +39,7 @@ jobs:
 
       - name: Verificar actualización de CHANGELOG.md
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-changelog')"
+        shell: bash
         run: |
           git fetch origin ${{ github.base_ref }}
 
