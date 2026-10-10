@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
@@ -137,9 +136,10 @@ class ConexionDAOPostgreSQLTest {
         when(filas.getString("tablename")).thenReturn("estudiantes", "materias");
 
         try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
-            driver.when(() -> DriverManager.getConnection(anyString()))
+            driver.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))
                     .thenReturn(conexionSimulada);
 
+            dao.abrir(conexionValida());
             List<String> tablas = dao.getTablas("prueba");
 
             assertEquals(List.of("estudiantes", "materias"), tablas);
@@ -147,9 +147,9 @@ class ConexionDAOPostgreSQLTest {
     }
 
     @Test
-    void getTablasFallaSiNoHayServidorDisponible() {
+    void getTablasFallaSiNoSeAbrioUnaConexion() {
         ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
 
-        assertThrows(SQLException.class, () -> dao.getTablas("base_inexistente"));
+        assertThrows(ErrorConexion.class, () -> dao.getTablas("base_inexistente"));
     }
 }

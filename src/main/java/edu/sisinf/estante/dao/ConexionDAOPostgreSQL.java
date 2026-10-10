@@ -17,12 +17,15 @@ import org.slf4j.LoggerFactory;
 /**
  * Implementación concreta de {@link IConexionDAO} para PostgreSQL.
  * PostgreSQL requiere host, puerto, usuario y password para conectarse.
- * La clase es stateless: no almacena conexiones internamente
- * y no implementa pooling de conexiones.
+ * La clase guarda internamente la última conexión abierta para poder
+ * reutilizar sus datos reales (host, puerto, usuario, password) en getTablas().
+ * No implementa pooling de conexiones.
  */
 public class ConexionDAOPostgreSQL implements IConexionDAO {
     private static final Logger logger = LoggerFactory.getLogger(ConexionDAOPostgreSQL.class);
     private static final String PUERTO_DEFAULT = "5432";
+
+    private Conexion ultimaConexion;
 
     /**
      * Devuelve el motor de base de datos que maneja esta implementación.
@@ -78,7 +81,9 @@ public class ConexionDAOPostgreSQL implements IConexionDAO {
         if (conexion.getPassword() == null || conexion.getPassword().isBlank()) {
             throw new ErrorConexion("La contraseña de PostgreSQL no puede estar vacía.");
         }
-        
+
+        this.ultimaConexion = conexion;
+
         String url = construirUrl(conexion);
         return DriverManager.getConnection(url,
                 conexion.getUsuario(),
@@ -86,14 +91,23 @@ public class ConexionDAOPostgreSQL implements IConexionDAO {
     }
 
     @Override
-    public List<String> getTablas(String nombreBaseDatos) throws SQLException {
+    public List<String> getTablas(String nombreBaseDatos) throws SQLException, ErrorConexion {
+        if (ultimaConexion == null) {
+            throw new ErrorConexion("No hay una conexión activa. Debe abrir una conexión antes de listar las tablas.");
+        }
+
         List<String> tablas = new ArrayList<>();
 
-        String url = String.format("jdbc:postgresql://localhost:%s/%s",
-                PUERTO_DEFAULT,
+        String puerto = (ultimaConexion.getPuerto() != null)
+                ? ultimaConexion.getPuerto().toString()
+                : PUERTO_DEFAULT;
+
+        String url = String.format("jdbc:postgresql://%s:%s/%s",
+                ultimaConexion.getHost(),
+                puerto,
                 nombreBaseDatos);
 
-        try (Connection conn = DriverManager.getConnection(url);
+        try (Connection conn = DriverManager.getConnection(url, ultimaConexion.getUsuario(), ultimaConexion.getPassword());
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(
                      "SELECT tablename FROM pg_tables WHERE schemaname='public'")) {

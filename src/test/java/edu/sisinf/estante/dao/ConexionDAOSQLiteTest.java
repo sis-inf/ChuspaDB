@@ -99,10 +99,19 @@ class ConexionDAOSQLiteTest {
         }
 
         ConexionDAOSQLite dao = new ConexionDAOSQLite();
+        dao.abrir(conexionHacia(archivo)).close();
+
         List<String> tablas = dao.getTablas(archivo.toString());
 
         assertTrue(tablas.contains("estudiantes"));
         assertTrue(tablas.contains("materias"));
+    }
+
+    @Test
+    void getTablasFallaSiNoSeAbrioUnaConexion() {
+        ConexionDAOSQLite dao = new ConexionDAOSQLite();
+
+        assertThrows(ErrorConexion.class, () -> dao.getTablas("cualquiera.db"));
     }
 
     @Test

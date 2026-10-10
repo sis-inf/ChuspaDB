@@ -21,6 +21,7 @@ y este proyecto adhiere a [SemVer](https://semver.org/spec/v2.0.0.html).
 ### Corregido
 - Flujo de integración de Pull Requests apuntando correctamente a la rama `dev`.
 - Limpieza y reestructuración de archivos sueltos y temporales en la raíz del proyecto.
+- `getTablas()` en los 3 DAO de conexión (MySQL, PostgreSQL, SQLite) ahora reutiliza los datos reales de la última conexión abierta, en vez de valores codificados como `localhost`.
 
 ### Cambiado
 - Refactorizaciones estructurales y optimizaciones de rendimiento aplicadas a lo largo del sprint actual.

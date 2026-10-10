@@ -18,10 +18,13 @@ import org.slf4j.LoggerFactory;
  * Implementación concreta de {@link IConexionDAO} para SQLite.
  * SQLite es una base de datos embebida que se accede vía un archivo
  * {@code .db} en disco. No requiere host, puerto, usuario ni password.
- * La clase es stateless: no almacena conexiones internamente.
+ * La clase guarda internamente la última conexión abierta para mantener
+ * el mismo patrón que las demás implementaciones de {@link IConexionDAO}.
  */
 public class ConexionDAOSQLite implements IConexionDAO {
     private static final Logger logger = LoggerFactory.getLogger(ConexionDAOSQLite.class);
+
+    private Conexion ultimaConexion;
 
     /**
      * Devuelve el motor de base de datos que maneja esta implementación.
@@ -65,15 +68,21 @@ public class ConexionDAOSQLite implements IConexionDAO {
             throw new ErrorConexion("La ruta de la base de datos no puede estar vacía.");
         }
 
+        this.ultimaConexion = conexion;
+
         String url = construirUrl(conexion);
         return DriverManager.getConnection(url);
     }
 
     @Override
-    public List<String> getTablas(String nombreBaseDatos) throws SQLException {
+    public List<String> getTablas(String nombreBaseDatos) throws SQLException, ErrorConexion {
+        if (ultimaConexion == null) {
+            throw new ErrorConexion("No hay una conexión activa. Debe abrir una conexión antes de listar las tablas.");
+        }
+
         List<String> tablas = new ArrayList<>();
 
-        String url = "jdbc:sqlite:" + nombreBaseDatos;
+        String url = construirUrl(ultimaConexion);
 
         try (Connection conn = DriverManager.getConnection(url);
              Statement stmt = conn.createStatement();
