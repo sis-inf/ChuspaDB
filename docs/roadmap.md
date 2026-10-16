@@ -17,7 +17,7 @@ Este documento describe las funcionalidades actuales y las planificadas para fut
 |--------------|---------|------------|------------|
 | CSV | Implementado | Alta | Baja |
 | JSON | Implementado | Alta | Baja |
-| Excel | Descartado | Media | Media |
+| Excel | Pendiente | Media | Media |
 | PDF | Planificado | Media | Alta |
 
 ## Funcionalidades de la interfaz

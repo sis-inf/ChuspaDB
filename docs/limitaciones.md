@@ -1,4 +1,4 @@
- # Limitaciones Técnicas del Sistema
+# Limitaciones Técnicas del Sistema
 
 Este documento describe las restricciones operativas, de diseño y arquitectónicas actuales de la aplicación, abarcando tanto el comportamiento de la interfaz gráfica (UI) como las capacidades de los motores de bases de datos soportados.
 
@@ -13,3 +13,7 @@ Este documento describe las restricciones operativas, de diseño y arquitectóni
 * **Procedimientos Almacenados:** El sistema no ofrece soporte para la ejecución, lectura ni gestión de procedimientos almacenados (*stored procedures*).
 * **Concurrencia en SQLite:** El motor SQLite está limitado arquitectónicamente, por lo que **no soporta múltiples conexiones concurrentes** de escritura, bloqueando el archivo de base de datos durante transacciones simultáneas.
 * **Seguridad y Credenciales:** No se dispone de un mecanismo de cifrado de contraseñas actualmente en los archivos de configuración local; las credenciales se manejan en texto plano dentro del entorno de desarrollo.
+
+## 3. Limitaciones de Exportación
+
+* **Exportación a Excel:** La funcionalidad de exportación a formato Excel (`.xlsx`) no se encuentra implementada en el ciclo actual del sistema. Únicamente están disponibles las exportaciones a CSV y JSON.
