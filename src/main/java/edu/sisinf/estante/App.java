@@ -213,6 +213,11 @@ public class App extends Application {
                 .getMenuNuevaConexion()
                 .setOnAction(e -> abrirDialogoNuevaConexion(stage));
 
+        // Conectar el handler del menú "Acerca de" aquí en App.java
+        principal
+                .getMenuAcercaDe()
+                .setOnAction(e -> mostrarAcercaDe());
+
         arbolController
                 .getBotonNuevaConexion()
                 .setOnAction(e -> abrirDialogoNuevaConexion(stage));
@@ -235,6 +240,14 @@ public class App extends Application {
 
         resultadoController
                 .setOnExportar(this::exportarCSV);
+    }
+
+    private void mostrarAcercaDe() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Acerca de");
+        alert.setHeaderText("ChuspaDB");
+        alert.setContentText("Versión: 1.0.0\nLicencia: MIT");
+        alert.showAndWait();
     }
 
     private void refrescarConexiones() {
@@ -266,7 +279,7 @@ public class App extends Application {
             dialog.initModality(Modality.APPLICATION_MODAL);
 
             dialog.setScene(new Scene(root));
-            // El botón Probar se registra solo en el FXML (handleProbarConexion).
+            
             controller.setDaos(daos);
 
             controller.setOnGuardar(() -> {
