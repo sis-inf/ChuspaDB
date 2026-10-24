@@ -75,4 +75,38 @@ public class HistorialQuerys {
     public void limpiar() {
         historial.clear();
     }
+    
+    /**
+     * Retorna solo las entradas que coincidan con la base de datos indicada,
+     * ignorando mayúsculas y minúsculas.
+     *
+     * @param baseDatos nombre de la base de datos a filtrar
+     * @return lista filtrada de entradas del historial
+     */
+    public List<EntradaHistorial> obtenerPorBaseDatos(String baseDatos) {
+        List<EntradaHistorial> filtradas = new ArrayList<>();
+        if (baseDatos != null) {
+            for (EntradaHistorial entrada : historial) {
+                if (baseDatos.equalsIgnoreCase(entrada.getBaseDatos())) {
+                    filtradas.add(entrada);
+                }
+            }
+        }
+        return filtradas;
+    }
+
+    /**
+     * Retorna solo las entradas cuyo campo exitosa sea true.
+     *
+     * @return lista filtrada de entradas exitosas
+     */
+    public List<EntradaHistorial> obtenerSoloExitosas() {
+        List<EntradaHistorial> filtradas = new ArrayList<>();
+        for (EntradaHistorial entrada : historial) {
+            if (entrada.isExitosa()) {
+                filtradas.add(entrada);
+            }
+        }
+        return filtradas;
+    }
 }
