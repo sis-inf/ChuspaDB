@@ -1,4 +1,4 @@
-package edu.sisinf.estante.dto;
+package edu.sisinf.chuspadb.dto;
 
 import java.util.List;
 
