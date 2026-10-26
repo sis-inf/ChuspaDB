@@ -1,10 +1,10 @@
-package edu.sisinf.chuspadb.core;
+package edu.sisinf.estante.core;
 
 /**
  * Excepcion lanzada cuando una consulta SQL falla durante su ejecucion.
  * Ejemplos: errores de sintaxis, tabla inexistente, privilegios insuficientes.
  */
-public class ErrorQuery extends ErrorChuspaDB {
+public class ErrorQuery extends ErrorEstante {
 
     public ErrorQuery(String message) {
         super(message);
