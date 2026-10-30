@@ -1,4 +1,4 @@
-# Casos de Uso del Administrador de BD - Proyecto Estante
+# Casos de Uso del Administrador de BD - Proyecto ChuspaDB
 
 Este documento describe las interacciones entre los actores y el motor de base de datos para la gestión técnica de la información.
 
