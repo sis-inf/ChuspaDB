@@ -1,7 +1,7 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
-import edu.sisinf.estante.core.ErrorPersistencia;
-import edu.sisinf.estante.modelo.ResultadoQuery;
+import edu.sisinf.chuspadb.core.ErrorPersistencia;
+import edu.sisinf.chuspadb.modelo.ResultadoQuery;
 
 import java.io.BufferedWriter;
 import java.io.File;
