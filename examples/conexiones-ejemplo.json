@@ -11,7 +11,7 @@
         "tipo": "mysql",
         "host": "localhost",
         "puerto": 3306,
-        "baseDatos": "ChuspaDB_demo",
+        "baseDatos": "chuspadb_demo",
         "usuario": "root",
         "password": ""
     }
