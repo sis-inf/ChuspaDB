@@ -1,4 +1,4 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
 import java.util.List;
 import java.util.StringJoiner;
