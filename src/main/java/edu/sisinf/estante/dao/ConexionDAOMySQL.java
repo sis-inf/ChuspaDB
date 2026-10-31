@@ -1,8 +1,8 @@
-package edu.sisinf.estante.dao;
+package edu.sisinf.chuspadb.dao;
 
-import edu.sisinf.estante.modelo.Conexion;
-import edu.sisinf.estante.modelo.TipoMotor;
-import edu.sisinf.estante.core.ErrorConexion;
+import edu.sisinf.chuspadb.modelo.Conexion;
+import edu.sisinf.chuspadb.modelo.TipoMotor;
+import edu.sisinf.chuspadb.core.ErrorConexion;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
