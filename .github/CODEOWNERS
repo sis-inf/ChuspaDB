@@ -2,9 +2,9 @@
 *                                             @erwinsaul
 
 # Revisores por módulos específicos
-/src/main/java/edu/sisinf/estante/dao/               @erwinsaul
-/src/main/java/edu/sisinf/estante/servicio/          @erwinsaul
-/src/main/java/edu/sisinf/estante/controller/        @erwinsaul
+/src/main/java/edu/sisinf/chuspadb/dao/               @erwinsaul
+/src/main/java/edu/sisinf/chuspadb/servicio/          @erwinsaul
+/src/main/java/edu/sisinf/chuspadb/controller/        @erwinsaul
 
 # Documentación
 /docs/                                        @erwinsaul
