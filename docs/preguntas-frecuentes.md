@@ -1,16 +1,16 @@
-# Preguntas Frecuentes — Estante
+# Preguntas Frecuentes — ChuspaDB
 
-## ¿Qué es Estante?
+## ¿Qué es ChuspaDB?
 
-Estante es un gestor de base de datos liviano desarrollado en Java que permite ejecutar consultas SQL sobre bases de datos MySQL de forma programática, sin depender de herramientas externas de administración.
+ChuspaDB es un gestor de base de datos liviano desarrollado en Java que permite ejecutar consultas SQL sobre bases de datos MySQL de forma programática, sin depender de herramientas externas de administración.
 
-## ¿Qué motor de base de datos usa Estante?
+## ¿Qué motor de base de datos usa ChuspaDB?
 
-Estante utiliza **MySQL** como motor de base de datos. La conexión se configura mediante la clase `DBConfig`, que requiere host, puerto, nombre de base de datos, usuario y contraseña.
+ChuspaDB utiliza **MySQL** como motor de base de datos. La conexión se configura mediante la clase `DBConfig`, que requiere host, puerto, nombre de base de datos, usuario y contraseña.
 
-## ¿Cómo se instala Estante?
+## ¿Cómo se instala ChuspaDB?
 
-Para instalar y ejecutar Estante se necesita:
+Para instalar y ejecutar ChuspaDB se necesita:
 
 1. Tener instalado **Java 21** o superior.
 2. Tener instalado **Maven 3.8** o superior.
@@ -26,9 +26,9 @@ mvn install
 mvn test
 ```
 
-## ¿Qué operaciones soporta Estante?
+## ¿Qué operaciones soporta ChuspaDB?
 
-Estante soporta las siguientes operaciones SQL:
+ChuspaDB soporta las siguientes operaciones SQL:
 
 - **SELECT**: consultas de lectura que retornan un `QueryResult` con columnas y filas.
 - **INSERT**: inserción de nuevos registros.
@@ -55,7 +55,7 @@ La URL JDBC se genera automáticamente con el método `toJdbcUrl()`.
 
 ## ¿Cómo se puede contribuir al proyecto?
 
-Para contribuir a Estante se debe seguir el **Forking Workflow**:
+Para contribuir a ChuspaDB se debe seguir el **Forking Workflow**:
 
 1. Hacer un fork del repositorio original.
 2. Crear una rama con el nombre del issue (por ejemplo `feat/nueva-funcionalidad`).
@@ -66,9 +66,9 @@ Consultar el archivo `docs/flujo-de-trabajo.md` para más detalles.
 
 ## ¿Por qué usar JDBC directo y no Hibernate?
 
-Estante usa JDBC directo de forma intencional. El proyecto está orientado a estudiantes de ingeniería, por lo que se prioriza que el acceso a la base de datos sea explícito y trazable. Hibernate y otros ORM agregan una capa de abstracción que oculta el SQL generado, lo que dificulta el aprendizaje y el debugging en un contexto educativo.
+ChuspaDB usa JDBC directo de forma intencional. El proyecto está orientado a estudiantes de ingeniería, por lo que se prioriza que el acceso a la base de datos sea explícito y trazable. Hibernate y otros ORM agregan una capa de abstracción que oculta el SQL generado, lo que dificulta el aprendizaje y el debugging en un contexto educativo.
 
-Además, el alcance del proyecto es acotado: las operaciones SQL que maneja Estante no justifican la configuración adicional que implica un ORM.
+Además, el alcance del proyecto es acotado: las operaciones SQL que maneja ChuspaDB no justifican la configuración adicional que implica un ORM.
 
 ## ¿Cómo agrego soporte para un nuevo motor de base de datos?
 
@@ -141,7 +141,7 @@ Las `NullPointerException` en controladores JavaFX ocurren con frecuencia cuando
 1. **Verifica el `fx:id` en el FXML.** El valor del `fx:id` del componente debe coincidir exactamente con el nombre del campo en el controlador:
 
 ```xml
-<Button fx:id="btnGuardar" />
+<Button fx:id="btnGuardar"/>
 ```
 
 ```java
