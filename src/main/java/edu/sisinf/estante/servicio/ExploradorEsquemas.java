@@ -1,12 +1,12 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import edu.sisinf.estante.modelo.Esquema;
-import edu.sisinf.estante.modelo.Tabla;
-import edu.sisinf.estante.modelo.ColumnaInfo;
-import edu.sisinf.estante.core.ErrorQuery;
+import edu.sisinf.chuspadb.modelo.Esquema;
+import edu.sisinf.chuspadb.modelo.Tabla;
+import edu.sisinf.chuspadb.modelo.ColumnaInfo;
+import edu.sisinf.chuspadb.core.ErrorQuery;
 
 /**
  * Servicio stateless para explorar la estructura de la base de datos.
