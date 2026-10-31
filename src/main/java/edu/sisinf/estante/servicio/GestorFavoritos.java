@@ -1,11 +1,11 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import edu.sisinf.estante.config.ConfiguracionApp;
-import edu.sisinf.estante.modelo.FavoritoQuery;
+import edu.sisinf.chuspadb.config.ConfiguracionApp;
+import edu.sisinf.chuspadb.modelo.FavoritoQuery;
 
 import java.io.File;
 import java.io.IOException;
