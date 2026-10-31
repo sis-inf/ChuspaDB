@@ -1,6 +1,6 @@
-# Guía de Instalación - DBMS Estante (Java Edition)
+# Guía de Instalación - DBMS ChuspaDB (Java Edition)
 
-Este documento describe los pasos necesarios para configurar el entorno de desarrollo y ejecutar el Administrador de Base de Datos **Estante** de forma local.
+Este documento describe los pasos necesarios para configurar el entorno de desarrollo y ejecutar el Administrador de Base de Datos **ChuspaDB** de forma local.
 
 ## 1. Requisitos Previos
 Para el despliegue del sistema, asegúrese de contar con:
@@ -12,8 +12,8 @@ Para el despliegue del sistema, asegúrese de contar con:
 ## 2. Clonación del Repositorio
 Obtenga el código fuente del motor de base de datos mediante Git:
 ```bash
-git clone https://github.com/sis-inf/estante.git
-cd estante
+git clone [https://github.com/sis-inf/ChuspaDB.git](https://github.com/sis-inf/ChuspaDB.git)
+cd ChuspaDB
 ```
 
 ## 3. Instalación en Linux (Ubuntu)
