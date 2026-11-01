@@ -1,8 +1,8 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.sisinf.estante.modelo.ResultadoQuery;
+import edu.sisinf.chuspadb.modelo.ResultadoQuery;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
