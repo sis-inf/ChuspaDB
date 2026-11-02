@@ -1,8 +1,8 @@
-package edu.sisinf.estante.controller;
+package edu.sisinf.chuspadb.controller;
 
-import edu.sisinf.estante.modelo.ResultadoQuery;
-import edu.sisinf.estante.servicio.EjecutorQueryAsync;
-import edu.sisinf.estante.util.SqlValidator;
+import edu.sisinf.chuspadb.modelo.ResultadoQuery;
+import edu.sisinf.chuspadb.servicio.EjecutorQueryAsync;
+import edu.sisinf.chuspadb.util.SqlValidator;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -71,7 +71,7 @@ public class PanelEditorSQLController {
             areaSQL.setStyleSpans(0, calcularResaltado(newText))
         );
         areaSQL.getStylesheets().add(
-            getClass().getResource("/css/estante.css").toExternalForm()
+            getClass().getResource("/css/chuspadb.css").toExternalForm()
         );
     }
 
