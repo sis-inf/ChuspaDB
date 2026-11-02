@@ -1,6 +1,6 @@
-package edu.sisinf.estante.controller;
+package edu.sisinf.chuspadb.controller;
 
-import edu.sisinf.estante.modelo.ResultadoQuery;
+import edu.sisinf.chuspadb.modelo.ResultadoQuery;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
