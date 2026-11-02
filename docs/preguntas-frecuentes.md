@@ -141,7 +141,7 @@ Las `NullPointerException` en controladores JavaFX ocurren con frecuencia cuando
 1. **Verifica el `fx:id` en el FXML.** El valor del `fx:id` del componente debe coincidir exactamente con el nombre del campo en el controlador:
 
 ```xml
-<Button fx:id="btnGuardar"/>
+<Button fx:id="btnGuardar" />
 ```
 
 ```java
