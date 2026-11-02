@@ -1,50 +1,47 @@
-package edu.sisinf.estante.core;
+package edu.sisinf.chuspadb.core;
 
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ErrorEstanteTest {
+class ErrorChuspaDBTest {
 
-```
-@Test
-void errorConexionDebeExtenderErrorEstante() {
-    ErrorConexion error = new ErrorConexion("Error de conexión");
+    @Test
+    void errorConexionDebeExtenderErrorChuspaDB() {
+        ErrorConexion error = new ErrorConexion("Error de conexión");
 
-    assertTrue(error instanceof ErrorEstante);
-    assertEquals("Error de conexión", error.getMessage());
-}
+        assertTrue(error instanceof ErrorChuspaDB);
+        assertEquals("Error de conexión", error.getMessage());
+    }
 
-@Test
-void errorPersistenciaDebeExtenderErrorEstante() {
-    ErrorPersistencia error = new ErrorPersistencia("Error de persistencia");
+    @Test
+    void errorPersistenciaDebeExtenderErrorChuspaDB() {
+        ErrorPersistencia error = new ErrorPersistencia("Error de persistencia");
 
-    assertTrue(error instanceof ErrorEstante);
-    assertEquals("Error de persistencia", error.getMessage());
-}
+        assertTrue(error instanceof ErrorChuspaDB);
+        assertEquals("Error de persistencia", error.getMessage());
+    }
 
-@Test
-void errorQueryDebeExtenderErrorEstante() {
-    ErrorQuery error = new ErrorQuery("Error de consulta");
+    @Test
+    void errorQueryDebeExtenderErrorChuspaDB() {
+        ErrorQuery error = new ErrorQuery("Error de consulta");
 
-    assertTrue(error instanceof ErrorEstante);
-    assertEquals("Error de consulta", error.getMessage());
-}
+        assertTrue(error instanceof ErrorChuspaDB);
+        assertEquals("Error de consulta", error.getMessage());
+    }
 
-@Test
-void errorEstanteDebeSerRuntimeException() {
-    ErrorEstante error = new ErrorEstante("Error base");
+    @Test
+    void errorChuspaDBDebeSerRuntimeException() {
+        ErrorChuspaDB error = new ErrorChuspaDB("Error base");
 
-    assertTrue(error instanceof RuntimeException);
-    assertEquals("Error base", error.getMessage());
-}
+        assertTrue(error instanceof RuntimeException);
+        assertEquals("Error base", error.getMessage());
+    }
 
-@Test
-void debePoderLanzarseSinTryCatch() {
-    assertThrows(ErrorEstante.class, () -> {
-        throw new ErrorEstante("Excepción sin try/catch");
-    });
-}
-```
-
+    @Test
+    void debePoderLanzarseSinTryCatch() {
+        assertThrows(ErrorChuspaDB.class, () -> {
+            throw new ErrorChuspaDB("Excepción sin try/catch");
+        });
+    }
 }
