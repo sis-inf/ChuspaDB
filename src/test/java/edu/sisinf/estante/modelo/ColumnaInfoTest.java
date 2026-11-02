@@ -1,4 +1,4 @@
-package edu.sisinf.estante.modelo;
+package edu.sisinf.chuspadb.modelo;
 
 import edu.sisinf.chuspadb.modelo.ColumnaInfo;
 import org.junit.jupiter.api.Test;
