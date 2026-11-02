@@ -1,6 +1,6 @@
-package edu.sisinf.estante.controller;
+package edu.sisinf.chuspadb.controller;
 
-import edu.sisinf.estante.util.SqlValidator;
+import edu.sisinf.chuspadb.util.SqlValidator;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
