@@ -1,4 +1,4 @@
-package edu.sisinf.estante.controller;
+package edu.sisinf.chuspadb.controller;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -7,7 +7,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.layout.StackPane;
 
 /**
- * Controller principal de la ventana base de Estante.
+ * Controller principal de la ventana base de ChuspaDB.
  */
 public class VentanaPrincipalController {
 
