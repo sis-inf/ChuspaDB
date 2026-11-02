@@ -12,7 +12,7 @@ Para el despliegue del sistema, asegúrese de contar con:
 ## 2. Clonación del Repositorio
 Obtenga el código fuente del motor de base de datos mediante Git:
 ```bash
-git clone [https://github.com/sis-inf/ChuspaDB.git](https://github.com/sis-inf/ChuspaDB.git)
+git clone https://github.com/sis-inf/ChuspaDB.git
 cd ChuspaDB
 ```
 
