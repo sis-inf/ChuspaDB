@@ -1,7 +1,7 @@
-package edu.sisinf.estante.controller;
+package edu.sisinf.chuspadb.controller;
 
-import edu.sisinf.estante.modelo.ColumnaInfo;
-import edu.sisinf.estante.servicio.ExploradorEsquemas;
+import edu.sisinf.chuspadb.modelo.ColumnaInfo;
+import edu.sisinf.chuspadb.servicio.ExploradorEsquemas;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
