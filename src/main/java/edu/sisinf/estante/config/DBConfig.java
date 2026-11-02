@@ -1,4 +1,4 @@
-package edu.sisinf.estante.config;
+package edu.sisinf.chuspadb.config;
 
 /**
  * Configuración de conexión a base de datos.
