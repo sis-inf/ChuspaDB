@@ -1,4 +1,4 @@
-package edu.sisinf.estante.controller;
+package edu.sisinf.chuspadb.controller;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
