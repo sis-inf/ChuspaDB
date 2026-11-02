@@ -1,4 +1,4 @@
-package edu.sisinf.estante;
+package edu.sisinf.chuspadb;
 
 /**
  * Clase de entrada de ChuspaDB para el JAR ejecutable.
