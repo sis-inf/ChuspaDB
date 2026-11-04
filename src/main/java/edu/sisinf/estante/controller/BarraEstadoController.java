@@ -45,6 +45,18 @@ public class BarraEstadoController {
     }
 
     /**
+     * Actualiza las etiquetas de filas y tiempo tras ejecutar una query.
+     * Muestra "Filas: N" y "Tiempo: X ms".
+     *
+     * @param filas    Número de filas devueltas o afectadas.
+     * @param tiempoMs Tiempo de ejecución en milisegundos.
+     */
+    public void actualizarEstadoQuery(int filas, long tiempoMs) {
+        labelFilas.setText("Filas: " + filas);
+        labelTiempo.setText("Tiempo: " + tiempoMs + " ms");
+    }
+
+    /**
      * Actualiza el label de mensaje libre.
      *
      * @param mensaje Mensaje a mostrar. Si es {@code null}, muestra texto vacío.
