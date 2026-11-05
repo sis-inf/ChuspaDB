@@ -1,12 +1,12 @@
-# Guía de Desarrollo — Estante
+# Guía de Desarrollo — ChuspaDB
 
-Esta guía describe las herramientas y flujos de trabajo recomendados para contribuir al desarrollo de Estante.
+Esta guía describe las herramientas y flujos de trabajo recomendados para contribuir al desarrollo de ChuspaDB.
 
 ---
 
 ## Editar FXMLs con Scene Builder
 
-Los archivos FXML del proyecto definen las interfaces gráficas de la aplicación y se ubican en `src/main/resources/edu/sisinf/estante/`. Aunque pueden editarse a mano, se recomienda usar **Scene Builder** para evitar errores de estructura o atributos mal formados.
+Los archivos FXML del proyecto definen las interfaces gráficas de la aplicación y se ubican en `src/main/resources/edu/sisinf/ChuspaDB/`. Aunque pueden editarse a mano, se recomienda usar **Scene Builder** para evitar errores de estructura o atributos mal formados.
 
 ### Instalación de Scene Builder
 
@@ -22,7 +22,7 @@ Los archivos FXML del proyecto definen las interfaces gráficas de la aplicació
 1. Abre Scene Builder.
 2. Ve a **File → Open** y navega hasta la carpeta:
    ```
-   src/main/resources/edu/sisinf/estante/
+   src/main/resources/edu/sisinf/ChuspaDB/
    ```
 3. Selecciona el archivo `.fxml` que deseas editar y haz clic en **Open**.
 
@@ -55,7 +55,7 @@ Cada archivo FXML tiene un atributo `fx:controller` en el elemento raíz que vin
 ```xml
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="edu.sisinf.estante.controller.MiController">
+            fx:controller="edu.sisinf.ChuspaDB.controller.MiController">
 ```
 
 **No modifiques este atributo.** Cambiarlo rompe el vínculo entre la vista y su controlador, lo que genera errores en tiempo de ejecución que pueden ser difíciles de rastrear. Si necesitas cambiar el controlador asociado a un FXML, consulta primero con el equipo en el issue correspondiente.
@@ -64,7 +64,7 @@ Cada archivo FXML tiene un atributo `fx:controller` en el elemento raíz que vin
 
 ## Convención de paquetes
 
-Todo el código fuente sigue la convención de paquetes del proyecto bajo la raíz `edu.sisinf.estante`. Consulta `CONTRIBUTING.md` para más detalles.
+Todo el código fuente sigue la convención de paquetes del proyecto bajo la raíz `edu.sisinf.ChuspaDB`. Consulta `CONTRIBUTING.md` para más detalles.
 
 ---
 
