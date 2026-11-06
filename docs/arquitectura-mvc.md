@@ -1,4 +1,4 @@
-# Arquitectura MVC en Estante
+# Arquitectura MVC en ChuspaDB
 
 Este documento complementa la [arquitectura general](arquitectura.md) y se concentra únicamente en cómo se aplica MVC en la interfaz JavaFX. La descripción completa de capas, servicios y acceso a datos se mantiene en `arquitectura.md` para evitar duplicación.
 
