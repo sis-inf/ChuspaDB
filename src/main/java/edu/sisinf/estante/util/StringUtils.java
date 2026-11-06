@@ -3,10 +3,23 @@ package edu.sisinf.chuspadb.util;
 public class StringUtils {
 
     public static String truncar(String texto, int maxLen) {
+        if (texto == null) return "";
         if (esVacioONulo(texto) || maxLen <= 0) return texto;
         if (texto.length() <= maxLen) return texto;
         if (maxLen <= 3) return texto.substring(0, maxLen);
         return texto.substring(0, maxLen - 3) + "...";
+    }
+
+    /**
+     * Escapa los caracteres comodín de SQL LIKE ({@code %} y {@code _})
+     * anteponiéndoles una barra invertida.
+     *
+     * @param texto Texto a escapar. Si es {@code null}, devuelve cadena vacía.
+     * @return Texto con {@code %} y {@code _} escapados.
+     */
+    public static String escaparLike(String texto) {
+        if (texto == null) return "";
+        return texto.replace("%", "\\%").replace("_", "\\_");
     }
 
     public static String enmascarar(String texto) {
