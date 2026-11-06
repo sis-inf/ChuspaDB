@@ -33,6 +33,20 @@ class HistorialQuerysTest {
     }
 
     @Test
+    @DisplayName("Conserva las 50 consultas más recientes")
+    void conservaLas50ConsultasMasRecientes() {
+        for (int i = 1; i <= 55; i++) {
+             historial.agregar("SELECT " + i + " FROM tabla", "test", 0L);
+        }
+
+        var consultas = historial.obtenerTodos();
+
+        assertEquals(50, consultas.size());
+        assertEquals("SELECT 55 FROM tabla", consultas.get(0).query());
+        assertEquals("SELECT 6 FROM tabla", consultas.get(49).query());
+    }
+
+    @Test
     @DisplayName("obtenerUltimo retorna la última query agregada")
     void obtenerUltimoRetornaLaUltimaAgregada() {
         historial.agregar("SELECT * FROM usuarios", "test", 0L);
