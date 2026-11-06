@@ -1,6 +1,9 @@
 package edu.sisinf.chuspadb.util;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Locale;
+import java.util.Optional;
 
 public class SqlValidator {
 
@@ -111,7 +114,71 @@ public class SqlValidator {
         return false;
     }
 
-    return !normalizar(query).isEmpty();
+    return !normalizar(query).isEmpty() && validarBalanceo(query).isEmpty();
+    }
+    
+    /**
+     * Verifica el balanceo de comillas simples y paréntesis, ignorando los
+     * caracteres que están dentro de literales de cadena y los comentarios
+     * de línea ({@code --}).
+     *
+     * @param query sentencia SQL a revisar
+     * @return mensaje de error con la posición aproximada (base 1), o
+     *         {@code Optional.empty()} si la sentencia está balanceada
+     */
+    public static Optional<String> validarBalanceo(String query) {
+        if (query == null) {
+            return Optional.empty();
+        }
+
+        Deque<Integer> parentesisAbiertos = new ArrayDeque<>();
+        boolean dentroDeCadena = false;
+        int inicioCadena = -1;
+
+        for (int i = 0; i < query.length(); i++) {
+            char c = query.charAt(i);
+
+            if (dentroDeCadena) {
+                if (c == '\'') {
+                    // '' dentro de un literal es una comilla escapada
+                    if (i + 1 < query.length() && query.charAt(i + 1) == '\'') {
+                        i++;
+                    } else {
+                        dentroDeCadena = false;
+                    }
+                }
+                continue;
+            }
+
+            if (c == '-' && i + 1 < query.length() && query.charAt(i + 1) == '-') {
+                int finLinea = query.indexOf('\n', i);
+                if (finLinea == -1) {
+                    break;
+                }
+                i = finLinea;
+                continue;
+            }
+
+            if (c == '\'') {
+                dentroDeCadena = true;
+                inicioCadena = i;
+            } else if (c == '(') {
+                parentesisAbiertos.push(i);
+            } else if (c == ')') {
+                if (parentesisAbiertos.isEmpty()) {
+                    return Optional.of("Paréntesis de cierre sin apertura cerca de la posición " + (i + 1));
+                }
+                parentesisAbiertos.pop();
+            }
+        }
+
+        if (dentroDeCadena) {
+            return Optional.of("Literal de texto con comilla simple sin cerrar, iniciado cerca de la posición " + (inicioCadena + 1));
+        }
+        if (!parentesisAbiertos.isEmpty()) {
+            return Optional.of("Paréntesis sin cerrar cerca de la posición " + (parentesisAbiertos.peek() + 1));
+        }
+        return Optional.empty();
     }
     // ==================== METODOS INDIVIDUALES REQUERIDOS ====================
     
