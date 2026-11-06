@@ -34,3 +34,21 @@ y este proyecto adhiere a [SemVer](https://semver.org/spec/v2.0.0.html).
 - Estructura inicial del proyecto ChuspaDB.
 - Configuración básica del repositorio y rama de desarrollo.
 - Creación de la carpeta de documentación (`docs/`).
+- **Conectividad multi-motor**
+  - Soporte para MySQL, PostgreSQL y SQLite mediante `ConexionDAOMySQL`, `ConexionDAOPostgreSQL` y `ConexionDAOSQLite`.
+  - Gestión de conexiones con `ConnectionProvider` y almacenamiento de las conexiones guardadas en `conexiones.json` mediante `RepositorioConexionesJSON`.
+  - Diálogo para crear nuevas conexiones.
+- **Editor SQL**
+  - Editor con resaltado de sintaxis.
+  - Ejecución asíncrona de consultas mediante `EjecutorQueryAsync`.
+  - Validación de operaciones DML.
+  - Generación de sentencias SQL mediante `GeneradorSQL`.
+  - Favoritos de consultas mediante `GestorFavoritos`.
+- **Explorador de esquemas**
+  - Exploración de esquemas y tablas mediante `ExploradorEsquemas`, mostrada en el árbol de conexiones y en el panel de información de tabla.
+- **Exportación**
+  - Exportación de resultados a CSV mediante `ExportadorCSV`.
+  - Exportación de resultados a JSON mediante `ExportadorJSON`.
+  - Exportación de resultados a Excel (.xlsx) mediante `ExportadorExcel`.
+- **Historial**
+  - Registro del historial de consultas mediante `HistorialQuerys` y panel de historial.
