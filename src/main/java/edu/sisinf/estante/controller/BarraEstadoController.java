@@ -1,4 +1,4 @@
-package edu.sisinf.estante.controller;
+package edu.sisinf.chuspadb.controller;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -42,6 +42,18 @@ public class BarraEstadoController {
      */
     public void setFilas(int filas) {
         labelFilas.setText(filas + " filas");
+    }
+
+    /**
+     * Actualiza las etiquetas de filas y tiempo tras ejecutar una query.
+     * Muestra "Filas: N" y "Tiempo: X ms".
+     *
+     * @param filas    Número de filas devueltas o afectadas.
+     * @param tiempoMs Tiempo de ejecución en milisegundos.
+     */
+    public void actualizarEstadoQuery(int filas, long tiempoMs) {
+        labelFilas.setText("Filas: " + filas);
+        labelTiempo.setText("Tiempo: " + tiempoMs + " ms");
     }
 
     /**

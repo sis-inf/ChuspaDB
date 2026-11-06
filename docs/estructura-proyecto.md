@@ -21,7 +21,7 @@ El proyecto sigue una estructura basada en Maven para aplicaciones JavaFX. Esta 
 ├── src/
 │   ├── main/
 │   │   ├── java/
-│   │   │   └── edu/sisinf/estante/
+│   │   │   └── edu/sisinf/chuspadb/
 │   │   │       ├── config/
 │   │   │       ├── controller/
 │   │   │       ├── core/
@@ -36,7 +36,7 @@ El proyecto sigue una estructura basada en Maven para aplicaciones JavaFX. Esta 
 │   │       └── fxml/
 │   └── test/
 │       └── java/
-│           └── edu/sisinf/estante/
+│           └── edu/sisinf/chuspadb/
 ├── tests/
 │   ├── automatizados/
 │   ├── casos/

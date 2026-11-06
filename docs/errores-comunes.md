@@ -1,8 +1,8 @@
-# Errores Comunes en Estante
+# Errores Comunes en ChuspaDB
 
 ## Introducción
 
-Este documento recopila errores frecuentes encontrados por los usuarios de Estante, junto con sus causas y soluciones.
+Este documento recopila errores frecuentes encontrados por los usuarios de ChuspaDB, junto con sus causas y soluciones.
 
 ## 1. Communications link failure
 

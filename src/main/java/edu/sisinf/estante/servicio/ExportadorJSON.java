@@ -1,7 +1,7 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
-import edu.sisinf.estante.core.ErrorPersistencia;
-import edu.sisinf.estante.modelo.ResultadoQuery;
+import edu.sisinf.chuspadb.core.ErrorPersistencia;
+import edu.sisinf.chuspadb.modelo.ResultadoQuery;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -102,6 +102,12 @@ public class ExportadorJSON {
         }
 
         if (valor instanceof Number) {
+            if (valor instanceof Double && (((Double) valor).isNaN() || ((Double) valor).isInfinite())) {
+                return "null";
+            }
+            if (valor instanceof Float && (((Float) valor).isNaN() || ((Float) valor).isInfinite())) {
+                return "null";
+            }
             return valor.toString();
         }
 

@@ -1,11 +1,11 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.sisinf.estante.core.ErrorPersistencia;
-import edu.sisinf.estante.dao.IConexionDAO;
-import edu.sisinf.estante.modelo.Conexion;
-import edu.sisinf.estante.modelo.ImportacionResultado;
+import edu.sisinf.chuspadb.core.ErrorPersistencia;
+import edu.sisinf.chuspadb.dao.IConexionDAO;
+import edu.sisinf.chuspadb.modelo.Conexion;
+import edu.sisinf.chuspadb.modelo.ImportacionResultado;
 
 import java.io.IOException;
 import java.io.Reader;

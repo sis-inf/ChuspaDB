@@ -1,5 +1,5 @@
 # Verificación de contraseñas comprometidas
-
+> **No implementado.** Esta funcionalidad está planificada pero aún no existe en el código del proyecto. Ver [roadmap.md](roadmap.md).
 ## Descripción
 
 La verificación de contraseñas comprometidas permite comprobar si una contraseña ha aparecido en filtraciones de datos conocidas utilizando el servicio Have I Been Pwned (HIBP).
@@ -8,13 +8,13 @@ El mecanismo protege la privacidad mediante el uso del modelo de k-anonimato, ev
 
 ## ¿Cómo funciona?
 
-El proceso sigue estos pasos:
+El proceso seguirá estos pasos:
 
-1. Se calcula el hash SHA-1 de la contraseña.
-2. Solo se envían al servicio los primeros caracteres del hash.
-3. El servicio responde con una lista de coincidencias posibles.
-4. La comparación final se realiza localmente.
-5. La contraseña completa nunca abandona la aplicación.
+1. Se calculará el hash SHA-1 de la contraseña.
+2. Solo se enviarán al servicio los primeros caracteres del hash.
+3. El servicio responderá con una lista de coincidencias posibles.
+4. La comparación final se realizará localmente.
+5. La contraseña completa nunca abandonará la aplicación. 
 
 ## ¿Qué es el k-anonimato?
 

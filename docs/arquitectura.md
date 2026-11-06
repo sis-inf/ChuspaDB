@@ -1,4 +1,4 @@
-# Arquitectura del Sistema - Proyecto Estante
+# Arquitectura del Sistema - Proyecto ChuspaDB
 
 ## Propósito de este documento
 
@@ -11,7 +11,7 @@ Para detalles específicos consulta:
 
 ## Descripción general
 
-Estante es un gestor de bases de datos con interfaz gráfica JavaFX. Permite conectarse a SQLite, MySQL y PostgreSQL, explorar esquemas, ejecutar consultas SQL y exportar resultados.
+ChuspaDB es un gestor de bases de datos con interfaz gráfica JavaFX. Permite conectarse a SQLite, MySQL y PostgreSQL, explorar esquemas, ejecutar consultas SQL y exportar resultados.
 
 La aplicación separa presentación, lógica de negocio, acceso a datos y modelo para reducir el acoplamiento y facilitar mantenimiento, pruebas y evolución.
 

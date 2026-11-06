@@ -1,4 +1,4 @@
-package edu.sisinf.estante.dto;
+package edu.sisinf.chuspadb.dto;
 
 import org.junit.jupiter.api.Test;
 import java.util.List;

@@ -2,7 +2,7 @@
 
 ## Introducción
 
-Estante permite exportar los resultados de consultas a distintos formatos. Actualmente cuenta con exportadores para CSV y JSON, y su diseño permite incorporar nuevos formatos -como Excel, SQL o Parquet- siguiendo una estructura común.
+ChuspaDB permite exportar los resultados de consultas a distintos formatos. Actualmente cuenta con exportadores para CSV y JSON, y su diseño permite incorporar nuevos formatos -como Excel, SQL o Parquet- siguiendo una estructura común.
 
 Esta guía explica el contrato que debe cumplir un nuevo explorador y cómo integrarlo con la interfaz de usuario.
 

@@ -2,30 +2,30 @@
 
 ## Introducción
 
-Estante permite almacenar configuraciones de conexión a bases de datos para facilitar el acceso a distintos motores soportados por la aplicación. Estas configuraciones incluyen información como el host, puerto, base de datos, usuario y contraseña.
+ChuspaDB permite almacenar configuraciones de conexión a bases de datos para facilitar el acceso a distintos motores soportados por la aplicación. Estas configuraciones incluyen información como el host, puerto, base de datos, usuario y contraseña.
 
 Debido a que las credenciales de acceso son información sensible, es importante comprender cómo se almacenan actualmente, cuáles son los riesgos asociados y qué medidas pueden tomarse para reducir posibles problemas de seguridad.
 
-Este documento describe el estado actual del almacenamiento de conexiones en Estante y presenta recomendaciones para mejorar la protección de las credenciales.
+Este documento describe el estado actual del almacenamiento de conexiones en ChuspaDB y presenta recomendaciones para mejorar la protección de las credenciales.
 
 ---
 
 ## Estado actual
 
-Actualmente Estante almacena las configuraciones de conexión en un archivo JSON ubicado dentro del directorio de configuración del usuario.
+Actualmente ChuspaDB almacena las configuraciones de conexión en un archivo JSON ubicado dentro del directorio de configuración del usuario.
 
 Ubicación habitual:
 
 **Linux / macOS**
 
 ```text
-~/.estante/conexiones.json
+~/.ChuspaDB/conexiones.json
 ```
 
 **Windows**
 
 ```text
-C:\Users\<usuario>\.estante\conexiones.json
+C:\Users\<usuario>\.ChuspaDB\conexiones.json
 ```
 
 Las conexiones son gestionadas mediante el repositorio `RepositorioConexionesJSON` y utilizan el modelo `Conexion`.
@@ -78,7 +78,7 @@ Aunque el almacenamiento actual presenta limitaciones, existen medidas que ayuda
 En sistemas Linux y macOS se recomienda permitir acceso únicamente al propietario del archivo:
 
 ```bash
-chmod 600 ~/.estante/conexiones.json
+chmod 600 ~/.ChuspaDB/conexiones.json
 ```
 
 Con esta configuración solamente el usuario propietario podrá leer o modificar el archivo.
@@ -93,7 +93,7 @@ Siempre que sea posible, las conexiones deben utilizar usuarios de base de datos
 
 ### Proteger respaldos
 
-Los respaldos que contengan configuraciones de Estante deben almacenarse en ubicaciones seguras y con acceso restringido.
+Los respaldos que contengan configuraciones de ChuspaDB deben almacenarse en ubicaciones seguras y con acceso restringido.
 
 ### Rotar credenciales periódicamente
 
@@ -150,7 +150,7 @@ Las conexiones cotidianas no deberían utilizar usuarios con privilegios de admi
 
 ## Mejoras futuras
 
-Una posible mejora para futuras versiones de Estante consiste en implementar mecanismos de protección de credenciales antes de almacenarlas.
+Una posible mejora para futuras versiones de ChuspaDB consiste en implementar mecanismos de protección de credenciales antes de almacenarlas.
 
 Entre las alternativas posibles se encuentran:
 
@@ -165,7 +165,7 @@ Estas mejoras permitirían reducir significativamente el riesgo asociado al alma
 
 ## Conclusión
 
-Estante facilita la administración de conexiones a bases de datos mediante el almacenamiento de configuraciones persistentes. Sin embargo, las credenciales deben considerarse información sensible y protegerse adecuadamente.
+ChuspaDB facilita la administración de conexiones a bases de datos mediante el almacenamiento de configuraciones persistentes. Sin embargo, las credenciales deben considerarse información sensible y protegerse adecuadamente.
 
 Mientras no exista un mecanismo de cifrado integrado, es responsabilidad del usuario aplicar buenas prácticas de seguridad, restringir permisos de acceso, proteger respaldos y utilizar conexiones seguras cuando el motor de base de datos lo permita.
 

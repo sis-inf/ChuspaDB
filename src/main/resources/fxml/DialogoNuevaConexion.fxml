@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.VBox?>
  
 <VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="edu.sisinf.estante.controller.DialogoNuevaConexionController"
+      fx:controller="edu.sisinf.chuspadb.controller.DialogoNuevaConexionController"
       prefWidth="400.0"
       spacing="12.0"
       style="-fx-padding: 15;">

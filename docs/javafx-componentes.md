@@ -1,12 +1,12 @@
-# Componentes JavaFX Utilizados en Estante
+# Componentes JavaFX Utilizados en ChuspaDB
 
 ## Introducción
 
-Este documento describe los principales componentes JavaFX utilizados en Estante y proporciona ejemplos básicos para facilitar la incorporación de nuevos contribuidores al proyecto.
+Este documento describe los principales componentes JavaFX utilizados en ChuspaDB y proporciona ejemplos básicos para facilitar la incorporación de nuevos contribuidores al proyecto.
 
 ## Componentes Utilizados
 
-| Componente | Ubicación principal | Uso en Estante |
+| Componente | Ubicación principal | Uso en ChuspaDB |
 |------------|------------|------------|
 | TreeView | PanelArbolConexiones | Navegación jerárquica de conexiones, bases de datos y objetos. |
 | TableView | PanelResultadoQuery, PanelInfoTabla | Visualización de resultados de consultas y metadatos de tablas. |
@@ -83,7 +83,7 @@ controller.cargarDatos("Ejemplo");
 
 Las actualizaciones visuales deben ejecutarse siempre en el hilo principal de JavaFX.
 
-En Estante, la clase `EjecutorQueryAsync` utiliza `Platform.runLater()` para garantizar que las modificaciones de la interfaz se realicen de forma segura.
+En ChuspaDB, la clase `EjecutorQueryAsync` utiliza `Platform.runLater()` para garantizar que las modificaciones de la interfaz se realicen de forma segura.
 
 Ejemplo utilizado en el proyecto:
 
@@ -139,7 +139,7 @@ public class NuevoPanelController {
 
 ```xml
 <AnchorPane
-    fx:controller="edu.sisinf.estante.controller.NuevoPanelController">
+    fx:controller="edu.sisinf.chuspadb.controller.NuevoPanelController">
 </AnchorPane>
 ```
 

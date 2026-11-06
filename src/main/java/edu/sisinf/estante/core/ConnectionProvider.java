@@ -1,9 +1,9 @@
-package edu.sisinf.estante.core;
+package edu.sisinf.chuspadb.core;
 
-import edu.sisinf.estante.config.DBConfig;
-import edu.sisinf.estante.dto.QueryResult;
-import edu.sisinf.estante.util.SqlValidator;
-import edu.sisinf.estante.core.ErrorQuery;
+import edu.sisinf.chuspadb.config.DBConfig;
+import edu.sisinf.chuspadb.dto.QueryResult;
+import edu.sisinf.chuspadb.util.SqlValidator;
+import edu.sisinf.chuspadb.core.ErrorQuery;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

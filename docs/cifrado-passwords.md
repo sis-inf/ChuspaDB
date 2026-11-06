@@ -2,7 +2,7 @@
 
 ## Descripción
 
-Actualmente el proyecto **no cifra** las contraseñas de conexión. `RepositorioConexionesJSON` serializa cada `Conexion` con Jackson tal cual, por lo que el campo `password` queda guardado en **texto plano** dentro de `conexiones.json` (en `<user.home>/.estante/`).
+Actualmente el proyecto **no cifra** las contraseñas de conexión. `RepositorioConexionesJSON` serializa cada `Conexion` con Jackson tal cual, por lo que el campo `password` queda guardado en **texto plano** dentro de `conexiones.json` (en `<user.home>/.ChuspaDB/`).
 
 Este estado es consistente con lo indicado en `docs/limitaciones.md`.
 

@@ -1,4 +1,4 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +30,20 @@ class HistorialQuerysTest {
         }
 
         assertEquals(50, historial.obtenerTodos().size());
+    }
+
+    @Test
+    @DisplayName("Conserva las 50 consultas más recientes")
+    void conservaLas50ConsultasMasRecientes() {
+        for (int i = 1; i <= 55; i++) {
+             historial.agregar("SELECT " + i + " FROM tabla", "test", 0L);
+        }
+
+        var consultas = historial.obtenerTodos();
+
+        assertEquals(50, consultas.size());
+        assertEquals("SELECT 55 FROM tabla", consultas.get(0).query());
+        assertEquals("SELECT 6 FROM tabla", consultas.get(49).query());
     }
 
     @Test

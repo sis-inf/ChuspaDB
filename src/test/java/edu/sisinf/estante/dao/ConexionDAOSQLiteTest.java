@@ -1,4 +1,4 @@
-package edu.sisinf.estante.dao;
+package edu.sisinf.chuspadb.dao;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -11,9 +11,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import edu.sisinf.estante.core.ErrorConexion;
-import edu.sisinf.estante.modelo.Conexion;
-import edu.sisinf.estante.modelo.TipoMotor;
+import edu.sisinf.chuspadb.core.ErrorConexion;
+import edu.sisinf.chuspadb.modelo.Conexion;
+import edu.sisinf.chuspadb.modelo.TipoMotor;
 
 class ConexionDAOSQLiteTest {
 

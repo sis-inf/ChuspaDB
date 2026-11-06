@@ -1,6 +1,6 @@
 // ============================================================
 // ARCHIVO: ConfiguracionApp.java
-// RUTA: src/main/java/edu/sisinf/estante/config/ConfiguracionApp.java
+// RUTA: src/main/java/edu/sisinf/ChuspaDB/config/ConfiguracionApp.java
 // ============================================================
 package edu.sisinf.estante.config;
 
@@ -12,21 +12,21 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Centraliza los paths de la aplicacion Estante.
+ * Centraliza los paths de la aplicacion ChuspaDB.
  *
  * <p>Todos los metodos son estaticos. Esta clase no puede ser instanciada.</p>
  *
  * <p>La aplicacion almacena sus archivos en un directorio oculto dentro del
  * home del usuario:</p>
  * <ul>
- * <li>Linux / macOS: {@code ~/.estante/}</li>
- * <li>Windows: {@code C:\Users\<usuario>\.estante\}</li>
+ * <li>Linux / macOS: {@code ~/.ChuspaDB/}</li>
+ * <li>Windows: {@code C:\Users\<usuario>\.ChuspaDB\}</li>
  * </ul>
  */
 public class ConfiguracionApp {
 
     /** Nombre del directorio oculto que usa la aplicacion dentro del home del usuario. */
-    private static final String APP_DIRECTORY = ".estante";
+    private static final String APP_DIRECTORY = ".ChuspaDB";
 
     /** Nombre del archivo que almacena las conexiones del usuario. */
     private static final String CONNECTIONS_FILE = "conexiones.json";
@@ -42,7 +42,7 @@ public class ConfiguracionApp {
      * <p>El directorio se construye combinando la propiedad del sistema
      * {@code user.home} con el subdirectorio {@value #APP_DIRECTORY}.</p>
      *
-     * @return {@link Path} que apunta a {@code <user.home>/.estante/}
+     * @return {@link Path} que apunta a {@code <user.home>/.ChuspaDB/}
      */
    public static Path directorioHome() {
        if (modoPortable()) {
@@ -57,7 +57,7 @@ public class ConfiguracionApp {
      * <p>El archivo se ubica dentro del directorio home de la aplicacion
      * con el nombre {@value #CONNECTIONS_FILE}.</p>
      *
-     * @return {@link File} que apunta a {@code <user.home>/.estante/conexiones.json}
+     * @return {@link File} que apunta a {@code <user.home>/.ChuspaDB/conexiones.json}
      */
     public static File archivoConexiones() {
         return directorioHome().resolve(CONNECTIONS_FILE).toFile();

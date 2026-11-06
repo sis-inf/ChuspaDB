@@ -1,8 +1,8 @@
-# Accesibilidad en Estante
+# Accesibilidad en ChuspaDB
 
 ## Introducción
 
-La accesibilidad permite que la aplicación pueda ser utilizada por personas con distintas capacidades y necesidades. Este documento resume las consideraciones actuales y futuras para mejorar la accesibilidad de Estante.
+La accesibilidad permite que la aplicación pueda ser utilizada por personas con distintas capacidades y necesidades. Este documento resume las consideraciones actuales y futuras para mejorar la accesibilidad de ChuspaDB.
 
 ## Navegación por teclado
 

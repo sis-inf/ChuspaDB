@@ -1,4 +1,4 @@
-# Glosario del Proyecto Estante
+# Glosario del Proyecto ChuspaDB
 
 ## Términos
 

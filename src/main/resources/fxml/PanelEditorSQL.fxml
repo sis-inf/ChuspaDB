@@ -8,7 +8,7 @@
 <?import org.fxmisc.richtext.CodeArea?>
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="edu.sisinf.estante.controller.PanelEditorSQLController"
+      fx:controller="edu.sisinf.chuspadb.controller.PanelEditorSQLController"
       VBox.vgrow="ALWAYS">
     <ToolBar>
         <Button fx:id="btnEjecutar" text="Ejecutar (Ctrl+Enter)"/>

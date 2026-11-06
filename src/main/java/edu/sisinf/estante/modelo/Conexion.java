@@ -1,4 +1,4 @@
-package edu.sisinf.estante.modelo;
+package edu.sisinf.chuspadb.modelo;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -2,11 +2,15 @@
 
 # 📂 Estructura de la carpeta `src`
 
+El árbol muestra la estructura objetivo de paquetes de ChuspaDB
+(`edu.sisinf.chuspadb`). Durante la migración, la ubicación física de los
+archivos conserva directorios previos.
+
 ```bash
 src/
 └── main/
     └── java/
-        └── edu/sisinf/estante/
+        └── edu/sisinf/chuspadb/
             ├── controller/
             ├── dao/
             ├── modelo/

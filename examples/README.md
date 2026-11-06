@@ -23,7 +23,7 @@ examples/conexiones-ejemplo.json
 a:
 
 ```bash
-~/.estante/conexiones.json
+~/.ChuspaDB/conexiones.json
 ```
 
 Luego iniciar la aplicación normalmente.

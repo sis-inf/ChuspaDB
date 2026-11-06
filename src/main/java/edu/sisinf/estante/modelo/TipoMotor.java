@@ -1,4 +1,4 @@
-package edu.sisinf.estante.modelo;
+package edu.sisinf.chuspadb.modelo;
 
 public enum TipoMotor {
     SQLITE,

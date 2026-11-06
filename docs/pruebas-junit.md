@@ -2,7 +2,7 @@
 
 ## Introducción
 
-Estante utiliza JUnit 5 para la creación de pruebas unitarias y Mockito para la simulación de dependencias durante la ejecución de pruebas. Estas herramientas permiten validar el comportamiento de las clases de manera aislada y automatizada.
+ChuspaDB utiliza JUnit 5 para la creación de pruebas unitarias y Mockito para la simulación de dependencias durante la ejecución de pruebas. Estas herramientas permiten validar el comportamiento de las clases de manera aislada y automatizada.
 
 Actualmente el proyecto contiene pruebas como `SqlValidatorTest`, `EjecutorQueryTest`, `DBConfigTest` y otras pruebas unitarias distribuidas en distintos paquetes.
 
@@ -243,4 +243,4 @@ mvn -Dtest=EjecutorQueryTest#debeEjecutarConsultaSelect test
 * Ejecutar la suite completa antes de abrir un Pull Request.
 * Mantener una única responsabilidad por prueba.
 
-Siguiendo estas recomendaciones es posible mantener una base de pruebas consistente y fácil de mantener dentro del proyecto Estante.
+Siguiendo estas recomendaciones es posible mantener una base de pruebas consistente y fácil de mantener dentro del proyecto ChuspaDB.

@@ -1,8 +1,8 @@
-\# Estructura de Tests del Proyecto Estante
+\# Estructura de Tests del Proyecto ChuspaDB
 
 
 
-Este documento describe la organizacion, ejecucion y creacion de tests para el proyecto Estante, un gestor de bases de datos MySQL desarrollado en Java y JavaFX.
+Este documento describe la organizacion, ejecucion y creacion de tests para el proyecto ChuspaDB, un gestor de bases de datos MySQL desarrollado en Java y JavaFX.
 
 
 

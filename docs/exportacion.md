@@ -2,7 +2,7 @@
 
 ## Introducción
 
-Estante dispone de mecanismos de exportación de resultados de consultas. Actualmente la aplicación soporta los formatos CSV y JSON para el intercambio y análisis de datos.
+ChuspaDB dispone de mecanismos de exportación de resultados de consultas. Actualmente la aplicación soporta los formatos CSV y JSON para el intercambio y análisis de datos.
 
 ---
 

@@ -1,7 +1,7 @@
-package edu.sisinf.estante.dao;
+package edu.sisinf.chuspadb.dao;
 
-import edu.sisinf.estante.core.ErrorPersistencia;
-import edu.sisinf.estante.modelo.Conexion;
+import edu.sisinf.chuspadb.core.ErrorPersistencia;
+import edu.sisinf.chuspadb.modelo.Conexion;
 import java.util.List;
 import java.util.Optional;
 

@@ -1,8 +1,8 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
-import edu.sisinf.estante.core.ErrorPersistencia;
-import edu.sisinf.estante.dao.IConexionDAO;
-import edu.sisinf.estante.modelo.Conexion;
+import edu.sisinf.chuspadb.core.ErrorPersistencia;
+import edu.sisinf.chuspadb.dao.IConexionDAO;
+import edu.sisinf.chuspadb.modelo.Conexion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

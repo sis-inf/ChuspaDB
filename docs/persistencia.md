@@ -2,22 +2,22 @@
 
 ## Introducción
 
-Estante almacena información del usuario para conservar configuraciones y consultas favoritas entre distintas sesiones. La persistencia se realiza mediante archivos JSON almacenados en el directorio personal del usuario.
+ChuspaDB almacena información del usuario para conservar configuraciones y consultas favoritas entre distintas sesiones. La persistencia se realiza mediante archivos JSON almacenados en el directorio personal del usuario.
 
 ---
 
 # Directorio de datos
 
-Los datos persistentes de Estante se almacenan en:
+Los datos persistentes de ChuspaDB se almacenan en:
 
 ```text
-~/.estante/
+~/.ChuspaDB/
 ```
 
 Estructura típica:
 
 ```text
-~/.estante/
+~/.ChuspaDB/
 ├── conexiones.json
 └── favoritos.json
 ```
@@ -120,13 +120,13 @@ El historial de consultas se pierde al cerrar la aplicación.
 Para realizar una copia de seguridad basta con copiar el directorio completo:
 
 ```bash
-cp -r ~/.estante respaldo-estante
+cp -r ~/.ChuspaDB respaldo-ChuspaDB
 ```
 
 Para restaurar los datos:
 
 ```bash
-cp -r respaldo-estante ~/.estante
+cp -r respaldo-ChuspaDB ~/.ChuspaDB
 ```
 
 Después de restaurar los archivos se recomienda reiniciar la aplicación.
@@ -137,10 +137,10 @@ Después de restaurar los archivos se recomienda reiniciar la aplicación.
 
 Para mover conexiones y favoritos a otro equipo:
 
-1. Cerrar Estante.
-2. Copiar el directorio `~/.estante/`.
+1. Cerrar ChuspaDB.
+2. Copiar el directorio `~/.ChuspaDB/`.
 3. Transferir el directorio al nuevo equipo.
 4. Colocarlo dentro del directorio personal del usuario.
-5. Iniciar Estante nuevamente.
+5. Iniciar ChuspaDB nuevamente.
 
 De esta forma se conservan las conexiones configuradas y las consultas favoritas.

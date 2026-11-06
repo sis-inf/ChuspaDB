@@ -1,12 +1,12 @@
 # Casos de Falla
 
-Comportamiento de Estante ante condiciones de error y como recuperarse.
+Comportamiento de ChuspaDB ante condiciones de error y como recuperarse.
 
 ## 1. Perdida de conexion durante una consulta larga
 
 ### Que ocurre
 
-Si la conexion a la base de datos se pierde mientras se ejecuta una consulta larga, Estante lanza ErrorConexion y cancela la operacion. La consulta no se completa y los datos no se modifican si era una operacion de solo lectura. Para operaciones de escritura, el resultado depende de si la base de datos usa transacciones.
+Si la conexion a la base de datos se pierde mientras se ejecuta una consulta larga, ChuspaDB lanza ErrorConexion y cancela la operacion. La consulta no se completa y los datos no se modifican si era una operacion de solo lectura. Para operaciones de escritura, el resultado depende de si la base de datos usa transacciones.
 
 ### Comportamiento esperado
 
@@ -25,7 +25,7 @@ Si la conexion a la base de datos se pierde mientras se ejecuta una consulta lar
 
 ### Que ocurre
 
-Si el servidor no responde cuando se intenta establecer una conexion nueva, Estante lanza ErrorConexion con el mensaje Communications link failure. La aplicacion no se bloquea y el usuario puede intentar reconectarse.
+Si el servidor no responde cuando se intenta establecer una conexion nueva, ChuspaDB lanza ErrorConexion con el mensaje Communications link failure. La aplicacion no se bloquea y el usuario puede intentar reconectarse.
 
 ### Comportamiento esperado
 
@@ -47,7 +47,7 @@ Si el servidor no responde cuando se intenta establecer una conexion nueva, Esta
 
 ### Que ocurre
 
-Si el disco se llena mientras Estante exporta datos, la operacion se interrumpe y el archivo exportado queda incompleto. Estante lanza ErrorPersistencia y muestra un mensaje de error.
+Si el disco se llena mientras ChuspaDB exporta datos, la operacion se interrumpe y el archivo exportado queda incompleto. ChuspaDB lanza ErrorPersistencia y muestra un mensaje de error.
 
 ### Comportamiento esperado
 
@@ -69,18 +69,18 @@ Si el disco se llena mientras Estante exporta datos, la operacion se interrumpe 
 
 ### Que ocurre
 
-Si el archivo donde Estante guarda las conexiones guardadas se corrompe (por ejemplo, por un cierre forzado), la aplicacion puede no cargar las conexiones al iniciar o mostrar un error de deserializacion.
+Si el archivo donde ChuspaDB guarda las conexiones guardadas se corrompe (por ejemplo, por un cierre forzado), la aplicacion puede no cargar las conexiones al iniciar o mostrar un error de deserializacion.
 
 ### Comportamiento esperado
 
-- Al iniciar, Estante muestra un mensaje indicando que no pudo cargar las conexiones guardadas
+- Al iniciar, ChuspaDB muestra un mensaje indicando que no pudo cargar las conexiones guardadas
 - La aplicacion inicia normalmente sin conexiones previas
 - No se pierden datos de las bases de datos, solo la configuracion de conexiones
 
 ### Como recuperarse
 
-1. Cerrar Estante
+1. Cerrar ChuspaDB
 2. Localizar el archivo de conexiones (generalmente en el directorio de configuracion del usuario)
 3. Eliminarlo o renombrarlo como respaldo
-4. Reiniciar Estante — iniciara sin conexiones guardadas
+4. Reiniciar ChuspaDB — iniciara sin conexiones guardadas
 5. Volver a configurar las conexiones manualmente

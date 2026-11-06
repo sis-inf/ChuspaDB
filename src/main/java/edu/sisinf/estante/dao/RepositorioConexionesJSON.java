@@ -1,9 +1,9 @@
-package edu.sisinf.estante.dao;
+package edu.sisinf.chuspadb.dao;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import edu.sisinf.estante.core.ErrorPersistencia;
-import edu.sisinf.estante.modelo.Conexion;
+import edu.sisinf.chuspadb.core.ErrorPersistencia;
+import edu.sisinf.chuspadb.modelo.Conexion;
 
 import java.io.File;
 import java.io.IOException;

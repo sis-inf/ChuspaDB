@@ -4,7 +4,7 @@
 
 La Integración Continua (CI) es una práctica que permite validar automáticamente los cambios realizados en un proyecto antes de integrarlos a las ramas principales. Su objetivo es detectar errores de forma temprana, verificar la calidad del código y facilitar la colaboración entre los contribuyentes.
 
-En el proyecto Estante se utilizan workflows de GitHub Actions para validar Pull Requests, ejecutar verificaciones de seguridad y apoyar el proceso de despliegue.
+En el proyecto ChuspaDB se utilizan workflows de GitHub Actions para validar Pull Requests, ejecutar verificaciones de seguridad y apoyar el proceso de despliegue.
 
 ---
 

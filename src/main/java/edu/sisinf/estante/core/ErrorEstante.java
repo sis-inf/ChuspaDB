@@ -1,7 +1,7 @@
 package edu.sisinf.estante.core;
 
 /**
- * Excepcion base para todos los errores de dominio en Estante.
+ * Excepcion base para todos los errores de dominio en ChuspaDB.
  * Todas las excepciones tipadas en la aplicacion deben extender de esta clase.
  */
 public class ErrorEstante extends RuntimeException {

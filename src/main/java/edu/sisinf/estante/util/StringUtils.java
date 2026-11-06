@@ -1,4 +1,4 @@
-package edu.sisinf.estante.util;
+package edu.sisinf.chuspadb.util;
 
 public class StringUtils {
 

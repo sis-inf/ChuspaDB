@@ -1,4 +1,4 @@
-package edu.sisinf.estante.core;
+package edu.sisinf.chuspadb.core;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

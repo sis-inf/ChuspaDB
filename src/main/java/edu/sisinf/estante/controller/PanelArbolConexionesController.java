@@ -1,6 +1,6 @@
-package edu.sisinf.estante.controller;
+package edu.sisinf.chuspadb.controller;
 
-import edu.sisinf.estante.modelo.Conexion;
+import edu.sisinf.chuspadb.modelo.Conexion;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Controller del panel izquierdo de Estante.
+ * Controller del panel izquierdo de ChuspaDB.
  */
 public class PanelArbolConexionesController {
 

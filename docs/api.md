@@ -1,4 +1,4 @@
-# API - Proyecto Estante
+# API - Proyecto ChuspaDB
 
 ## Descripción
 Este documento describe las clases principales del proyecto y sus métodos.
@@ -22,7 +22,7 @@ Cierra la conexión con la base de datos.
 
 ---
 
-## Clase: EstanteService
+## Clase: ChuspaDBService
 Encargada de la lógica del sistema.
 
 ### Métodos:

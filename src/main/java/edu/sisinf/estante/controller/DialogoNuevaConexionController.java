@@ -1,8 +1,8 @@
-package edu.sisinf.estante.controller;
+package edu.sisinf.chuspadb.controller;
 
-import edu.sisinf.estante.dao.IConexionDAO;
-import edu.sisinf.estante.modelo.Conexion;
-import edu.sisinf.estante.modelo.TipoMotor;
+import edu.sisinf.chuspadb.dao.IConexionDAO;
+import edu.sisinf.chuspadb.modelo.Conexion;
+import edu.sisinf.chuspadb.modelo.TipoMotor;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;

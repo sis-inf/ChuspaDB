@@ -1,4 +1,4 @@
-package edu.sisinf.estante.modelo;
+package edu.sisinf.chuspadb.modelo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +40,12 @@ public class ResultadoQuery {
         ResultadoQuery resultado = new ResultadoQuery();
         resultado.tipo = Tipo.LECTURA;
         resultado.columnas = columnas;
-        resultado.filas = filas;
+        if (filas == null) {
+            resultado.filas = new ArrayList<>();
+        } else {
+            resultado.filas = new ArrayList<>(filas);
+        }
+        resultado.totalFilas = resultado.filas.size();
         resultado.tiempoMs = tiempoMs;
         return resultado;
     }

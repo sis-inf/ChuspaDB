@@ -1,6 +1,6 @@
-# Guía de Operaciones y Consultas del DBMS - Estante
+# Guía de Operaciones y Consultas del DBMS - ChuspaDB
 
-Este documento detalla las operaciones fundamentales de manipulación de datos (DML) que el administrador puede ejecutar sobre el motor de base de datos de **Estante**.
+Este documento detalla las operaciones fundamentales de manipulación de datos (DML) que el administrador puede ejecutar sobre el motor de base de datos de **ChuspaDB**.
 
 ## 1. Inserción de Registros (Crear)
 **Descripción:** Operación para persistir un nuevo registro en la tabla de datos bibliográficos.
