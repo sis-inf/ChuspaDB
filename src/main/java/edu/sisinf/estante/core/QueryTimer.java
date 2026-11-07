@@ -1,4 +1,4 @@
-package edu.sisinf.estante.core;
+package edu.sisinf.chuspadb.core;
 
 /**
  * Clase utilitaria para medir el tiempo de ejecución de queries.
