@@ -1,8 +1,8 @@
-# Guía para Contribuidores de Estante
+# Guía para Contribuidores de ChuspaDB
 
 ## Introducción
 
-Esta guía explica paso a paso cómo realizar tu primer Pull Request en el proyecto Estante utilizando Java, Maven y JavaFX.
+Esta guía explica paso a paso cómo realizar tu primer Pull Request en el proyecto ChuspaDB utilizando Java, Maven y JavaFX.
 
 ---
 
@@ -15,8 +15,8 @@ Desde GitHub, presiona el botón *Fork* en el repositorio principal.
 ## 2. Clonar el repositorio
 
 bash
-git clone https://github.com/TU-USUARIO/estante.git
-cd estante
+git clone https://github.com/TU-USUARIO/ChuspaDB.git
+cd ChuspaDB
 
 
 ---
