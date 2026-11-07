@@ -1,9 +1,9 @@
-package edu.sisinf.estante.controller;
+package edu.sisinf.chuspadb.controller;
 
-import edu.sisinf.estante.core.ErrorPersistencia;
-import edu.sisinf.estante.modelo.ResultadoQuery;
-import edu.sisinf.estante.servicio.ExportadorExcel;
-import edu.sisinf.estante.servicio.ExportadorJSON;
+import edu.sisinf.chuspadb.core.ErrorPersistencia;
+import edu.sisinf.chuspadb.modelo.ResultadoQuery;
+import edu.sisinf.chuspadb.servicio.ExportadorExcel;
+import edu.sisinf.chuspadb.servicio.ExportadorJSON;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
