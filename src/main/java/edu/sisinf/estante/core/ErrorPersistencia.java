@@ -1,10 +1,10 @@
-package edu.sisinf.estante.core;
+package edu.sisinf.chuspadb.core;
 
 /**
  * Excepcion lanzada cuando falla una operacion de persistencia de configuracion.
  * Ejemplos: archivo no escribible, configuracion corrupta, error de E/S al guardar.
  */
-public class ErrorPersistencia extends ErrorEstante {
+public class ErrorPersistencia extends ErrorChuspaDB {
 
     public ErrorPersistencia(String message) {
         super(message);
