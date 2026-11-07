@@ -2,7 +2,7 @@
 
 ## Información general
 
-**Período:** Sprint 2 del proyecto ChuspaDB
+**Período:** Sprint 2 del proyecto Estante
 
 **Objetivo:** Consolidar nuevas funcionalidades del sistema, mejorar la calidad del código y fortalecer la documentación del proyecto.
 
