@@ -7,7 +7,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -24,7 +26,8 @@ public class PanelArbolConexionesController {
     private Consumer<Conexion> onConexionDoubleClick = null;
     private Consumer<String> onTablaClick = null;
 
-    private final List<Conexion> conexionesOriginales = new ArrayList<>();
+    private final Map<TreeItem<Object>, List<TreeItem<Object>>> hijosOriginales =
+            new IdentityHashMap<>();
 
     @FXML
     public void initialize() {
@@ -62,32 +65,58 @@ public class PanelArbolConexionesController {
 
     public void cargarConexiones(List<Conexion> lista) {
         if (lista == null) return;
-        conexionesOriginales.clear();
-        conexionesOriginales.addAll(lista);
+        TreeItem<Object> raiz = arbol.getRoot();
+        hijosOriginales.clear();
+        raiz.getChildren().clear();
+        for (Conexion conexion : lista) {
+            TreeItem<Object> item = new TreeItem<>(conexion);
+            item.getChildren().add(new TreeItem<>("(cargando...)"));
+            raiz.getChildren().add(item);
+        }
         filtrarArbol(txtBusqueda.getText());
     }
 
     private void filtrarArbol(String filtro) {
         TreeItem<Object> raiz = arbol.getRoot();
-        raiz.getChildren().clear();
+        restaurarHijos(raiz);
 
         if (filtro == null || filtro.isBlank()) {
-            for (Conexion conexion : conexionesOriginales) {
-                TreeItem<Object> item = new TreeItem<>(conexion);
-                item.getChildren().add(new TreeItem<>("(cargando...)"));
-                raiz.getChildren().add(item);
-            }
-        } else {
-            String termino = filtro.toLowerCase().trim();
-            for (Conexion conexion : conexionesOriginales) {
-                String nombre = conexion != null ? conexion.toString().toLowerCase() : "";
-                if (nombre.contains(termino)) {
-                    TreeItem<Object> item = new TreeItem<>(conexion);
-                    item.getChildren().add(new TreeItem<>("(cargando...)"));
-                    raiz.getChildren().add(item);
-                }
+            return;
+        }
+        filtrarHijos(raiz, filtro.toLowerCase().trim());
+    }
+
+    private boolean filtrarHijos(TreeItem<Object> item, String termino) {
+        List<TreeItem<Object>> hijos = new ArrayList<>(item.getChildren());
+        List<TreeItem<Object>> visibles = new ArrayList<>();
+        for (TreeItem<Object> hijo : hijos) {
+            if (coincide(hijo, termino)) {
+                visibles.add(hijo);
+            } else if (filtrarHijos(hijo, termino)) {
+                hijo.setExpanded(true);
+                visibles.add(hijo);
             }
         }
+        if (visibles.size() < hijos.size()) {
+            hijosOriginales.put(item, hijos);
+            item.getChildren().setAll(visibles);
+        }
+        return !visibles.isEmpty();
+    }
+
+    private void restaurarHijos(TreeItem<Object> item) {
+        List<TreeItem<Object>> hijos = hijosOriginales.remove(item);
+        if (hijos != null && hijos.containsAll(item.getChildren())) {
+            item.getChildren().setAll(hijos);
+        }
+        for (TreeItem<Object> hijo : item.getChildren()) {
+            restaurarHijos(hijo);
+        }
+    }
+
+    private boolean coincide(TreeItem<Object> item, String termino) {
+        Object valor = item.getValue();
+        return valor != null && valor.toString().toLowerCase().contains(termino);
     }
 
     public void setOnConexionDoubleClick(Consumer<Conexion> callback) {
