@@ -13,9 +13,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Genera una sentencia DDL CREATE TABLE a partir de la estructura de una tabla existente.
@@ -40,6 +38,16 @@ public class GeneradorCreateTable {
     /** Máximo de caracteres de un VARCHAR en MySQL con utf8mb4 (límite de 65535 bytes por fila). */
     private static final int MYSQL_MAX_VARCHAR = 16_383;
 
+    /**
+     * Definiciones de columnas ya armadas.
+     *
+     * @param columnas  cadenas de definición de cada columna
+     * @param pkEnLinea {@code true} si la clave primaria quedó declarada dentro de una
+     *                  columna (SQLite con {@code INTEGER PRIMARY KEY AUTOINCREMENT}) y por
+     *                  lo tanto no debe repetirse al final de la tabla
+     */
+    private record Definiciones(List<String> columnas, boolean pkEnLinea) {}
+
     /** Constructor privado — clase utilitaria, no instanciable. */
     private GeneradorCreateTable() {}
 
@@ -60,24 +68,15 @@ public class GeneradorCreateTable {
             DatabaseMetaData metadata = connection.getMetaData();
 
             List<String> primaryKeys = getPrimaryKeys(metadata, tableName);
-            Set<String> autoincrementales = getAutoincrementColumns(metadata, tableName);
 
-            // SQLite solo admite AUTOINCREMENT junto a una PRIMARY KEY de una sola columna,
-            // declarada en la propia columna ("INTEGER PRIMARY KEY AUTOINCREMENT").
-            String pkEnLinea = null;
-            if (motor == TipoMotor.SQLITE
-                    && primaryKeys.size() == 1
-                    && autoincrementales.contains(primaryKeys.get(0))) {
-                pkEnLinea = primaryKeys.get(0);
-            }
-
-            List<String> columnDefinitions =
-                    getColumnDefinitions(metadata, tableName, motor, autoincrementales, pkEnLinea);
+            // getColumns() se recorre una sola vez: IS_AUTOINCREMENT se lee en el mismo recorrido
+            Definiciones definiciones =
+                    getColumnDefinitions(metadata, tableName, motor, primaryKeys);
 
             // Si la PK ya quedó declarada en la columna, no se repite al final de la tabla.
-            List<String> pkDeTabla = (pkEnLinea == null) ? primaryKeys : new ArrayList<>();
+            List<String> pkDeTabla = definiciones.pkEnLinea() ? new ArrayList<>() : primaryKeys;
 
-            return buildDDL(tableName, columnDefinitions, pkDeTabla, motor);
+            return buildDDL(tableName, definiciones.columnas(), pkDeTabla, motor);
         }
     }
     // Metodos ayudantes privados (Helpers)
@@ -103,47 +102,29 @@ public class GeneradorCreateTable {
     }
 
     /**
-     * Recupera los nombres de las columnas autoincrementales de la tabla dada,
-     * según la columna estándar {@code IS_AUTOINCREMENT} de los metadatos.
-     *
-     * @param metadata  metadatos de la base de datos
-     * @param tableName tabla a inspeccionar
-     * @return conjunto con los nombres de las columnas autoincrementales
-     * @throws SQLException si falla el acceso a los metadatos
-     */
-    private static Set<String> getAutoincrementColumns(DatabaseMetaData metadata,
-                                                       String tableName) throws SQLException {
-        Set<String> columnas = new HashSet<>();
-
-        try (ResultSet rs = metadata.getColumns(null, null, tableName, null)) {
-            while (rs.next()) {
-                if ("YES".equals(rs.getString("IS_AUTOINCREMENT"))) {
-                    columnas.add(rs.getString("COLUMN_NAME"));
-                }
-            }
-        }
-
-        return columnas;
-    }
-
-    /**
      * Construye las cadenas de definición de columnas a partir de los metadatos de la tabla.
      *
-     * @param metadata          metadatos de la base de datos
-     * @param tableName         tabla a inspeccionar
-     * @param motor             motor objetivo, utilizado para dar formato a los nombres de los tipos
-     * @param autoincrementales nombres de las columnas autoincrementales
-     * @param pkEnLinea         columna que en SQLite se declara como
-     *                          {@code INTEGER PRIMARY KEY AUTOINCREMENT}, o {@code null} si no aplica
-     * @return lista de cadenas de definición de columnas (ej. {@code id INTEGER NOT NULL})
+     * <p>Recorre {@code getColumns()} una sola vez y lee en ese mismo recorrido la columna
+     * estándar {@code IS_AUTOINCREMENT}.</p>
+     *
+     * @param metadata    metadatos de la base de datos
+     * @param tableName   tabla a inspeccionar
+     * @param motor       motor objetivo, utilizado para dar formato a los nombres de los tipos
+     * @param primaryKeys columnas de la clave primaria, ya conocidas
+     * @return las definiciones de columnas y si la clave primaria quedó declarada en línea
      * @throws SQLException si falla el acceso a los metadatos
      */
-    private static List<String> getColumnDefinitions(DatabaseMetaData metadata,
+    private static Definiciones getColumnDefinitions(DatabaseMetaData metadata,
                                                      String tableName,
                                                      TipoMotor motor,
-                                                     Set<String> autoincrementales,
-                                                     String pkEnLinea) throws SQLException {
+                                                     List<String> primaryKeys) throws SQLException {
         List<String> definitions = new ArrayList<>();
+        boolean pkEnLinea = false;
+
+        // SQLite solo admite AUTOINCREMENT junto a una PRIMARY KEY de una sola columna,
+        // declarada en la propia columna ("INTEGER PRIMARY KEY AUTOINCREMENT").
+        String columnaPkUnica =
+                (motor == TipoMotor.SQLITE && primaryKeys.size() == 1) ? primaryKeys.get(0) : null;
 
         try (ResultSet rs = metadata.getColumns(null, null, tableName, null)) {
             while (rs.next()) {
@@ -151,17 +132,18 @@ public class GeneradorCreateTable {
                 String typeName   = rs.getString("TYPE_NAME");
                 int    columnSize = rs.getInt("COLUMN_SIZE");
                 String nullable   = rs.getString("IS_NULLABLE");
+                boolean autoincremental = "YES".equals(rs.getString("IS_AUTOINCREMENT"));
 
                 String definicion;
 
-                if (columnName.equals(pkEnLinea)) {
+                if (autoincremental && columnName.equals(columnaPkUnica)) {
                     // Solo ocurre en SQLite
                     definicion = "INTEGER PRIMARY KEY AUTOINCREMENT";
+                    pkEnLinea = true;
                 } else {
                     // En SQLite el autoincremento solo es válido en la PK en línea;
                     // en cualquier otro caso la columna se genera como una normal.
-                    boolean auto = motor != TipoMotor.SQLITE
-                            && autoincrementales.contains(columnName);
+                    boolean auto = motor != TipoMotor.SQLITE && autoincremental;
 
                     String sqlType = auto
                             ? buildAutoincrementType(typeName, motor)
@@ -176,7 +158,7 @@ public class GeneradorCreateTable {
             }
         }
 
-        return definitions;
+        return new Definiciones(definitions, pkEnLinea);
     }
 
     /**
