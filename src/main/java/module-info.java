@@ -33,6 +33,9 @@ module edu.sisinf.chuspadb {
     /** Permite a Jackson serializar / deserializar los modelos de dominio. */
     opens edu.sisinf.chuspadb.modelo to com.fasterxml.jackson.databind;
 
+    /** Permite a Jackson serializar / deserializar los DTOs. */
+    opens edu.sisinf.chuspadb.dto to com.fasterxml.jackson.databind;
+
     // ── Exportaciones públicas del módulo ─────────────────────────────────────
     exports edu.sisinf.chuspadb;
     exports edu.sisinf.chuspadb.controller;
