@@ -18,14 +18,35 @@ import java.util.List;
 /**
  * Genera una sentencia DDL CREATE TABLE a partir de la estructura de una tabla existente.
  *
- * <p>Utiliza {@link DatabaseMetaData} para inspeccionar columnas, tipos y restricciones
- * de clave primaria, y luego construye una cadena CREATE TABLE sintácticamente correcta
- * para el motor de base de datos objetivo (MySQL, PostgreSQL o SQLite).</p>
+ * <p>Utiliza {@link DatabaseMetaData} para inspeccionar columnas, tipos, columnas
+ * autoincrementales y restricciones de clave primaria, y luego construye una cadena
+ * CREATE TABLE sintácticamente correcta para el motor de base de datos objetivo
+ * (MySQL, PostgreSQL o SQLite).</p>
+ *
+ * <p>Adapta por motor: el autoincremento (AUTO_INCREMENT, SERIAL o
+ * INTEGER PRIMARY KEY AUTOINCREMENT), los tipos de texto largo, los booleanos
+ * y los tipos de fecha.</p>
  *
  * <p>Útil para ingeniería inversa: replicar la estructura de una tabla en otro
  * servidor o guardar el esquema como un script.</p>
  */
 public class GeneradorCreateTable {
+
+    /** Máximo de caracteres de un VARCHAR en PostgreSQL. */
+    private static final int POSTGRESQL_MAX_VARCHAR = 10_485_760;
+
+    /** Máximo de caracteres de un VARCHAR en MySQL con utf8mb4 (límite de 65535 bytes por fila). */
+    private static final int MYSQL_MAX_VARCHAR = 16_383;
+
+    /**
+     * Definiciones de columnas ya armadas.
+     *
+     * @param columnas  cadenas de definición de cada columna
+     * @param pkEnLinea {@code true} si la clave primaria quedó declarada dentro de una
+     *                  columna (SQLite con {@code INTEGER PRIMARY KEY AUTOINCREMENT}) y por
+     *                  lo tanto no debe repetirse al final de la tabla
+     */
+    private record Definiciones(List<String> columnas, boolean pkEnLinea) {}
 
     /** Constructor privado — clase utilitaria, no instanciable. */
     private GeneradorCreateTable() {}
@@ -47,9 +68,15 @@ public class GeneradorCreateTable {
             DatabaseMetaData metadata = connection.getMetaData();
 
             List<String> primaryKeys = getPrimaryKeys(metadata, tableName);
-            List<String> columnDefinitions = getColumnDefinitions(metadata, tableName, motor);
 
-            return buildDDL(tableName, columnDefinitions, primaryKeys, motor);
+            // getColumns() se recorre una sola vez: IS_AUTOINCREMENT se lee en el mismo recorrido
+            Definiciones definiciones =
+                    getColumnDefinitions(metadata, tableName, motor, primaryKeys);
+
+            // Si la PK ya quedó declarada en la columna, no se repite al final de la tabla.
+            List<String> pkDeTabla = definiciones.pkEnLinea() ? new ArrayList<>() : primaryKeys;
+
+            return buildDDL(tableName, definiciones.columnas(), pkDeTabla, motor);
         }
     }
     // Metodos ayudantes privados (Helpers)
@@ -77,16 +104,27 @@ public class GeneradorCreateTable {
     /**
      * Construye las cadenas de definición de columnas a partir de los metadatos de la tabla.
      *
-     * @param metadata  metadatos de la base de datos
-     * @param tableName tabla a inspeccionar
-     * @param motor     motor objetivo, utilizado para dar formato a los nombres de los tipos
-     * @return lista de cadenas de definición de columnas (ej. {@code id INTEGER NOT NULL})
+     * <p>Recorre {@code getColumns()} una sola vez y lee en ese mismo recorrido la columna
+     * estándar {@code IS_AUTOINCREMENT}.</p>
+     *
+     * @param metadata    metadatos de la base de datos
+     * @param tableName   tabla a inspeccionar
+     * @param motor       motor objetivo, utilizado para dar formato a los nombres de los tipos
+     * @param primaryKeys columnas de la clave primaria, ya conocidas
+     * @return las definiciones de columnas y si la clave primaria quedó declarada en línea
      * @throws SQLException si falla el acceso a los metadatos
      */
-    private static List<String> getColumnDefinitions(DatabaseMetaData metadata,
+    private static Definiciones getColumnDefinitions(DatabaseMetaData metadata,
                                                      String tableName,
-                                                     TipoMotor motor) throws SQLException {
+                                                     TipoMotor motor,
+                                                     List<String> primaryKeys) throws SQLException {
         List<String> definitions = new ArrayList<>();
+        boolean pkEnLinea = false;
+
+        // SQLite solo admite AUTOINCREMENT junto a una PRIMARY KEY de una sola columna,
+        // declarada en la propia columna ("INTEGER PRIMARY KEY AUTOINCREMENT").
+        String columnaPkUnica =
+                (motor == TipoMotor.SQLITE && primaryKeys.size() == 1) ? primaryKeys.get(0) : null;
 
         try (ResultSet rs = metadata.getColumns(null, null, tableName, null)) {
             while (rs.next()) {
@@ -94,16 +132,65 @@ public class GeneradorCreateTable {
                 String typeName   = rs.getString("TYPE_NAME");
                 int    columnSize = rs.getInt("COLUMN_SIZE");
                 String nullable   = rs.getString("IS_NULLABLE");
+                boolean autoincremental = "YES".equals(rs.getString("IS_AUTOINCREMENT"));
 
-                String sqlType = buildSqlType(typeName, columnSize, motor);
-                String nullConstraint = "NO".equals(nullable) ? " NOT NULL" : "";
+                String definicion;
 
-                definitions.add("    " + quoteIdentifier(columnName, motor) + " "
-                        + sqlType + nullConstraint);
+                if (autoincremental && columnName.equals(columnaPkUnica)) {
+                    // Solo ocurre en SQLite
+                    definicion = "INTEGER PRIMARY KEY AUTOINCREMENT";
+                    pkEnLinea = true;
+                } else {
+                    // En SQLite el autoincremento solo es válido en la PK en línea;
+                    // en cualquier otro caso la columna se genera como una normal.
+                    boolean auto = motor != TipoMotor.SQLITE && autoincremental;
+
+                    String sqlType = auto
+                            ? buildAutoincrementType(typeName, motor)
+                            : buildSqlType(typeName, columnSize, motor);
+                    String nullConstraint = "NO".equals(nullable) ? " NOT NULL" : "";
+                    String autoSuffix = (auto && motor == TipoMotor.MYSQL) ? " AUTO_INCREMENT" : "";
+
+                    definicion = sqlType + nullConstraint + autoSuffix;
+                }
+
+                definitions.add("    " + quoteIdentifier(columnName, motor) + " " + definicion);
             }
         }
 
-        return definitions;
+        return new Definiciones(definitions, pkEnLinea);
+    }
+
+    /**
+     * Devuelve el tipo de una columna autoincremental para MySQL o PostgreSQL.
+     *
+     * <p>PostgreSQL usa los pseudotipos SERIAL; MySQL usa un tipo entero seguido de
+     * {@code AUTO_INCREMENT} (el sufijo lo agrega quien llama).</p>
+     *
+     * @param typeName nombre crudo del tipo proveniente de los metadatos
+     * @param motor    motor objetivo (MYSQL o POSTGRESQL)
+     * @return tipo entero o SERIAL correspondiente
+     */
+    private static String buildAutoincrementType(String typeName, TipoMotor motor) {
+        String upperType = typeName.toUpperCase();
+
+        if (motor == TipoMotor.POSTGRESQL) {
+            if (upperType.contains("BIGINT")
+                    || upperType.contains("BIGSERIAL")
+                    || upperType.equals("INT8")) return "BIGSERIAL";
+            if (upperType.contains("SMALLINT")
+                    || upperType.contains("TINYINT")
+                    || upperType.contains("SMALLSERIAL")
+                    || upperType.equals("INT2")) return "SMALLSERIAL";
+            return "SERIAL";
+        }
+
+        // MySQL: si el origen era SERIAL de PostgreSQL se convierte a su entero equivalente;
+        // si ya era un entero de MySQL (INT, BIGINT, TINYINT...) se conserva tal cual.
+        if (upperType.contains("BIGSERIAL"))   return "BIGINT";
+        if (upperType.contains("SMALLSERIAL")) return "SMALLINT";
+        if (upperType.contains("SERIAL"))      return "INT";
+        return typeName;
     }
 
     /**
@@ -118,23 +205,58 @@ public class GeneradorCreateTable {
         String upperType = typeName.toUpperCase();
 
         if (motor == TipoMotor.SQLITE) {
-            // SQLite utiliza afinidad de tipos flexible
-            if (upperType.contains("INT"))                 return "INTEGER";
-            if (upperType.contains("CHAR")
-                    || upperType.contains("TEXT")
-                    || upperType.contains("CLOB")) return "TEXT";
-            if (upperType.contains("REAL")
-                    || upperType.contains("FLOA")
-                    || upperType.contains("DOUB")) return "REAL";
-            if (upperType.contains("BLOB"))    return "BLOB";
-            return "NUMERIC";
+            return buildSqliteType(upperType);
         }
 
         if (motor == TipoMotor.POSTGRESQL) {
             return buildPostgresqlType(upperType, columnSize);
         }
 
-        // MySQL: mantiene el tipo original con tamaño cuando corresponda
+        return buildMysqlType(typeName, upperType, columnSize);
+    }
+
+    /**
+     * Convierte tipos comunes de JDBC y otros motores a tipos válidos de SQLite.
+     */
+    private static String buildSqliteType(String upperType) {
+        // SQLite no tiene tipo booleano: se guarda como entero 0/1
+        if (upperType.contains("BOOL") || upperType.equals("BIT")) return "INTEGER";
+
+        // SQLite no tiene tipos de fecha nativos: se conserva el nombre declarado
+        if (upperType.contains("TIMESTAMP")) return "TIMESTAMP";
+        if (upperType.contains("DATETIME"))  return "DATETIME";
+        if (upperType.equals("DATE") || upperType.equals("TIME")) return upperType;
+
+        // SQLite utiliza afinidad de tipos flexible
+        if (upperType.contains("INT"))                 return "INTEGER";
+        if (upperType.contains("CHAR")
+                || upperType.contains("TEXT")
+                || upperType.contains("CLOB")) return "TEXT";
+        if (upperType.contains("REAL")
+                || upperType.contains("FLOA")
+                || upperType.contains("DOUB")) return "REAL";
+        if (upperType.contains("BLOB"))    return "BLOB";
+        return "NUMERIC";
+    }
+
+    /**
+     * Convierte tipos comunes de JDBC y otros motores a tipos válidos de MySQL.
+     */
+    private static String buildMysqlType(String typeName, String upperType, int columnSize) {
+        // Texto largo: CLOB y LONGVARCHAR no existen en MySQL
+        if (upperType.contains("CLOB") || upperType.contains("LONGVARCHAR")) return "LONGTEXT";
+
+        // VARCHAR sin límite (PostgreSQL) o más grande de lo que cabe en una fila
+        if (upperType.contains("VARCHAR") && columnSize > MYSQL_MAX_VARCHAR) return "LONGTEXT";
+
+        // Booleanos
+        if (upperType.equals("BOOL") || upperType.equals("BOOLEAN")) return "BOOLEAN";
+
+        // Fechas: MySQL no maneja zona horaria en estos tipos
+        if (upperType.equals("TIMESTAMPTZ")) return "DATETIME";
+        if (upperType.equals("TIMETZ"))      return "TIME";
+
+        // Mantiene el tipo original con tamaño cuando corresponda
         if ((upperType.contains("VARCHAR") || upperType.contains("CHAR"))
                 && columnSize > 0) {
             return typeName + "(" + columnSize + ")";
@@ -150,17 +272,35 @@ public class GeneradorCreateTable {
         if (upperType.contains("SMALLSERIAL")) return "SMALLSERIAL";
         if (upperType.contains("BIGSERIAL"))   return "BIGSERIAL";
         if (upperType.contains("SERIAL"))      return "SERIAL";
-        if (upperType.contains("BOOL") || upperType.equals("BIT")) return "BOOLEAN";
+
+        // Booleanos: BIT(1) de MySQL equivale a BOOLEAN; un BIT de más bits es una cadena de bits
+        if (upperType.contains("BOOL")) return "BOOLEAN";
+        if (upperType.equals("BIT")) {
+            return columnSize > 1 ? "BIT(" + columnSize + ")" : "BOOLEAN";
+        }
+
+        // Texto largo
         if (upperType.contains("TEXT")
                 || upperType.contains("CLOB")
                 || upperType.contains("LONGVARCHAR")) return "TEXT";
         if (upperType.contains("VARCHAR")
                 || upperType.contains("CHARACTER VARYING")) {
+            if (columnSize > POSTGRESQL_MAX_VARCHAR) return "TEXT";
             return columnSize > 0 ? "VARCHAR(" + columnSize + ")" : "VARCHAR";
         }
         if (upperType.contains("CHAR") || upperType.contains("BPCHAR")) {
             return columnSize > 0 ? "CHAR(" + columnSize + ")" : "CHAR";
         }
+
+        // Fechas y horas (antes de los enteros para que INTERVAL no se confunda con INT)
+        if (upperType.contains("DATETIME")) return "TIMESTAMP";
+        if (upperType.contains("TIMESTAMP")
+                || upperType.equals("DATE")
+                || upperType.equals("TIME")
+                || upperType.equals("TIMETZ")
+                || upperType.equals("INTERVAL")) return upperType;
+        if (upperType.equals("YEAR")) return "SMALLINT";
+
         if (upperType.contains("BIGINT") || upperType.equals("INT8")) return "BIGINT";
         if (upperType.contains("SMALLINT")
                 || upperType.contains("TINYINT")
@@ -175,7 +315,6 @@ public class GeneradorCreateTable {
         if (upperType.contains("FLOAT")
                 || upperType.contains("REAL")
                 || upperType.equals("FLOAT4")) return "REAL";
-        if (upperType.contains("DATETIME")) return "TIMESTAMP";
         return upperType;
     }
 
@@ -185,6 +324,7 @@ public class GeneradorCreateTable {
      * @param tableName         nombre de la tabla
      * @param columnDefinitions lista de cadenas con las definiciones de columnas
      * @param primaryKeys       lista con los nombres de las columnas de la clave primaria
+     *                          que se declaran al final de la tabla
      * @param motor             motor objetivo
      * @return cadena DDL completa del CREATE TABLE
      */
