@@ -15,7 +15,7 @@ Este documento describe el flujo interno que sigue el sistema desde que se abre 
 [UI / Entrada de consulta]
 │
 ▼
-[open() - Conexión a BD]
+[ConnectionProvider.abrir(DBConfig) - Conexión a BD]
 │
 ▼
 [Validación de query]
@@ -37,14 +37,14 @@ Este documento describe el flujo interno que sigue el sistema desde que se abre 
 ### Paso 1: Entrada del usuario
 El usuario ingresa una consulta SQL desde la interfaz.
 
-### Paso 2: Apertura de conexión (open)
-Se establece conexión con la base de datos.
+### Paso 2: Apertura de conexión (`ConnectionProvider.abrir`)
+Se establece la conexión con la base de datos mediante `ConnectionProvider.abrir(DBConfig)`.
 
 ### Paso 3: Validación de la consulta
-Se identifica el tipo de query.
+Se valida e identifica el tipo de consulta utilizando `SqlValidator.tipo(sql)`.
 
-### Paso 4: Ejecución (executeSelect)
-Se ejecuta la consulta SELECT.
+### Paso 4: Ejecución (`EjecutorQuery.ejecutar`)
+Se ejecuta la consulta mediante `EjecutorQuery.ejecutar`, la cual delega en `ConnectionProvider.executeSelect` para procesar las consultas SELECT.
 
 ### Paso 5: Resultado
 Se construye un ResultadoQuery.

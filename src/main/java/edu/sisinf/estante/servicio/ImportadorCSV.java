@@ -1,9 +1,9 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
-import edu.sisinf.estante.core.ErrorPersistencia;
-import edu.sisinf.estante.dao.IConexionDAO;
-import edu.sisinf.estante.modelo.Conexion;
-import edu.sisinf.estante.modelo.ImportacionResultado;
+import edu.sisinf.chuspadb.core.ErrorPersistencia;
+import edu.sisinf.chuspadb.dao.IConexionDAO;
+import edu.sisinf.chuspadb.modelo.Conexion;
+import edu.sisinf.chuspadb.modelo.ImportacionResultado;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,15 +21,43 @@ import java.util.regex.Pattern;
  * Servicio para importar datos desde un archivo CSV a una tabla existente.
  *
  * La primera línea del CSV se usa como nombres de columnas.
- * Cada fila posterior genera un INSERT. Si una fila falla,
- * el error se registra y la importación continúa con la siguiente.
+ * Cada registro posterior genera un INSERT. Si un registro falla,
+ * el error se registra y la importación continúa con el siguiente.
+ *
+ * El delimitador puede indicarse (coma, punto y coma o tabulador) o detectarse
+ * automáticamente a partir de la línea de encabezado. Los campos encerrados entre
+ * comillas dobles pueden contener el delimitador y saltos de línea.
  */
 public class ImportadorCSV {
 
+    /** Delimitadores de campo admitidos. */
+    public enum Delimitador {
+        COMA(','),
+        PUNTO_Y_COMA(';'),
+        TABULADOR('\t');
+
+        private final char caracter;
+
+        Delimitador(char caracter) {
+            this.caracter = caracter;
+        }
+
+        public char getCaracter() {
+            return caracter;
+        }
+    }
+
+    /** Registro CSV lógico: puede ocupar varias líneas físicas si hay saltos dentro de comillas. */
+    private record Registro(String texto, int lineas) {}
+
     private static final Pattern IDENTIFICADOR_SEGURO = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
 
+    /** Marca de orden de bytes (BOM) que Excel agrega al guardar CSV en UTF-8. */
+    private static final String BOM_UTF8 = "\uFEFF";
+
     /**
-     * Importa los datos del CSV a la tabla indicada.
+     * Importa los datos del CSV a la tabla indicada, detectando el delimitador
+     * automáticamente a partir de la línea de encabezado.
      *
      * @param archivoCsv ruta al archivo CSV
      * @param tabla      nombre de la tabla destino
@@ -43,6 +71,27 @@ public class ImportadorCSV {
             Conexion conexion,
             IConexionDAO dao
     ) {
+        return importar(archivoCsv, tabla, conexion, dao, null);
+    }
+
+    /**
+     * Importa los datos del CSV a la tabla indicada usando el delimitador dado.
+     *
+     * @param archivoCsv ruta al archivo CSV
+     * @param tabla      nombre de la tabla destino
+     * @param conexion   datos de conexión a la base de datos
+     * @param dao        DAO para abrir la conexión JDBC
+     * @param delimitador delimitador a usar; si es {@code null}, se detecta a partir
+     *                    de la línea de encabezado (y si no se puede deducir, se usa la coma)
+     * @return {@link ImportacionResultado} con el resumen de la operación
+     */
+    public ImportacionResultado importar(
+            Path archivoCsv,
+            String tabla,
+            Conexion conexion,
+            IConexionDAO dao,
+            Delimitador delimitador
+    ) {
         int insertadas = 0;
         int fallidas = 0;
         List<String> errores = new ArrayList<>();
@@ -52,24 +101,31 @@ public class ImportadorCSV {
              Connection conn = dao.abrir(conexion)) {
 
             // Primera línea: cabeceras
-            String lineaCabecera = reader.readLine();
-            if (lineaCabecera == null || lineaCabecera.isBlank()) {
+            Registro cabecera = leerRegistro(reader);
+            if (cabecera == null || cabecera.texto().isBlank()) {
                 throw new ErrorPersistencia("El archivo CSV está vacío o no tiene cabeceras.");
             }
 
-            String[] columnas = parsearLinea(lineaCabecera);
+            String textoCabecera = quitarBom(cabecera.texto());
+
+            Delimitador usado = delimitador != null
+                    ? delimitador
+                    : detectarDelimitador(textoCabecera);
+            char separador = usado.getCaracter();
+
+            String[] columnas = parsearLinea(textoCabecera, separador);
             String sql = construirInsert(tabla, columnas);
 
-            String linea;
-            int numeroLinea = 2;
+            int numeroLinea = 1 + cabecera.lineas();
+            Registro registro;
 
-            while ((linea = reader.readLine()) != null) {
-                if (linea.isBlank()) {
-                    numeroLinea++;
+            while ((registro = leerRegistro(reader)) != null) {
+                if (registro.texto().isBlank()) {
+                    numeroLinea += registro.lineas();
                     continue;
                 }
 
-                String[] valores = parsearLinea(linea);
+                String[] valores = parsearLinea(registro.texto(), separador);
 
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     for (int i = 0; i < columnas.length; i++) {
@@ -83,7 +139,7 @@ public class ImportadorCSV {
                     errores.add("Línea " + numeroLinea + ": " + e.getMessage());
                 }
 
-                numeroLinea++;
+                numeroLinea += registro.lineas();
             }
 
         } catch (ErrorPersistencia e) {
@@ -97,6 +153,98 @@ public class ImportadorCSV {
         }
 
         return new ImportacionResultado(insertadas, fallidas, errores);
+    }
+
+    /**
+     * Lee el siguiente registro lógico del CSV.
+     *
+     * Si una línea termina dentro de un campo entre comillas, se siguen leyendo líneas
+     * hasta cerrar la comilla, de modo que un campo con saltos de línea queda en un solo
+     * registro. Si el archivo termina con una comilla sin cerrar, se entrega lo leído.
+     *
+     * @return el registro, o {@code null} si no quedan más líneas
+     */
+    private Registro leerRegistro(BufferedReader reader) throws IOException {
+        String linea = reader.readLine();
+        if (linea == null) {
+            return null;
+        }
+
+        StringBuilder registro = new StringBuilder(linea);
+        int lineas = 1;
+        boolean entreComillas = alternarComillas(linea, false);
+
+        while (entreComillas) {
+            String siguiente = reader.readLine();
+            if (siguiente == null) {
+                break;
+            }
+            registro.append('\n').append(siguiente);
+            lineas++;
+            entreComillas = alternarComillas(siguiente, entreComillas);
+        }
+
+        return new Registro(registro.toString(), lineas);
+    }
+
+    /**
+     * Devuelve el estado "dentro de comillas" al terminar de recorrer el texto.
+     * Una comilla escapada ("") alterna dos veces, por lo que no cambia el estado.
+     */
+    private boolean alternarComillas(String texto, boolean estadoInicial) {
+        boolean entreComillas = estadoInicial;
+        for (int i = 0; i < texto.length(); i++) {
+            if (texto.charAt(i) == '"') {
+                entreComillas = !entreComillas;
+            }
+        }
+        return entreComillas;
+    }
+
+    /**
+     * Detecta el delimitador contando cuántas veces aparece cada candidato, fuera de
+     * comillas, en la línea de encabezado. Gana el más frecuente; si ninguno aparece
+     * o hay empate, se conserva el primero en el orden coma, punto y coma, tabulador.
+     */
+    private Delimitador detectarDelimitador(String cabecera) {
+        Delimitador mejor = Delimitador.COMA;
+        int mayor = 0;
+
+        for (Delimitador candidato : Delimitador.values()) {
+            int cantidad = contarFueraDeComillas(cabecera, candidato.getCaracter());
+            if (cantidad > mayor) {
+                mayor = cantidad;
+                mejor = candidato;
+            }
+        }
+
+        return mejor;
+    }
+
+    /**
+     * Cuenta las apariciones de un carácter que no están dentro de comillas.
+     */
+    private int contarFueraDeComillas(String texto, char buscado) {
+        int cantidad = 0;
+        boolean entreComillas = false;
+
+        for (int i = 0; i < texto.length(); i++) {
+            char c = texto.charAt(i);
+            if (c == '"') {
+                entreComillas = !entreComillas;
+            } else if (c == buscado && !entreComillas) {
+                cantidad++;
+            }
+        }
+
+        return cantidad;
+    }
+
+    /**
+     * Quita la marca BOM del inicio del texto, si existe.
+     */
+    private String quitarBom(String texto) {
+        return texto.startsWith(BOM_UTF8) ? texto.substring(1) : texto;
     }
 
     /**
@@ -137,9 +285,10 @@ public class ImportadorCSV {
     }
 
     /**
-     * Parsea una línea CSV respetando valores entre comillas.
+     * Parsea un registro CSV respetando valores entre comillas, que pueden contener
+     * el delimitador y saltos de línea.
      */
-    private String[] parsearLinea(String linea) {
+    private String[] parsearLinea(String linea, char delimitador) {
         List<String> campos = new ArrayList<>();
         StringBuilder campo = new StringBuilder();
         boolean entreComillas = false;
@@ -154,7 +303,7 @@ public class ImportadorCSV {
                 } else {
                     entreComillas = !entreComillas;
                 }
-            } else if (c == ',' && !entreComillas) {
+            } else if (c == delimitador && !entreComillas) {
                 campos.add(campo.toString().trim());
                 campo.setLength(0);
             } else {

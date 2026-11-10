@@ -1,8 +1,8 @@
-# Modelo de Datos - Estante
+# Modelo de Datos - ChuspaDB
 
 ## 1. Visión General
 
-Estante es un gestor de bases de datos desarrollado en Java con JavaFX que permite conectarse, explorar y administrar bases de datos MySQL mediante una interfaz gráfica.
+ChuspaDB es un gestor de bases de datos desarrollado en Java con JavaFX que permite conectarse, explorar y administrar bases de datos MySQL mediante una interfaz gráfica.
 
 El sistema permite gestionar conexiones, ejecutar consultas SQL y explorar estructuras de bases de datos de forma visual e intuitiva.
 
@@ -129,7 +129,7 @@ Registra eventos y operaciones realizadas dentro del sistema.
 
 ## 2.7. FavoritoQuery
 
-Representa una consulta SQL guardada como favorita por el usuario para reutilizarla. Se implementa como un `record` inmutable (`edu.sisinf.estante.modelo.FavoritoQuery`).
+Representa una consulta SQL guardada como favorita por el usuario para reutilizarla. Se implementa como un `record` inmutable (`edu.sisinf.chuspadb.modelo.FavoritoQuery`).
 
 | Atributo | Tipo | Descripción |
 |---|---|---|
@@ -154,7 +154,7 @@ Representa una consulta SQL guardada como favorita por el usuario para reutiliza
 
 ## 2.8. EntradaHistorial
 
-Registra una query ejecutada durante la sesión, incluyendo su resultado y rendimiento. Se implementa como un `record` inmutable (`edu.sisinf.estante.modelo.EntradaHistorial`).
+Registra una query ejecutada durante la sesión, incluyendo su resultado y rendimiento. Se implementa como un `record` inmutable (`edu.sisinf.chuspadb.modelo.EntradaHistorial`).
 
 | Atributo | Tipo | Descripción |
 |---|---|---|
@@ -177,7 +177,7 @@ Registra una query ejecutada durante la sesión, incluyendo su resultado y rendi
 
 ## 2.9. ColumnaInfo
 
-Representa la metadata de una columna de una tabla, obtenida en tiempo real desde el motor de base de datos mediante JDBC (`DatabaseMetaData`). Se implementa como un `record` inmutable (`edu.sisinf.estante.modelo.ColumnaInfo`).
+Representa la metadata de una columna de una tabla, obtenida en tiempo real desde el motor de base de datos mediante JDBC (`DatabaseMetaData`). Se implementa como un `record` inmutable (`edu.sisinf.chuspadb.modelo.ColumnaInfo`).
 
 | Atributo | Tipo | Descripción |
 |---|---|---|

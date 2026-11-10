@@ -1,8 +1,8 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
-import edu.sisinf.estante.dao.IConexionDAO;
-import edu.sisinf.estante.modelo.Conexion;
-import edu.sisinf.estante.modelo.TipoMotor;
+import edu.sisinf.chuspadb.dao.IConexionDAO;
+import edu.sisinf.chuspadb.modelo.Conexion;
+import edu.sisinf.chuspadb.modelo.TipoMotor;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;

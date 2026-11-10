@@ -1,4 +1,4 @@
-package edu.sisinf.estante.dao;
+package edu.sisinf.chuspadb.dao;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -15,9 +15,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-import edu.sisinf.estante.core.ErrorConexion;
-import edu.sisinf.estante.modelo.Conexion;
-import edu.sisinf.estante.modelo.TipoMotor;
+import edu.sisinf.chuspadb.core.ErrorConexion;
+import edu.sisinf.chuspadb.modelo.Conexion;
+import edu.sisinf.chuspadb.modelo.TipoMotor;
 
 class ConexionDAOPostgreSQLTest {
 
@@ -151,5 +151,58 @@ class ConexionDAOPostgreSQLTest {
         ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
 
         assertThrows(ErrorConexion.class, () -> dao.getTablas("base_inexistente"));
+    }
+    
+    @Test
+    void construirUrlRespetaLaSintaxisJdbcPostgresql() {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+
+        Conexion conexion = conexionValida();
+        conexion.setHost("db.interno.local");
+        conexion.setPuerto(6543);
+        conexion.setBasedatos("ventas");
+
+        String url = dao.construirUrl(conexion);
+
+        assertTrue(url.matches("jdbc:postgresql://[^:/]+:\\d+/[^/]+"),
+                "La URL no respeta el formato jdbc:postgresql://host:puerto/base: " + url);
+        assertEquals("jdbc:postgresql://db.interno.local:6543/ventas", url);
+    }
+
+    @Test
+    void construirUrlUsaElPrefijoJdbcPostgresql() {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+
+        String url = dao.construirUrl(conexionValida());
+
+        assertTrue(url.startsWith("jdbc:postgresql://"),
+                "La URL no comienza con el prefijo jdbc:postgresql://: " + url);
+    }
+
+    @Test
+    void construirUrlUsaElPuerto5432ConCualquierHostSiSeOmiteElPuerto() {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+
+        Conexion conexion = conexionValida();
+        conexion.setHost("10.0.0.5");
+        conexion.setBasedatos("academico");
+        conexion.setPuerto(null);
+
+        String url = dao.construirUrl(conexion);
+
+        assertEquals("jdbc:postgresql://10.0.0.5:5432/academico", url);
+    }
+
+    @Test
+    void construirUrlConPuertoOmitidoRespetaLaSintaxis() {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+
+        Conexion conexion = conexionValida();
+        conexion.setPuerto(null);
+
+        String url = dao.construirUrl(conexion);
+
+        assertTrue(url.matches("jdbc:postgresql://[^:/]+:5432/[^/]+"),
+                "La URL con puerto omitido no respeta el formato esperado: " + url);
     }
 }

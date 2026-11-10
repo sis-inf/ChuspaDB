@@ -1,12 +1,13 @@
-package edu.sisinf.estante.controller;
+package edu.sisinf.chuspadb.controller;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.StackPane;
 
 /**
- * Controller principal de la ventana base de Estante.
+ * Controller principal de la ventana base de ChuspaDB.
  */
 public class VentanaPrincipalController {
 
@@ -34,6 +35,15 @@ public class VentanaPrincipalController {
     @FXML
     public void initialize() {
         menuSalir.setOnAction(event -> Platform.exit());
+
+        // Conectar el handler faltante para mostrar la información del proyecto
+        menuAcercaDe.setOnAction(event -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Acerca de");
+            alert.setHeaderText("ChuspaDB");
+            alert.setContentText("Versión: 0.1.0\nLicencia: MIT");
+            alert.showAndWait();
+        });
     }
 
     public MenuItem getMenuNuevaConexion() {

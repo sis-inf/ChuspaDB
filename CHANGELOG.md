@@ -23,6 +23,7 @@ y este proyecto adhiere a [SemVer](https://semver.org/spec/v2.0.0.html).
 - Limpieza y reestructuración de archivos sueltos y temporales en la raíz del proyecto.
 - `EjecutorQuery.ejecutar()` ahora lanza `ErrorQuery` en vez de devolver `ResultadoQuery.deError(...)`, unificando el manejo de errores SQL con `ConnectionProvider` y conservando el mensaje original del error.
 - `getTablas()` en los 3 DAO de conexión (MySQL, PostgreSQL, SQLite) ahora reutiliza los datos reales de la última conexión abierta, en vez de valores codificados como `localhost`.
+- Diálogo «Acerca de» conectado al menú, mostrando el nombre del proyecto, la versión `0.1.0` y la licencia MIT.
 
 ### Cambiado
 - Refactorizaciones estructurales y optimizaciones de rendimiento aplicadas a lo largo del sprint actual.
@@ -30,6 +31,24 @@ y este proyecto adhiere a [SemVer](https://semver.org/spec/v2.0.0.html).
 ## [0.1.0] - 2026-04-19
 
 ### Añadido
-- Estructura inicial del proyecto Estante.
+- Estructura inicial del proyecto ChuspaDB.
 - Configuración básica del repositorio y rama de desarrollo.
 - Creación de la carpeta de documentación (`docs/`).
+- **Conectividad multi-motor**
+  - Soporte para MySQL, PostgreSQL y SQLite mediante `ConexionDAOMySQL`, `ConexionDAOPostgreSQL` y `ConexionDAOSQLite`.
+  - Gestión de conexiones con `ConnectionProvider` y almacenamiento de las conexiones guardadas en `conexiones.json` mediante `RepositorioConexionesJSON`.
+  - Diálogo para crear nuevas conexiones.
+- **Editor SQL**
+  - Editor con resaltado de sintaxis.
+  - Ejecución asíncrona de consultas mediante `EjecutorQueryAsync`.
+  - Validación de operaciones DML.
+  - Generación de sentencias SQL mediante `GeneradorSQL`.
+  - Favoritos de consultas mediante `GestorFavoritos`.
+- **Explorador de esquemas**
+  - Exploración de esquemas y tablas mediante `ExploradorEsquemas`, mostrada en el árbol de conexiones y en el panel de información de tabla.
+- **Exportación**
+  - Exportación de resultados a CSV mediante `ExportadorCSV`.
+  - Exportación de resultados a JSON mediante `ExportadorJSON`.
+  - Exportación de resultados a Excel (.xlsx) mediante `ExportadorExcel`.
+- **Historial**
+  - Registro del historial de consultas mediante `HistorialQuerys` y panel de historial.

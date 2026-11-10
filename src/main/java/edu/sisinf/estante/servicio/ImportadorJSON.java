@@ -1,11 +1,11 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.sisinf.estante.core.ErrorPersistencia;
-import edu.sisinf.estante.dao.IConexionDAO;
-import edu.sisinf.estante.modelo.Conexion;
-import edu.sisinf.estante.modelo.ImportacionResultado;
+import edu.sisinf.chuspadb.core.ErrorPersistencia;
+import edu.sisinf.chuspadb.dao.IConexionDAO;
+import edu.sisinf.chuspadb.modelo.Conexion;
+import edu.sisinf.chuspadb.modelo.ImportacionResultado;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -23,8 +23,9 @@ import java.util.regex.Pattern;
 /**
  * Servicio para importar datos desde un archivo JSON a una tabla existente.
  *
- * El archivo debe contener un array de objetos, como el que genera
- * {@link ExportadorJSON}. Las claves del primer objeto se usan como
+ * El archivo debe contener un array no vacío de objetos, como el que genera
+ * {@link ExportadorJSON}. Esa estructura se valida por completo antes de abrir
+ * la conexión o insertar nada. Las claves del primer objeto se usan como
  * nombres de columnas. Cada objeto genera un INSERT. Si una fila falla,
  * el error se registra y la importación continúa con la siguiente.
  */
@@ -42,6 +43,8 @@ public class ImportadorJSON {
      * @param conexion    datos de conexión a la base de datos
      * @param dao         DAO para abrir la conexión JDBC
      * @return {@link ImportacionResultado} con el resumen de la operación
+     * @throws ErrorPersistencia si el JSON no es un array no vacío de objetos
+     *                           (el mensaje indica qué se encontró) o si falla la lectura
      */
     public ImportacionResultado importar(
             Path archivoJson,
@@ -56,15 +59,9 @@ public class ImportadorJSON {
         try (Reader reader = Files.newBufferedReader(archivoJson, StandardCharsets.UTF_8)) {
 
             JsonNode raiz = mapper.readTree(reader);
-            if (raiz == null || !raiz.isArray()) {
-                throw new ErrorPersistencia("El archivo JSON no contiene un array de filas.");
-            }
-            if (raiz.isEmpty()) {
-                return new ImportacionResultado(0, 0, errores);
-            }
-            if (!raiz.get(0).isObject()) {
-                throw new ErrorPersistencia("La fila 1 del archivo JSON no es un objeto.");
-            }
+
+            // Se valida toda la estructura antes de tocar la base de datos
+            validarEstructura(raiz);
 
             List<String> columnas = new ArrayList<>();
             Iterator<String> nombres = raiz.get(0).fieldNames();
@@ -80,10 +77,6 @@ public class ImportadorJSON {
             try (Connection conn = dao.abrir(conexion)) {
                 for (int f = 0; f < raiz.size(); f++) {
                     JsonNode fila = raiz.get(f);
-                    if (!fila.isObject()) {
-                        throw new ErrorPersistencia(
-                                "La fila " + (f + 1) + " del archivo JSON no es un objeto.");
-                    }
 
                     try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                         for (int i = 0; i < columnas.size(); i++) {
@@ -111,6 +104,51 @@ public class ImportadorJSON {
         }
 
         return new ImportacionResultado(insertadas, fallidas, errores);
+    }
+
+    /**
+     * Valida que el JSON tenga estructura tabular: un array no vacío cuyos
+     * elementos sean todos objetos.
+     *
+     * @param raiz nodo raíz leído del archivo
+     * @throws ErrorPersistencia con un mensaje que indica qué se encontró en lugar
+     *                           de la estructura esperada
+     */
+    private void validarEstructura(JsonNode raiz) {
+        if (raiz == null || raiz.isMissingNode()) {
+            throw new ErrorPersistencia(
+                    "El archivo JSON está vacío: se esperaba un array de objetos.");
+        }
+        if (!raiz.isArray()) {
+            throw new ErrorPersistencia(
+                    "La raíz del archivo JSON debe ser un array de objetos, pero se encontró "
+                            + describirTipo(raiz) + ".");
+        }
+        if (raiz.isEmpty()) {
+            throw new ErrorPersistencia(
+                    "El array del archivo JSON está vacío: debe contener al menos un objeto.");
+        }
+
+        for (int f = 0; f < raiz.size(); f++) {
+            JsonNode fila = raiz.get(f);
+            if (!fila.isObject()) {
+                throw new ErrorPersistencia(
+                        "La fila " + (f + 1) + " del archivo JSON debe ser un objeto, pero se encontró "
+                                + describirTipo(fila) + ".");
+            }
+        }
+    }
+
+    /**
+     * Describe en español el tipo de un nodo JSON, para los mensajes de error.
+     */
+    private String describirTipo(JsonNode nodo) {
+        if (nodo.isObject())  return "un objeto";
+        if (nodo.isTextual()) return "una cadena de texto";
+        if (nodo.isNumber())  return "un número";
+        if (nodo.isBoolean()) return "un valor booleano";
+        if (nodo.isNull())    return "null";
+        return "un valor de tipo desconocido";
     }
 
     /**

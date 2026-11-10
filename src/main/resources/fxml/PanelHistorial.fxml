@@ -9,9 +9,9 @@
 
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="edu.sisinf.estante.controller.PanelHistorialController"
+      fx:controller="edu.sisinf.chuspadb.controller.PanelHistorialController"
       spacing="8"
-      stylesheets="@../css/estante.css">
+      stylesheets="@../css/chuspadb.css">
 
     <padding>
         <Insets top="8" right="8" bottom="8" left="8"/>

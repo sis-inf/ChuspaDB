@@ -7,7 +7,7 @@
 
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="edu.sisinf.estante.controller.PanelInfoTablaController"
+      fx:controller="edu.sisinf.chuspadb.controller.PanelInfoTablaController"
       spacing="8"
       VBox.vgrow="ALWAYS">
 

@@ -1,6 +1,6 @@
-package edu.sisinf.estante.controller;
+package edu.sisinf.chuspadb.controller;
 
-import edu.sisinf.estante.modelo.EntradaHistorial;
+import edu.sisinf.chuspadb.modelo.EntradaHistorial;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Controller del panel de historial de queries de Estante.
+ * Controller del panel de historial de queries de ChuspaDB.
  *
  * <p>Muestra las últimas queries ejecutadas en la sesión en un ListView.
  * Expone hooks para que la integración reaccione al doble clic sobre
@@ -54,14 +54,14 @@ public class PanelHistorialController {
                         DateTimeFormatter.ofLocalizedDateTime(
                             FormatStyle.SHORT
                         ).withLocale(locale);
-                    
+
                     String hora = LocalDateTime
                         .ofInstant(
                             Instant.ofEpochMilli(entrada.timestamp()),
                             ZoneId.systemDefault()
                         )
                         .format(formatter);
-                 
+
                     String query = entrada.query().length() > MAX_QUERY_CHARS
                             ? entrada.query().substring(0, MAX_QUERY_CHARS) + "..."
                             : entrada.query();

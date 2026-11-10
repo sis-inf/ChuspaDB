@@ -2,7 +2,7 @@
 
 ## Introducción
 
-Estante permite conectarse a distintos motores de bases de datos a través de una arquitectura basada en DAOs (Data Access Objects, u Objetos de Accesi a Datos). Actualmente cuenta con implementaciones para MySQL, PostgreSQL y SQLite.
+ChuspaDB permite conectarse a distintos motores de bases de datos a través de una arquitectura basada en DAOs (Data Access Objects, u Objetos de Accesi a Datos). Actualmente cuenta con implementaciones para MySQL, PostgreSQL y SQLite.
 
 Esta guía describe el proceso recomendado para incorporar soporte a un nuevo motor de base de datos, siguiendo el patrón utilizado por las implementaciones existentes y evitando los errores de configuración más comunes.
 

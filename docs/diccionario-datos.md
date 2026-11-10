@@ -1,8 +1,8 @@
-# Diccionario de Datos - Sistema Estante
+# Diccionario de Datos - Sistema ChuspaDB
 
 | Información | Valor |
 |---|---|
-| Proyecto | Estante |
+| Proyecto | ChuspaDB |
 | Versión | 1.0 |
 | Motores de Base de Datos soportados | SQLite, MySQL, PostgreSQL (`TipoMotor`) |
 | Tecnología | Java + JavaFX |
@@ -12,7 +12,7 @@
 
 # Descripción General
 
-Este documento describe las estructuras de datos reales utilizadas por el sistema **Estante**, un gestor visual de bases de datos desarrollado en Java y JavaFX que soporta tres motores: SQLite, MySQL y PostgreSQL (enum `TipoMotor`).
+Este documento describe las estructuras de datos reales utilizadas por el sistema **ChuspaDB**, un gestor visual de bases de datos desarrollado en Java y JavaFX que soporta tres motores: SQLite, MySQL y PostgreSQL (enum `TipoMotor`).
 
 El sistema no mantiene tablas SQL propias: persiste las conexiones y las consultas favoritas en archivos JSON, y mantiene el historial de consultas ejecutadas únicamente en memoria durante la sesión. El objetivo de este diccionario es definir de manera clara esos archivos JSON, records y reglas de negocio utilizados por el sistema para la administración de conexiones, la ejecución de consultas SQL y el registro temporal del historial de operaciones.
 
@@ -53,7 +53,7 @@ Almacena los perfiles de conexión configurados por el usuario. Permite guardar 
 
 # favoritos.json
 
-Almacena las consultas SQL marcadas como favoritas por el usuario para reutilizarlas rápidamente. Corresponde al record `FavoritoQuery` (`edu.sisinf.estante.modelo.FavoritoQuery`).
+Almacena las consultas SQL marcadas como favoritas por el usuario para reutilizarlas rápidamente. Corresponde al record `FavoritoQuery` (`edu.sisinf.ChuspaDB.modelo.FavoritoQuery`).
 
 | Campo           | Descripción                                  |
 | --------------- | ---------------------------------------------- |
@@ -68,7 +68,7 @@ Almacena las consultas SQL marcadas como favoritas por el usuario para reutiliza
 
 El historial de consultas ejecutadas **no se persiste**: se mantiene únicamente en memoria interna durante la sesión y se pierde al cerrar la aplicación.
 
-Mientras la aplicación está en ejecución, cada consulta genera un `EntradaHistorial` (`edu.sisinf.estante.modelo.EntradaHistorial`) con la siguiente forma:
+Mientras la aplicación está en ejecución, cada consulta genera un `EntradaHistorial` (`edu.sisinf.ChuspaDB.modelo.EntradaHistorial`) con la siguiente forma:
 
 | Nombre Campo  | Tipo de Dato | Descripción                                       | Restricciones |
 | ------------- | ------------ | -------------------------------------------------- | ------------- |

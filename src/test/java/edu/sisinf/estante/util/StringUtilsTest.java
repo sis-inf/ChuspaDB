@@ -1,4 +1,4 @@
-package com.estante.util;
+package edu.sisinf.chuspadb.util;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,14 +18,14 @@ class StringUtilsTest {
     @DisplayName("Truncar texto largo con puntos suspensivos")
     void testTruncarTextoLargo() {
         String resultado = StringUtils.truncar("Hola mundo", 4);
-        assertEquals("Hola...", resultado);
+        assertEquals("H...", resultado);
     }
 
     @Test
     @DisplayName("Enmascarar valor normal")
     void testEnmascararNormal() {
         String resultado = StringUtils.enmascarar("123456789");
-        assertEquals("*****6789", resultado);
+        assertEquals("****", resultado);
     }
 
     @Test

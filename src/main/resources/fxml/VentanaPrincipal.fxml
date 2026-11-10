@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.StackPane?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
-            fx:controller="edu.sisinf.estante.controller.VentanaPrincipalController"
+            fx:controller="edu.sisinf.chuspadb.controller.VentanaPrincipalController"
             prefWidth="1100.0"
             prefHeight="700.0">
 

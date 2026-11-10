@@ -1,12 +1,14 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import edu.sisinf.estante.modelo.Esquema;
-import edu.sisinf.estante.modelo.Tabla;
-import edu.sisinf.estante.modelo.ColumnaInfo;
-import edu.sisinf.estante.core.ErrorQuery;
+import edu.sisinf.chuspadb.modelo.Esquema;
+import edu.sisinf.chuspadb.modelo.Tabla;
+import edu.sisinf.chuspadb.modelo.ColumnaInfo;
+import edu.sisinf.chuspadb.core.ErrorQuery;
 
 /**
  * Servicio stateless para explorar la estructura de la base de datos.
@@ -105,5 +107,34 @@ public class ExploradorEsquemas {
         }
 
         return columnas;
+    }
+
+    /**
+    * Obtiene las claves foráneas de una tabla.
+    *
+    * @return mapa con el nombre de la columna FK como clave y el nombre de la
+    *         tabla referenciada como valor. Vacío si la tabla no tiene FK.
+    */
+   public Map<String, String> getClavesForaneas(Connection conexion, String esquema, String tabla) {
+      Map<String, String> claves = new LinkedHashMap<>();
+
+      try {
+          DatabaseMetaData metaData = conexion.getMetaData();
+
+          try (ResultSet rs = metaData.getImportedKeys(esquema, null, tabla)) {
+              while (rs.next()) {
+                  String columna = rs.getString("FKCOLUMN_NAME");
+                  String tablaReferenciada = rs.getString("PKTABLE_NAME");
+
+                  if (columna != null && tablaReferenciada != null) {
+                      claves.put(columna, tablaReferenciada);
+                 }
+              }
+          }
+      } catch (SQLException e) {
+          throw new ErrorQuery("No se pudieron obtener las claves foráneas de la tabla " + tabla, e);
+      }
+
+      return claves;
     }
 }

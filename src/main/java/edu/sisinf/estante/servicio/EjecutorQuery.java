@@ -1,4 +1,4 @@
-package edu.sisinf.estante.servicio;
+package edu.sisinf.chuspadb.servicio;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -8,9 +8,9 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.sisinf.estante.core.ErrorQuery;
-import edu.sisinf.estante.modelo.ResultadoQuery;
-import edu.sisinf.estante.util.SqlValidator;
+import edu.sisinf.chuspadb.core.ErrorQuery;
+import edu.sisinf.chuspadb.modelo.ResultadoQuery;
+import edu.sisinf.chuspadb.util.SqlValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

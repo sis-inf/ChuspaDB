@@ -1,7 +1,7 @@
-package edu.sisinf.estante;
+package edu.sisinf.chuspadb;
 
 /**
- * Clase de entrada para el JAR ejecutable.
+ * Clase de entrada de ChuspaDB para el JAR ejecutable.
  *
  * JavaFX requiere una clase lanzadora que no extienda Application
  * para que el JAR shaded funcione con java -jar sin argumentos

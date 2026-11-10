@@ -1,18 +1,18 @@
-package edu.sisinf.estante;
+package edu.sisinf.chuspadb;
 
-import edu.sisinf.estante.config.ConfiguracionApp;
-import edu.sisinf.estante.controller.*;
-import edu.sisinf.estante.core.ErrorConexion;
-import edu.sisinf.estante.dao.*;
-import edu.sisinf.estante.modelo.Conexion;
-import edu.sisinf.estante.modelo.Esquema;
-import edu.sisinf.estante.modelo.ResultadoQuery;
-import edu.sisinf.estante.modelo.TipoMotor;
-import edu.sisinf.estante.servicio.EjecutorQuery;
-import edu.sisinf.estante.servicio.EjecutorQueryAsync;
-import edu.sisinf.estante.servicio.ExploradorEsquemas;
-import edu.sisinf.estante.servicio.ExportadorCSV;
-import edu.sisinf.estante.util.SqlValidator;
+import edu.sisinf.chuspadb.config.ConfiguracionApp;
+import edu.sisinf.chuspadb.controller.*;
+import edu.sisinf.chuspadb.core.ErrorConexion;
+import edu.sisinf.chuspadb.dao.*;
+import edu.sisinf.chuspadb.modelo.Conexion;
+import edu.sisinf.chuspadb.modelo.Esquema;
+import edu.sisinf.chuspadb.modelo.ResultadoQuery;
+import edu.sisinf.chuspadb.modelo.TipoMotor;
+import edu.sisinf.chuspadb.servicio.EjecutorQuery;
+import edu.sisinf.chuspadb.servicio.EjecutorQueryAsync;
+import edu.sisinf.chuspadb.servicio.ExploradorEsquemas;
+import edu.sisinf.chuspadb.servicio.ExportadorCSV;
+import edu.sisinf.chuspadb.util.SqlValidator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,11 +113,11 @@ public class App extends Application {
 
         scene.getStylesheets().add(
                 getClass()
-                        .getResource("/css/estante.css")
+                        .getResource("/css/chuspadb.css")
                         .toExternalForm()
         );
 
-        stage.setTitle("Estante");
+        stage.setTitle("ChuspaDB");
 
         stage.setScene(scene);
 
@@ -266,7 +266,7 @@ public class App extends Application {
             dialog.initModality(Modality.APPLICATION_MODAL);
 
             dialog.setScene(new Scene(root));
-            // El botón Probar se registra solo en el FXML (handleProbarConexion).
+
             controller.setDaos(daos);
 
             controller.setOnGuardar(() -> {
@@ -331,7 +331,7 @@ public class App extends Application {
 
             nodo.getChildren().clear();
 
-            for (Esquema esquema : esquemas){
+            for (Esquema esquema : esquemas) {
                 nodo.getChildren().add(
                         new TreeItem<>(esquema.getNombre())
                 );

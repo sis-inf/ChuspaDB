@@ -1,4 +1,4 @@
-# Checklist antes de usar Estante con bases de datos de producción
+# Checklist antes de usar ChuspaDB con bases de datos de producción
 
 ## Objetivo
 

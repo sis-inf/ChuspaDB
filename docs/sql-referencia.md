@@ -2,7 +2,7 @@
 
 ## Introducción
 
-Estante permite trabajar con distintos motores de bases de datos mediante JDBC.
+ChuspaDB permite trabajar con distintos motores de bases de datos mediante JDBC.
 
 Actualmente los motores soportados son:
 
@@ -196,9 +196,9 @@ SELECT * FROM clientes;
 
 ---
 
-## Validaciones realizadas por Estante
+## Validaciones realizadas por ChuspaDB
 
-Actualmente Estante valida y clasifica consultas SQL mediante la clase `SqlValidator`.
+Actualmente ChuspaDB valida y clasifica consultas SQL mediante la clase `SqlValidator`.
 
 Las sentencias reconocidas son:
 
@@ -210,13 +210,13 @@ Las sentencias reconocidas son:
 - DROP
 - ALTER
 
-Además, Estante identifica algunas operaciones potencialmente destructivas, por ejemplo:
+Además, ChuspaDB identifica algunas operaciones potencialmente destructivas, por ejemplo:
 
 - DELETE
 - DROP
 - UPDATE sin cláusula WHERE
 
-Actualmente Estante no realiza conversiones automáticas de sintaxis entre MySQL, PostgreSQL y SQLite ni muestra advertencias específicas sobre incompatibilidades entre motores.
+Actualmente ChuspaDB no realiza conversiones automáticas de sintaxis entre MySQL, PostgreSQL y SQLite ni muestra advertencias específicas sobre incompatibilidades entre motores.
 
 Por este motivo, el usuario debe utilizar la sintaxis adecuada para el motor seleccionado.
 ---

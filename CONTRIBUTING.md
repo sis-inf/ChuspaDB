@@ -32,7 +32,7 @@ cd PROYECTO
 [#3-agrega-el-repo-original-como-upstream](#3-agrega-el-repo-original-como-upstream)
 
 ```
-git remote add upstream https://github.com/sis-inf/estante.git
+git remote add upstream https://github.com/sis-inf/ChuspaDB.git
 ```
 
 ### 4. Sincroniza antes de trabajar
@@ -105,7 +105,7 @@ git push origin fix/descripcion o feat/descripcion
 
 [#8-abre-un-pull-request](#8-abre-un-pull-request)
 
-- Base: `sis-inf/estante` → rama `dev` (Los PRs deben abrirse contra la rama dev, no contra main)
+- Base: `sis-inf/ChuspaDB` → rama `dev` (Los PRs deben abrirse contra la rama dev, no contra main)
 - Compare: `TU-USUARIO/PROYECTO` → tu rama
 
 #### Recomendaciones para el PR
@@ -162,13 +162,11 @@ chore: configurar GitHub Actions para CI
 
 [#convención-de-paquetes-java](#convención-de-paquetes-java)
 
-Los directorios de paquetes deben seguir estrictamente las convenciones canónicas de Java para el proyecto. Todo el código fuente nuevo o modificado debe organizarse bajo el paquete raíz: `edu.sisinf.estante`
+Los directorios de paquetes deben seguir estrictamente las convenciones canónicas de Java para ChuspaDB.
 
-Utilizando el subpaquete correcto según su propósito en el sistema:
+Todo el código fuente nuevo o modificado debe organizarse bajo el paquete raíz utilizado actualmente por el proyecto, respetando la estructura existente en `src/main/java`.
 
-- `edu.sisinf.estante.core`
-- `edu.sisinf.estante.util`
-- `edu.sisinf.estante.config`
+Se debe utilizar el subpaquete correspondiente según su propósito en el sistema, manteniendo la coherencia con los paquetes existentes.
 
 ---
 
@@ -203,8 +201,8 @@ contribuidor puede realizar siguiendo estos pasos en orden:
    Actualiza `docs/dao-guia.md` describiendo el nuevo motor agregado y cualquier
    particularidad de su implementación.
 
-> ✅ Sigue siempre la convención de paquetes Java (`edu.sisinf.estante.*`) y la convención
-> de commits/ramas descrita en este documento al implementar estos pasos.
+> ✅ Sigue siempre la convención de paquetes Java utilizada actualmente por ChuspaDB
+> y la convención de commits/ramas descrita en este documento al implementar estos pasos.
 
 ---
 

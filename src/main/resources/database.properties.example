@@ -1,5 +1,5 @@
 db.host=localhost
 db.puerto=3306
-db.nombre=estante
+db.nombre=chuspadb
 db.usuario=root
 db.password=

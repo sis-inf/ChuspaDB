@@ -1,8 +1,8 @@
-# Estilo de Commits para Estante
+# Estilo de Commits para ChuspaDB
 
 ## Introducción
 
-El proyecto *Estante* utiliza la convención *Conventional Commits* para mantener un historial de cambios claro, consistente y fácil de revisar.
+El proyecto *ChuspaDB* utiliza la convención *Conventional Commits* para mantener un historial de cambios claro, consistente y fácil de revisar.
 
 ## Formato
 
@@ -36,7 +36,7 @@ docs(docs): actualizar guía de instalación
 
 ---
 
-## Ámbitos recomendados para Estante
+## Ámbitos recomendados para ChuspaDB
 
 | Ámbito     | Uso                   |
 | ---------- | --------------------- |

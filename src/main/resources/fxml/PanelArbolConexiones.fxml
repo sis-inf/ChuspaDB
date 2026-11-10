@@ -8,7 +8,7 @@
 
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="edu.sisinf.estante.controller.PanelArbolConexionesController"
+      fx:controller="edu.sisinf.chuspadb.controller.PanelArbolConexionesController"
       VBox.vgrow="ALWAYS">
 
     <ToolBar>

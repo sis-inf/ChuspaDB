@@ -2,7 +2,7 @@ Guía del patrón DAO y cómo agregar soporte a un nuevo motor
 
 Introducción
 
-El proyecto estante utiliza el patrón DAO (Data Access Object) para desacoplar la lógica de acceso a datos de la lógica principal de la aplicación. Este enfoque permite trabajar con distintos motores de bases de datos mediante una interfaz común denominada "IConexionDAO".
+El proyecto ChuspaDB utiliza el patrón DAO (Data Access Object) para desacoplar la lógica de acceso a datos de la lógica principal de la aplicación. Este enfoque permite trabajar con distintos motores de bases de datos mediante una interfaz común denominada "IConexionDAO".
 
 Actualmente el sistema soporta los motores MySQL, SQLite y PostgreSQL. Cada implementación concreta encapsula los detalles específicos de conexión y configuración del motor correspondiente, permitiendo que el resto de la aplicación interactúe con una API consistente.
 
@@ -106,7 +106,7 @@ Implementación utilizada para bases de datos MySQL. Requiere un host, puerto y 
 
 Ejemplo:
 
-jdbc:mysql://localhost:3306/estante
+jdbc:mysql://localhost:3306/ChuspaDB
 
 ---
 
@@ -116,7 +116,7 @@ Implementación basada en archivos locales. No requiere servidor independiente.
 
 Ejemplo:
 
-jdbc:sqlite:estante.db
+jdbc:sqlite:ChuspaDB.db
 
 ---
 
@@ -126,7 +126,7 @@ Implementación orientada a entornos donde se requieren capacidades avanzadas de
 
 Ejemplo:
 
-jdbc:postgresql://localhost:5432/estante
+jdbc:postgresql://localhost:5432/ChuspaDB
 
 ---
 

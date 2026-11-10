@@ -8,7 +8,7 @@
 
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="edu.sisinf.estante.controller.PanelEstadisticasController"
+      fx:controller="edu.sisinf.chuspadb.controller.PanelEstadisticasController"
       spacing="16"
       style="-fx-padding: 20;">
 

@@ -13,7 +13,7 @@ Este documento complementa la [arquitectura general](arquitectura.md) y describe
 | `util` | Utilidades reutilizables | `SqlValidator` |
 | `controller` | Coordinación entre vistas y lógica | `PanelEditorSQLController`, `PanelArbolConexionesController`, `DialogoNuevaConexionController` |
 | `config` | Configuración de la aplicación | `ConfiguracionApp` |
-| `dto` | Objetos de transferencia utilizados entre componentes | clases DTO definidas en el paquete `edu.sisinf.estante.dto` |
+| `dto` | Objetos de transferencia utilizados entre componentes | clases DTO definidas en el paquete `edu.sisinf.chuspadb.dto` |
 
 Las vistas se almacenan como recursos FXML bajo `src/main/resources/fxml`; no forman un paquete Java `vista`.
 

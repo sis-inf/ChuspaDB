@@ -1,8 +1,11 @@
-package edu.sisinf.estante.controller;
+package edu.sisinf.chuspadb.controller;
 
-import edu.sisinf.estante.dao.IConexionDAO;
-import edu.sisinf.estante.modelo.Conexion;
-import edu.sisinf.estante.modelo.TipoMotor;
+import edu.sisinf.chuspadb.config.DBConfig;
+import edu.sisinf.chuspadb.core.ConnectionProvider;
+import edu.sisinf.chuspadb.dao.IConexionDAO;
+import edu.sisinf.chuspadb.modelo.Conexion;
+import edu.sisinf.chuspadb.modelo.TipoMotor;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -12,6 +15,7 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
+import java.sql.Connection;
 import java.util.Map;
 
 /**
@@ -22,7 +26,8 @@ import java.util.Map;
  *
  * <p>El handler de "Guardar" se inyecta desde fuera del controller. El de "Probar"
  * está registrado en el FXML ({@code onAction="#handleProbarConexion"}) y prueba la
- * conexión real con el DAO recibido en {@link #setDaos}.</p>
+ * conexión real en segundo plano con {@link ConnectionProvider}, usando la URL que
+ * arma el DAO recibido en {@link #setDaos}.</p>
  */
 public class DialogoNuevaConexionController {
 
@@ -256,7 +261,9 @@ public class DialogoNuevaConexionController {
     /**
      * Handler del botón "Probar", registrado en el FXML
      * ({@code onAction="#handleProbarConexion"}).
-     * Valida el formulario y prueba la conexión real con el DAO del motor seleccionado.
+     * Valida el formulario y prueba la conexión real con {@link ConnectionProvider}
+     * en un hilo de fondo, para no congelar la interfaz. Muestra un icono de éxito
+     * si conecta o el mensaje de error JDBC si falla.
      */
     @FXML
     private void handleProbarConexion() {
@@ -264,19 +271,65 @@ public class DialogoNuevaConexionController {
             return;
         }
 
+        DBConfig config;
         try {
             Conexion conexion = construirConexion();
             IConexionDAO dao = daos.get(conexion.getTipoMotor());
-
-            long inicio = System.currentTimeMillis();
-            boolean ok = dao.probar(conexion);
-            long tiempo = System.currentTimeMillis() - inicio;
-
-            etiquetaEstado.setText(
-                    (ok ? "✅ Conexión exitosa" : "❌ Conexión fallida")
-                            + " (" + tiempo + " ms)");
+            config = new DBConfig(
+                    dao.construirUrl(conexion),
+                    conexion.getUsuario(),
+                    conexion.getPassword(),
+                    driverDe(conexion.getTipoMotor()));
         } catch (Exception e) {
             etiquetaEstado.setText("❌ " + e.getMessage());
+            etiquetaEstado.setStyle("-fx-text-fill: #e74c3c;");
+            return;
         }
+
+        Task<Long> prueba = new Task<>() {
+            @Override
+            protected Long call() throws Exception {
+                long inicio = System.currentTimeMillis();
+                try (Connection ignored = ConnectionProvider.abrir(config)) {
+                    return System.currentTimeMillis() - inicio;
+                }
+            }
+        };
+
+        prueba.setOnSucceeded(event -> {
+            botonProbar.setDisable(false);
+            etiquetaEstado.setText("✅ Conexión exitosa (" + prueba.getValue() + " ms)");
+            etiquetaEstado.setStyle("-fx-text-fill: #27ae60;");
+        });
+
+        prueba.setOnFailed(event -> {
+            botonProbar.setDisable(false);
+            Throwable error = prueba.getException();
+            etiquetaEstado.setText("❌ No se pudo conectar: "
+                    + (error != null ? error.getMessage() : "error desconocido"));
+            etiquetaEstado.setStyle("-fx-text-fill: #e74c3c;");
+        });
+
+        botonProbar.setDisable(true);
+        etiquetaEstado.setText("⏳ Probando conexión...");
+        etiquetaEstado.setStyle("");
+
+        Thread hilo = new Thread(prueba, "probar-conexion");
+        hilo.setDaemon(true);
+        hilo.start();
+    }
+
+    /**
+     * Devuelve la clase del driver JDBC para el motor indicado.
+     *
+     * @param motor motor seleccionado
+     * @return nombre completo de la clase del driver
+     */
+    private static String driverDe(TipoMotor motor) {
+        return switch (motor) {
+            case SQLITE -> "org.sqlite.JDBC";
+            case MYSQL -> "com.mysql.cj.jdbc.Driver";
+            case POSTGRESQL -> "org.postgresql.Driver";
+        };
     }
 }

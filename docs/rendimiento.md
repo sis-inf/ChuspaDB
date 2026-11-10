@@ -2,13 +2,13 @@
 
 ## Introducción
 
-Las consultas que recuperan grandes volúmenes de información pueden afectar el rendimiento de la aplicación y aumentar el consumo de memoria. Este documento describe las consideraciones actuales de rendimiento de Estante y algunas recomendaciones para trabajar con conjuntos de datos extensos.
+Las consultas que recuperan grandes volúmenes de información pueden afectar el rendimiento de la aplicación y aumentar el consumo de memoria. Este documento describe las consideraciones actuales de rendimiento de ChuspaDB y algunas recomendaciones para trabajar con conjuntos de datos extensos.
 
 ---
 
 ## Límites recomendados
 
-Actualmente Estante no impone un límite máximo de filas sobre los resultados obtenidos desde la base de datos.
+Actualmente ChuspaDB no impone un límite máximo de filas sobre los resultados obtenidos desde la base de datos.
 
 Los resultados recuperados son almacenados en memoria y posteriormente mostrados en la interfaz mediante una tabla de resultados.
 
@@ -35,7 +35,7 @@ si la tabla contiene cientos de miles o millones de registros.
 
 ## LIMIT automático
 
-Actualmente Estante no agrega cláusulas `LIMIT` de manera automática.
+Actualmente ChuspaDB no agrega cláusulas `LIMIT` de manera automática.
 
 Las consultas SQL son ejecutadas exactamente como fueron escritas por el usuario.
 
