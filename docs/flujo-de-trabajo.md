@@ -1,6 +1,6 @@
-# Flujo de Trabajo con Git - Forking Workflow para ChuspaDB
+# Flujo de Trabajo con Git - Forking Workflow para Estante
 
-Este documento describe paso a paso el Forking Workflow utilizado en el proyecto **ChuspaDB**.
+Este documento describe paso a paso el Forking Workflow utilizado en el proyecto **Estante**.
 
 ---
 
@@ -10,14 +10,14 @@ El fork es una copia del repositorio original en tu cuenta personal de GitHub.
 
 ### Pasos:
 
-1. Ve al repositorio original en GitHub: `https://github.com/sis-inf/ChuspaDB`
+1. Ve al repositorio original en GitHub: `https://github.com/sis-inf/estante`
 2. Haz clic en el botón **Fork** (esquina superior derecha).
 
    ![Fork button en GitHub](./img/fork-button.png)
    *Captura: Botón Fork en la página principal del repositorio*
 
 3. Selecciona tu cuenta personal como destino del fork.
-4. Espera a que GitHub termine de crear la copia. Serás redirigido automáticamente a `https://github.com/TU-USUARIO/ChuspaDB`.
+4. Espera a que GitHub termine de crear la copia. Serás redirigido automáticamente a `https://github.com/TU-USUARIO/estante`.
 
    ![Fork creado exitosamente](./img/fork-creado.png)
    *Captura: Repositorio forkeado en tu cuenta personal*
@@ -25,14 +25,14 @@ El fork es una copia del repositorio original en tu cuenta personal de GitHub.
 5. Clona tu fork en tu máquina local:
 
 ```bash
-git clone https://github.com/TU-USUARIO/ChuspaDB.git
-cd ChuspaDB
+git clone https://github.com/TU-USUARIO/estante.git
+cd estante
 ```
 
 6. Agrega el repositorio original como remote `upstream`:
 
 ```bash
-git remote add upstream https://github.com/sis-inf/ChuspaDB.git
+git remote add upstream https://github.com/sis-inf/estante.git
 git remote -v  # Verifica que aparezcan origin y upstream
 ```
 
@@ -151,7 +151,7 @@ Un Pull Request (PR) permite proponer tus cambios al repositorio original.
 
 ### Pasos:
 
-1. Ve a tu fork en GitHub: `https://github.com/TU-USUARIO/ChuspaDB`
+1. Ve a tu fork en GitHub: `https://github.com/TU-USUARIO/estante`
 2. GitHub mostrará un banner amarillo sugiriendo crear un PR desde tu rama recién subida. Haz clic en **"Compare & pull request"**.
 
    ![Banner de PR en GitHub](./img/pr-banner.png)
@@ -160,7 +160,7 @@ Un Pull Request (PR) permite proponer tus cambios al repositorio original.
 3. Completa el formulario del PR:
    - **Título:** `docs: agregar guía del flujo de trabajo con Git`
    - **Descripción:** Explica brevemente qué incluye el PR y referencia el issue con `Closes #9`
-   - **Base:** `dev` del repositorio `sis-inf/ChuspaDB`
+   - **Base:** `dev` del repositorio `sis-inf/estante`
    - **Compare:** `docs/flujo-de-trabajo` de tu fork
 
    ![Formulario del Pull Request](./img/pr-formulario.png)
@@ -181,7 +181,7 @@ Un Pull Request (PR) permite proponer tus cambios al repositorio original.
 
 ```
 ! [rejected] docs/flujo-de-trabajo -> docs/flujo-de-trabajo (non-fast-forward)
-error: failed to push some refs to 'https://github.com/TU-USUARIO/ChuspaDB.git'
+error: failed to push some refs to 'https://github.com/TU-USUARIO/estante.git'
 ```
 
 **Solución:**
@@ -254,8 +254,8 @@ Merge hacia main
 
 | Paso | Comando / Acción |
 |------|-----------------|
-| Clonar fork | `git clone https://github.com/TU-USUARIO/ChuspaDB.git` |
-| Agregar upstream | `git remote add upstream https://github.com/sis-inf/ChuspaDB.git` |
+| Clonar fork | `git clone https://github.com/TU-USUARIO/estante.git` |
+| Agregar upstream | `git remote add upstream https://github.com/sis-inf/estante.git` |
 | Actualizar main | `git pull upstream main` |
 | Crear rama | `git checkout -b nombre-de-la-rama` |
 | Ver cambios | `git status` |
