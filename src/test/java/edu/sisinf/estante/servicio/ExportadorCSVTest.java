@@ -1,3 +1,4 @@
+
 package edu.sisinf.chuspadb.servicio;
 
 import edu.sisinf.chuspadb.core.ErrorPersistencia;
@@ -62,7 +63,7 @@ class ExportadorCSVTest {
     }
 
     /**
-     * Verifica que el número de filas en el CSV coincide con el ResultadoQuery.
+     * Verifica que el número de filas coincide con el ResultadoQuery.
      */
     @Test
     void exportar_debeGenerarMismasFilasQueResultado() throws IOException {
@@ -80,12 +81,11 @@ class ExportadorCSVTest {
         exportador.exportar(resultado, archivo);
 
         List<String> lineas = Files.readAllLines(archivo.toPath());
-        // 1 cabecera + 3 filas de datos
         assertEquals(4, lineas.size());
     }
 
     /**
-     * Verifica que el archivo es generado en la ruta indicada.
+     * Verifica que el archivo se genera en la ruta indicada.
      */
     @Test
     void exportar_debeCrearArchivoEnRutaIndicada() throws IOException {
@@ -109,7 +109,7 @@ class ExportadorCSVTest {
     void exportar_debeEscribirCeldaVaciaParaNull() throws IOException {
         ResultadoQuery resultado = ResultadoQuery.deLectura(
                 List.of("id", "nombre"),
-                List.of(List.of(1, null)),
+                List.of(Arrays.asList(1, null)),
                 10L
         );
 
@@ -118,6 +118,65 @@ class ExportadorCSVTest {
 
         List<String> lineas = Files.readAllLines(archivo.toPath());
         assertEquals("1,", lineas.get(1));
+    }
+
+    /**
+     * Verifica que las celdas con comas se envuelven entre comillas dobles.
+     */
+    @Test
+    void exportar_debeEscaparValoresConComas() throws IOException {
+        ResultadoQuery resultado = ResultadoQuery.deLectura(
+                List.of("nombre"),
+                List.of(List.of("Ana, María")),
+                10L
+        );
+
+        File archivo = directorioTemp.resolve("comas.csv").toFile();
+        exportador.exportar(resultado, archivo);
+
+        String contenido = Files.readString(archivo.toPath());
+
+        assertTrue(contenido.contains("\"Ana, María\""));
+    }
+
+    /**
+     * Verifica que las comillas dobles internas se duplican según RFC 4180.
+     */
+    @Test
+    void exportar_debeEscaparComillasDobles() throws IOException {
+        ResultadoQuery resultado = ResultadoQuery.deLectura(
+                List.of("comentario"),
+                List.of(List.of("Dijo \"hola\"")),
+                10L
+        );
+
+        File archivo = directorioTemp.resolve("comillas.csv").toFile();
+        exportador.exportar(resultado, archivo);
+
+        String contenido = Files.readString(archivo.toPath());
+
+        assertTrue(contenido.contains("\"Dijo \"\"hola\"\"\""));
+    }
+
+    /**
+     * Verifica que los saltos de línea internos se conservan entre comillas.
+     */
+    @Test
+    void exportar_debeEscaparSaltosDeLinea() throws IOException {
+        ResultadoQuery resultado = ResultadoQuery.deLectura(
+                List.of("descripcion"),
+                List.of(List.of("Primera línea\nSegunda línea")),
+                10L
+        );
+
+        File archivo = directorioTemp.resolve("saltos.csv").toFile();
+        exportador.exportar(resultado, archivo);
+
+        String contenido = Files.readString(archivo.toPath());
+
+        assertTrue(contenido.contains(
+                "\"Primera línea\nSegunda línea\""
+        ));
     }
 
     /**
