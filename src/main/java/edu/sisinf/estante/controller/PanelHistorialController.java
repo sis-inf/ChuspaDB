@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.input.MouseButton;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -38,46 +39,54 @@ public class PanelHistorialController {
 
     /**
      * Inicializa el ListView con celda personalizada y registra
-     * el manejador de doble clic.
+     * el manejador de doble clic en cada celda.
      */
     @FXML
     public void initialize() {
-        listaHistorial.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(EntradaHistorial entrada, boolean empty) {
-                super.updateItem(entrada, empty);
-                if (empty || entrada == null) {
-                    setText(null);
-                } else {
-                    Locale locale = Locale.getDefault();
-                    DateTimeFormatter formatter =
-                        DateTimeFormatter.ofLocalizedDateTime(
-                            FormatStyle.SHORT
-                        ).withLocale(locale);
+        listaHistorial.setCellFactory(lv -> {
+            ListCell<EntradaHistorial> celda = new ListCell<>() {
+                @Override
+                protected void updateItem(EntradaHistorial entrada, boolean empty) {
+                    super.updateItem(entrada, empty);
+                    if (empty || entrada == null) {
+                        setText(null);
+                    } else {
+                        Locale locale = Locale.getDefault();
+                        DateTimeFormatter formatter =
+                            DateTimeFormatter.ofLocalizedDateTime(
+                                FormatStyle.SHORT
+                            ).withLocale(locale);
 
-                    String hora = LocalDateTime
-                        .ofInstant(
-                            Instant.ofEpochMilli(entrada.timestamp()),
-                            ZoneId.systemDefault()
-                        )
-                        .format(formatter);
+                        String hora = LocalDateTime
+                            .ofInstant(
+                                Instant.ofEpochMilli(entrada.timestamp()),
+                                ZoneId.systemDefault()
+                            )
+                            .format(formatter);
 
-                    String query = entrada.query().length() > MAX_QUERY_CHARS
-                            ? entrada.query().substring(0, MAX_QUERY_CHARS) + "..."
-                            : entrada.query();
-                    setText("[" + hora + "] " + query);
+                        String query = entrada.query().length() > MAX_QUERY_CHARS
+                                ? entrada.query().substring(0, MAX_QUERY_CHARS) + "..."
+                                : entrada.query();
+                        setText("[" + hora + "] " + query);
+                    }
                 }
-            }
-        });
+            };
 
-        listaHistorial.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2) {
-                EntradaHistorial seleccionada =
-                        listaHistorial.getSelectionModel().getSelectedItem();
-                if (seleccionada != null && onQuerySeleccionada != null) {
-                    onQuerySeleccionada.accept(seleccionada.query());
+            // El doble clic se maneja en la celda: solo actúa si la celda
+            // tiene contenido, así un clic en espacio vacío no reutiliza
+            // una selección anterior.
+            celda.setOnMouseClicked(event -> {
+                if (event.getButton() == MouseButton.PRIMARY
+                        && event.getClickCount() == 2
+                        && !celda.isEmpty()
+                        && celda.getItem() != null
+                        && onQuerySeleccionada != null) {
+                    // Solo se lee la entrada; el registro del historial no se modifica.
+                    onQuerySeleccionada.accept(celda.getItem().query());
                 }
-            }
+            });
+
+            return celda;
         });
     }
 
