@@ -6,8 +6,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -23,7 +21,11 @@ import edu.sisinf.chuspadb.modelo.TipoMotor;
 
 class ConexionDAOMySQLTest {
 
-    private static final String PARAMETRO_SSL = "useSSL=false";
+    // Parametros que construirUrl agrega despues del '?'.
+    private static final String PARAMS_SIN_SSL =
+            "useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+    private static final String PARAMS_CON_SSL =
+            "useSSL=true&requireSSL=true&serverTimezone=UTC&allowPublicKeyRetrieval=true";
 
     private Conexion conexionValida() {
         Conexion conexion = new Conexion();
@@ -36,12 +38,19 @@ class ConexionDAOMySQLTest {
         return conexion;
     }
 
-    private Conexion conexionCon(String host, int puerto, String basedatos) {
+    // Importante: setTipoMotor(MYSQL) fija el puerto en 3306, por eso se llama antes de setPuerto.
+    private Conexion conexionCon(String host, Integer puerto, String basedatos) {
         Conexion conexion = new Conexion();
         conexion.setTipoMotor(TipoMotor.MYSQL);
         conexion.setHost(host);
         conexion.setPuerto(puerto);
         conexion.setBasedatos(basedatos);
+        return conexion;
+    }
+
+    private Conexion conexionConSsl(String host, Integer puerto, String basedatos) {
+        Conexion conexion = conexionCon(host, puerto, basedatos);
+        conexion.setUsarSSL(true);
         return conexion;
     }
 
@@ -67,20 +76,43 @@ class ConexionDAOMySQLTest {
         assertTrue(url.startsWith("jdbc:mysql://192.168.1.10:3307/tienda"));
     }
 
+    // ---------------------------------------------------------------
+    // Parametros de conexion: SSL deshabilitado (valor por defecto)
+    // ---------------------------------------------------------------
+
     @Test
-    void construirUrlTieneElFormatoJdbcConParametroSsl() {
+    void construirUrlSinSslDevuelveLaUrlExacta() {
         ConexionDAOMySQL dao = new ConexionDAOMySQL();
 
         String url = dao.construirUrl(conexionCon("localhost", 3306, "tienda"));
 
-        assertTrue(url.startsWith("jdbc:mysql://localhost:3306/tienda?"),
-                "La URL debe separar la base de datos de los parametros con '?': " + url);
-        assertTrue(url.contains(PARAMETRO_SSL),
-                "La URL debe incluir " + PARAMETRO_SSL + ": " + url);
+        assertEquals("jdbc:mysql://localhost:3306/tienda"
+                + "?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true", url);
     }
 
     @Test
-    void construirUrlUsaUnSoloSeparadorDeParametros() {
+    void conexionNuevaTieneSslDeshabilitadoPorDefecto() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+        Conexion conexion = conexionCon("localhost", 3306, "tienda");
+
+        assertFalse(conexion.isUsarSSL());
+        assertTrue(dao.construirUrl(conexion).contains("useSSL=false"));
+    }
+
+    @Test
+    void construirUrlSinSslIncluyeTimezoneYPublicKeyRetrieval() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        String url = dao.construirUrl(conexionCon("localhost", 3306, "tienda"));
+
+        assertTrue(url.contains("serverTimezone=UTC"), "Falta serverTimezone=UTC en: " + url);
+        assertTrue(url.contains("allowPublicKeyRetrieval=true"),
+                "Falta allowPublicKeyRetrieval=true en: " + url);
+        assertFalse(url.contains("requireSSL"), "Sin SSL no debe aparecer requireSSL: " + url);
+    }
+
+    @Test
+    void construirUrlTieneUnSoloSeparadorDeParametros() {
         ConexionDAOMySQL dao = new ConexionDAOMySQL();
 
         String url = dao.construirUrl(conexionCon("localhost", 3306, "tienda"));
@@ -88,6 +120,61 @@ class ConexionDAOMySQLTest {
         assertEquals(1, url.chars().filter(c -> c == '?').count(),
                 "La URL debe tener un unico '?': " + url);
     }
+
+    // ---------------------------------------------------------------
+    // Parametros de conexion: SSL habilitado
+    // ---------------------------------------------------------------
+
+    @Test
+    void construirUrlConSslDevuelveLaUrlExacta() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        String url = dao.construirUrl(conexionConSsl("localhost", 3306, "tienda"));
+
+        assertEquals("jdbc:mysql://localhost:3306/tienda"
+                + "?useSSL=true&requireSSL=true&serverTimezone=UTC&allowPublicKeyRetrieval=true", url);
+    }
+
+    @Test
+    void construirUrlConSslExigeSslYConservaTimezoneYPublicKeyRetrieval() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        String url = dao.construirUrl(conexionConSsl("localhost", 3306, "tienda"));
+
+        assertTrue(url.contains("useSSL=true"), "Falta useSSL=true en: " + url);
+        assertTrue(url.contains("requireSSL=true"), "Falta requireSSL=true en: " + url);
+        assertTrue(url.contains("serverTimezone=UTC"), "Falta serverTimezone=UTC en: " + url);
+        assertTrue(url.contains("allowPublicKeyRetrieval=true"),
+                "Falta allowPublicKeyRetrieval=true en: " + url);
+        assertFalse(url.contains("useSSL=false"), "No debe aparecer useSSL=false: " + url);
+    }
+
+    @Test
+    void construirUrlConSslRespetaHostPuertoYBaseDeDatos() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        String url = dao.construirUrl(conexionConSsl("db.ejemplo.com", 3307, "ventas"));
+
+        assertEquals("jdbc:mysql://db.ejemplo.com:3307/ventas?" + PARAMS_CON_SSL, url);
+    }
+
+    @Test
+    void activarYDesactivarSslCambiaSoloLosParametros() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+        Conexion conexion = conexionCon("localhost", 3306, "tienda");
+
+        conexion.setUsarSSL(true);
+        String urlConSsl = dao.construirUrl(conexion);
+        conexion.setUsarSSL(false);
+        String urlSinSsl = dao.construirUrl(conexion);
+
+        assertEquals("jdbc:mysql://localhost:3306/tienda?" + PARAMS_CON_SSL, urlConSsl);
+        assertEquals("jdbc:mysql://localhost:3306/tienda?" + PARAMS_SIN_SSL, urlSinSsl);
+    }
+
+    // ---------------------------------------------------------------
+    // Hosts y puertos
+    // ---------------------------------------------------------------
 
     @Test
     void construirUrlRespetaDistintosHostsYPuertos() {
@@ -104,40 +191,55 @@ class ConexionDAOMySQLTest {
 
         for (Object[] caso : casos) {
             String host = (String) caso[0];
-            int puerto = (Integer) caso[1];
+            Integer puerto = (Integer) caso[1];
 
             String url = dao.construirUrl(conexionCon(host, puerto, "tienda"));
 
-            String esperado = "jdbc:mysql://" + host + ":" + puerto + "/tienda?";
-            assertTrue(url.startsWith(esperado),
-                    "Se esperaba que la URL empiece con " + esperado + " pero fue: " + url);
-            assertTrue(url.contains(PARAMETRO_SSL),
-                    "Falta " + PARAMETRO_SSL + " en: " + url);
+            assertEquals("jdbc:mysql://" + host + ":" + puerto + "/tienda?" + PARAMS_SIN_SSL, url);
         }
     }
 
     @Test
-    void construirUrlCambiaSoloLoQueCambiaLaConexion() {
+    void construirUrlUsaPuertoPorDefectoCuandoElPuertoEsNulo() {
         ConexionDAOMySQL dao = new ConexionDAOMySQL();
 
-        String urlA = dao.construirUrl(conexionCon("localhost", 3306, "tienda"));
-        String urlB = dao.construirUrl(conexionCon("localhost", 3307, "tienda"));
-        String urlC = dao.construirUrl(conexionCon("otro-host", 3306, "tienda"));
+        String url = dao.construirUrl(conexionCon("localhost", null, "tienda"));
 
-        assertNotEquals(urlA, urlB);
-        assertNotEquals(urlA, urlC);
-        assertNotEquals(urlB, urlC);
+        assertEquals("jdbc:mysql://localhost:3306/tienda?" + PARAMS_SIN_SSL, url);
+    }
+
+    @Test
+    void construirUrlCambiaCuandoCambianHostOPuerto() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        String urlBase = dao.construirUrl(conexionCon("localhost", 3306, "tienda"));
+        String urlOtroPuerto = dao.construirUrl(conexionCon("localhost", 3307, "tienda"));
+        String urlOtroHost = dao.construirUrl(conexionCon("otro-host", 3306, "tienda"));
+
+        assertNotEquals(urlBase, urlOtroPuerto);
+        assertNotEquals(urlBase, urlOtroHost);
+        assertNotEquals(urlOtroPuerto, urlOtroHost);
     }
 
     @Test
     void construirUrlNoIncluyeUsuarioNiPassword() {
         ConexionDAOMySQL dao = new ConexionDAOMySQL();
 
-        String url = dao.construirUrl(conexionValida());
+        String urlSinSsl = dao.construirUrl(conexionValida());
+        Conexion conSsl = conexionValida();
+        conSsl.setUsarSSL(true);
+        String urlConSsl = dao.construirUrl(conSsl);
 
-        assertFalse(url.contains("root"), "La URL no debe contener el usuario: " + url);
-        assertFalse(url.contains("secreta"), "La URL no debe contener la password: " + url);
+        assertFalse(urlSinSsl.contains("root") || urlSinSsl.contains("secreta"),
+                "La URL no debe contener credenciales: " + urlSinSsl);
+        assertFalse(urlConSsl.contains("root") || urlConSsl.contains("secreta"),
+                "La URL no debe contener credenciales: " + urlConSsl);
     }
+
+    // ---------------------------------------------------------------
+    // Caracteres especiales en el nombre de la base de datos.
+    // Comportamiento actual: construirUrl NO codifica el nombre, lo inserta tal cual.
+    // ---------------------------------------------------------------
 
     @Test
     void construirUrlConservaGuionesYGuionesBajosEnLaBaseDeDatos() {
@@ -148,32 +250,75 @@ class ConexionDAOMySQLTest {
         for (String nombre : nombres) {
             String url = dao.construirUrl(conexionCon("localhost", 3306, nombre));
 
-            assertTrue(url.startsWith("jdbc:mysql://localhost:3306/" + nombre + "?"),
-                    "El nombre " + nombre + " debe quedar intacto en: " + url);
+            assertEquals("jdbc:mysql://localhost:3306/" + nombre + "?" + PARAMS_SIN_SSL, url);
         }
     }
 
     @Test
-    void construirUrlManejaCaracteresEspecialesEnLaBaseDeDatos() {
+    void construirUrlNoCodificaEspaciosEnLaBaseDeDatos() {
         ConexionDAOMySQL dao = new ConexionDAOMySQL();
 
-        String[] nombres = {"mi base", "educación", "año_2024", "base#1"};
+        String url = dao.construirUrl(conexionCon("localhost", 3306, "mi base"));
 
-        for (String nombre : nombres) {
-            String url = dao.construirUrl(conexionCon("localhost", 3306, nombre));
+        assertEquals("jdbc:mysql://localhost:3306/mi base?" + PARAMS_SIN_SSL, url);
+        assertFalse(url.contains("%20"), "El espacio no se codifica: " + url);
+    }
 
-            // El nombre puede aparecer tal cual o codificado como URL; ambas formas son validas.
-            String codificado = URLEncoder.encode(nombre, StandardCharsets.UTF_8).replace("+", "%20");
-            String prefijo = "jdbc:mysql://localhost:3306/";
+    @Test
+    void construirUrlNoCodificaTildesNiEnieEnLaBaseDeDatos() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
 
-            assertTrue(url.startsWith(prefijo),
-                    "La URL debe conservar el host y el puerto: " + url);
-            assertTrue(url.contains(nombre) || url.contains(codificado),
-                    "No se encontro el nombre '" + nombre + "' (ni su forma codificada) en: " + url);
-            assertTrue(url.contains(PARAMETRO_SSL),
-                    "Los parametros de conexion se perdieron con el nombre '" + nombre + "': " + url);
+        String urlTilde = dao.construirUrl(conexionCon("localhost", 3306, "educación"));
+        String urlEnie = dao.construirUrl(conexionCon("localhost", 3306, "año_2024"));
+
+        assertEquals("jdbc:mysql://localhost:3306/educación?" + PARAMS_SIN_SSL, urlTilde);
+        assertEquals("jdbc:mysql://localhost:3306/año_2024?" + PARAMS_SIN_SSL, urlEnie);
+    }
+
+    @Test
+    void construirUrlNoCodificaElNumeralEnLaBaseDeDatos() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        String url = dao.construirUrl(conexionCon("localhost", 3306, "base#1"));
+
+        assertEquals("jdbc:mysql://localhost:3306/base#1?" + PARAMS_SIN_SSL, url);
+        assertFalse(url.contains("%23"), "El '#' no se codifica: " + url);
+    }
+
+    @Test
+    void construirUrlConCaracteresEspecialesConSslConservaLosParametros() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        String url = dao.construirUrl(conexionConSsl("localhost", 3306, "mi base"));
+
+        assertEquals("jdbc:mysql://localhost:3306/mi base?" + PARAMS_CON_SSL, url);
+    }
+
+    @Test
+    void getTablasRechazaNombresConCaracteresEspeciales() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        String[] invalidos = {
+                "mi-base", "mi base", "educación", "año_2024", "base#1",
+                "tienda;DROP DATABASE x", "base.tabla", ""
+        };
+
+        for (String nombre : invalidos) {
+            assertThrows(ErrorConexion.class, () -> dao.getTablas(nombre),
+                    "Debia rechazar el nombre: '" + nombre + "'");
         }
     }
+
+    @Test
+    void getTablasRechazaNombreNulo() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        assertThrows(ErrorConexion.class, () -> dao.getTablas(null));
+    }
+
+    // ---------------------------------------------------------------
+    // Comportamiento existente de abrir / probar / getTablas
+    // ---------------------------------------------------------------
 
     @Test
     void abrirFallaSiElMotorNoEsMySQL() {
