@@ -11,8 +11,8 @@ Este documento describe el ciclo de vida de una consulta SQL desde que el usuari
            │
            ▼
 ┌──────────────────────┐
-│ SqlValidator verifica│
-│ la consulta          │
+│ SqlValidator detecta │
+│ si es destructiva    │
 └──────────┬───────────┘
            │
            ▼
@@ -64,7 +64,7 @@ Este documento describe el ciclo de vida de una consulta SQL desde que el usuari
            ▼
 ┌──────────────────────┐
 │ SqlValidator o       │
-│ EjecutorQueryAsync   │
+│ EjecutorQuery        │
 │ detecta un error     │
 └──────────┬───────────┘
            │
@@ -86,75 +86,120 @@ Este documento describe el ciclo de vida de una consulta SQL desde que el usuari
 │ informa el fallo     │
 └──────────────────────┘
 ```
+
 ## Componentes involucrados
-
-### ConnectionProvider
-
-Responsable de obtener una conexión válida a la base de datos utilizando la configuración activa. Actúa como punto de acceso para los componentes que necesitan ejecutar consultas.
-
-### EjecutorQuery
-
-Realiza la ejecución efectiva de la sentencia SQL mediante JDBC. Procesa la consulta recibida y genera el resultado correspondiente.
 
 ### EjecutorQueryAsync
 
-Ejecuta consultas en segundo plano para evitar bloqueos de la interfaz gráfica. Coordina la ejecución asíncrona y la entrega de resultados al usuario.
+Ejecuta la consulta en un hilo de segundo plano (`Task` de JavaFX sobre un
+`Thread` daemon) para que la interfaz no se bloquee. En ese hilo abre la
+conexión con `dao.abrir(conexion)` (`IConexionDAO`), delega la ejecución en
+`EjecutorQuery` y cierra la conexión al terminar mediante try-with-resources.
+El resultado se entrega a la interfaz con los callbacks `onSuccess` (recibe un
+`ResultadoQuery`) y `onError` (recibe la excepción), ambos invocados en el hilo
+de JavaFX con `Platform.runLater`. También ofrece `cancelarConsultaActiva()`.
 
-### QueryResult
+### EjecutorQuery
 
-Contiene el resultado de la ejecución de una consulta, incluyendo datos devueltos, metadatos de columnas e información asociada a la operación realizada.
+Ejecuta la sentencia mediante JDBC sobre la conexión que recibe, sin abrirla ni
+cerrarla. Usa `SqlValidator.tipo()` para decidir el camino: si es un `SELECT`
+ejecuta `executeQuery` y lee columnas y filas; en otro caso ejecuta
+`executeUpdate`. Mide el tiempo de ejecución y devuelve un `ResultadoQuery`. Si
+ocurre una `SQLException`, la registra en el log y lanza un `ErrorQuery`.
+
+### ResultadoQuery
+
+Clase `modelo.ResultadoQuery`: es el resultado que participa en el flujo
+principal. La producen `EjecutorQuery` y `EjecutorQueryAsync`, y la consumen
+`PanelEditorSQLController` y `PanelResultadoQueryController` (también los
+exportadores). Contiene:
+
+- `tipo`: `LECTURA`, `ESCRITURA` o `ERROR`.
+- `columnas` y `filas`, con `totalFilas` (solo en lecturas).
+- `filasAfectadas` (solo en escrituras).
+- `tiempoMs`: tiempo de ejecución en milisegundos.
+- `mensaje`: texto de error (tipo `ERROR`).
+
+No almacena los tipos SQL de las columnas.
+
+### ConnectionProvider y dto.QueryResult
+
+`ConnectionProvider` es una clase utilitaria con métodos estáticos. `abrir()`
+carga el driver y obtiene la conexión con `DriverManager.getConnection()`, sin
+pool de conexiones. Su método `executeSelect()` devuelve un `dto.QueryResult`,
+un DTO que contiene únicamente nombres de columnas y filas (sin tipos SQL).
+
+Estas dos clases **no participan en el flujo principal** descrito en este
+documento: la ejecución desde el editor pasa por `EjecutorQueryAsync` y
+`EjecutorQuery`, que trabajan con `ResultadoQuery`.
 
 ### PanelEditorSQLController
 
-Obtiene la consulta escrita por el usuario e inicia el flujo de validación y ejecución.
+Obtiene la consulta escrita por el usuario. Al pulsar Ejecutar (o Ctrl+Enter)
+ignora el texto vacío y, si `SqlValidator.esDestructiva()` lo indica, pide
+confirmación con `DialogoConfirmacionDML`. Luego muestra un indicador de
+progreso, deshabilita el botón y delega la ejecución en el callback `onEjecutar`, conectado por la aplicación a `EjecutorQueryAsync`. El resultado o el error vuelven por los callbacks `onResultado` y `onError`, y el indicador se
+oculta con `ocultarSpinner()`.
 
 ### PanelResultadoQueryController
 
-Se encarga de renderizar los datos obtenidos y presentarlos en la interfaz gráfica.
+Se encarga de renderizar los datos obtenidos y presentarlos en la interfaz
+gráfica.
 
 ## Recolección de metadatos
 
-Tras la ejecución de la consulta, se recopilan los metadatos asociados al resultado obtenido.
+`EjecutorQuery` recopila los datos del resultado mientras ejecuta la consulta:
 
-Entre los elementos recopilados se encuentran:
+- **Lecturas (`SELECT`):** nombres de columna (con `getColumnLabel`, es decir,
+  el alias si existe), las filas leídas con `getObject`, el total de filas y el
+  tiempo de ejecución.
+- **Escrituras:** número de filas afectadas y tiempo de ejecución.
 
-- Nombres de columnas.
-- Tipos de datos.
-- Cantidad de registros obtenidos.
-- Información necesaria para la representación en la interfaz.
+Todo se guarda en un `ResultadoQuery`. No se almacenan los tipos SQL de las
+columnas.
 
-Estos datos son almacenados dentro de `QueryResult` para su posterior visualización.
+## Obtención de la conexión
+
+`EjecutorQueryAsync` obtiene la conexión con `dao.abrir(conexion)` en el hilo
+de segundo plano y la cierra al terminar la ejecución (éxito, error o
+cancelación). En el código documentado no se usa un pool de conexiones: cada
+ejecución abre su propia conexión.
 
 ## Manejo de excepciones y cancelación
 
-Durante la ejecución pueden producirse errores de validación, conexión o ejecución SQL.
+### Excepciones
 
-Ante una excepción:
+1. `EjecutorQuery` captura la `SQLException`, la registra en el log y lanza un
+   `ErrorQuery`.
+2. `EjecutorQueryAsync` hace fallar el `Task` y entrega la excepción al
+   callback `onError`, en el hilo de JavaFX.
+3. La interfaz decide cómo informar al usuario.
 
-1. El error es detectado por los componentes de ejecución.
-2. El evento puede registrarse en el historial.
-3. Se notifica al usuario mediante la interfaz.
-4. La barra de estado actualiza el resultado de la operación.
+### Cancelación manual
 
-Las consultas de larga duración pueden ser canceladas o interrumpidas según los mecanismos de control implementados por la aplicación.
+`cancelarConsultaActiva()` marca la cancelación como solicitada y llama a
+`Statement.cancel()` sobre el statement en curso. Devuelve `true` si había un
+statement activo.
+
+Cuando se cancela, `onError` recibe una `ConsultaCancelada`, lo que permite a
+la interfaz distinguir una cancelación de un fallo real. Si el driver devuelve
+un resultado a pesar de la cancelación, ese resultado se descarta.
 
 ## Control del tiempo de ejecución
 
-La ejecución asíncrona permite supervisar consultas que pueden requerir tiempos prolongados.
-
-Si una operación excede el tiempo esperado:
-
-- La ejecución puede ser interrumpida.
-- El usuario recibe una notificación.
-- La aplicación mantiene la capacidad de respuesta de la interfaz.
+La ejecución asíncrona evita que la interfaz se congele durante consultas
+largas. **No existe un timeout automático**: una consulta que tarda mucho
+sigue ejecutándose hasta terminar, fallar o ser cancelada manualmente con
+`cancelarConsultaActiva()`. Lo único que se mide es el tiempo total de
+ejecución (`tiempoMs` en `ResultadoQuery`).
 
 ## Resumen
 
 1. El usuario escribe una consulta SQL.
-2. La consulta es validada por `SqlValidator`.
-3. Si la operación corresponde a una instrucción DML, se solicita confirmación mediante `DialogoConfirmacionDML`.
-4. La ejecución se realiza mediante `EjecutorQueryAsync` en un hilo de segundo plano.
+2. Al ejecutar, `PanelEditorSQLController` ignora el texto vacío y consulta a `SqlValidator` si la sentencia es destructiva.
+3. Si lo es, se solicita confirmación mediante `DialogoConfirmacionDML`; si el usuario cancela, no se ejecuta.
+4. La ejecución se realiza mediante `EjecutorQueryAsync` en un hilo de segundo plano: abre la conexión con `dao.abrir()`, delega en `EjecutorQuery` y entrega un `ResultadoQuery` por los callbacks `onSuccess` u `onError`.
 5. La consulta se registra en el historial mediante `HistorialQuerys.agregar()`.
 6. Los resultados se muestran en `PanelResultadoQueryController`.
 7. `BarraEstadoController` actualiza el estado de la operación.
-8. Ante errores, se informa al usuario y se actualiza el estado correspondiente.
+8. Ante errores, se informa al usuario y se actualiza el estado correspondiente. La consulta en curso puede cancelarse manualmente con `cancelarConsultaActiva()`; no existe un timeout automático.
