@@ -1,5 +1,7 @@
 package edu.sisinf.chuspadb.util;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -189,45 +191,44 @@ class SqlValidatorTest {
         assertFalse(SqlValidator.esLectura(null), "Null no debe lanzar excepción y ser false");
         assertFalse(SqlValidator.esDML(null), "Null no debe lanzar excepción y ser false");
     }
+
     // -------------------------------------------------------------------------
-// Balanceo y validación sintáctica
-// -------------------------------------------------------------------------
+    // Balanceo y validación sintáctica
+    // -------------------------------------------------------------------------
 
-@Test
-@DisplayName("Debe aceptar una consulta válida con subquery")
-void esSentenciaValida_conSubquery_retornaTrue() {
-    String query =
-            "SELECT * FROM libros WHERE id IN " +
-            "(SELECT libro_id FROM prestamos)";
-    
-    assertTrue(SqlValidator.esSentenciaValida(query));
-    assertTrue(SqlValidator.validarBalanceo(query).isEmpty());
-}
+    @Test
+    @DisplayName("Debe aceptar una consulta válida con subquery")
+    void esSentenciaValida_conSubquery_retornaTrue() {
+        String query =
+                "SELECT * FROM libros WHERE id IN " +
+                "(SELECT libro_id FROM prestamos)";
 
-@Test
-@DisplayName("Debe detectar paréntesis sin cerrar")
-void validarBalanceo_parentesisSinCerrar_retornaError() {
-    String query =
-            "SELECT * FROM libros WHERE id IN " +
-            "(SELECT libro_id FROM prestamos";
+        assertTrue(SqlValidator.esSentenciaValida(query));
+        assertTrue(SqlValidator.validarBalanceo(query).isEmpty());
+    }
 
-    Optional<String> resultado =
-            SqlValidator.validarBalanceo(query);
+    @Test
+    @DisplayName("Debe detectar paréntesis sin cerrar")
+    void validarBalanceo_parentesisSinCerrar_retornaError() {
+        String query =
+                "SELECT * FROM libros WHERE id IN " +
+                "(SELECT libro_id FROM prestamos";
 
-    assertTrue(resultado.isPresent());
-    assertTrue(resultado.get().contains("Paréntesis sin cerrar"));
-}
+        Optional<String> resultado = SqlValidator.validarBalanceo(query);
 
-@Test
-@DisplayName("Debe detectar comilla simple sin cerrar")
-void validarBalanceo_comillaSinCerrar_retornaError() {
-    String query =
-            "SELECT * FROM libros WHERE titulo = 'Java";
+        assertTrue(resultado.isPresent());
+        assertTrue(resultado.get().contains("Paréntesis sin cerrar"));
+    }
 
-    Optional<String> resultado =
-            SqlValidator.validarBalanceo(query);
+    @Test
+    @DisplayName("Debe detectar comilla simple sin cerrar")
+    void validarBalanceo_comillaSinCerrar_retornaError() {
+        String query =
+                "SELECT * FROM libros WHERE titulo = 'Java";
 
-    assertTrue(resultado.isPresent());
-    assertTrue(resultado.get().contains("comilla simple sin cerrar"));
-}
+        Optional<String> resultado = SqlValidator.validarBalanceo(query);
+
+        assertTrue(resultado.isPresent());
+        assertTrue(resultado.get().contains("comilla simple sin cerrar"));
+    }
 }
