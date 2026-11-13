@@ -117,11 +117,11 @@ public class Conexion {
         // Mapeamos los campos usando los nombres exactos de tu clase
         copia.setNombre(nuevoNombre);
         copia.setHost(this.host);
+        copia.setTipoMotor(this.tipoMotor);
         copia.setPuerto(this.puerto);
         copia.setBasedatos(this.basedatos);
         copia.setUsuario(this.usuario);
         copia.setPassword(this.password);
-        copia.setTipoMotor(this.tipoMotor);
         copia.setUsarSSL(this.usarSSL);
         
         // Criterio de aceptación: No debe compartir estado mutable.

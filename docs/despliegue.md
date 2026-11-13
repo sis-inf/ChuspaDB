@@ -23,10 +23,12 @@ PostgreSQL no es un requisito obligatorio. Solo debe utilizarse si el usuario se
 ## Clonar el repositorio
 
 ```bash
-git clone https://github.com/TU-USUARIO/ChuspaDB.git
+git clone https://github.com/sis-inf/ChuspaDB.git
 cd ChuspaDB
----
 ```
+
+---
+
 ## Compilación y ejecución
 
 Los pasos para compilar, configurar y ejecutar el proyecto se encuentran detallados en la siguiente guía:
