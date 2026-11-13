@@ -37,10 +37,13 @@ public class ExportadorCSV {
                                      StandardCharsets.UTF_8
                              )
                      )) {
+            for (int i = 0; i < resultado.getColumnas().size(); i++) {
+                writer.write(escaparCelda(resultado.getColumnas().get(i)));
 
-            writer.write(
-                    String.join(",", resultado.getColumnas())
-            );
+                if (i < resultado.getColumnas().size() - 1) {
+                    writer.write(",");
+                }
+            }
             writer.write("\n");
 
             for (List<Object> fila : resultado.getFilas()) {
@@ -78,7 +81,8 @@ public class ExportadorCSV {
         boolean tieneCaracteresEspeciales =
                 texto.contains(",")
                         || texto.contains("\"")
-                        || texto.contains("\n");
+                        || texto.contains("\n")
+                        || texto.contains("\r");
 
         texto = texto.replace("\"", "\"\"");
 
