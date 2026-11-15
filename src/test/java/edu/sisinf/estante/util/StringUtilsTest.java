@@ -66,4 +66,34 @@ class StringUtilsTest {
     void testEsVacioONuloTexto() {
         assertFalse(StringUtils.esVacioONulo("Hola"));
     }
+
+    @Test
+    void truncaEnElLimiteDePuntosSuspensivos() {
+        assertEquals("abc", StringUtils.truncar("abcdef", 3));
+        assertEquals("a...", StringUtils.truncar("abcdef", 4));
+        assertEquals("abcd", StringUtils.truncar("abcd", 4));
+    }
+
+    @Test
+    void conservaTextoSiElLimiteNoEsPositivo() {
+        assertEquals("abc", StringUtils.truncar("abc", 0));
+        assertEquals("abc", StringUtils.truncar("abc", -1));
+    }
+
+    @Test
+    void trataTextoNuloComoCadenaVaciaAlTruncarYEscapar() {
+        assertEquals("", StringUtils.truncar(null, 4));
+        assertEquals("", StringUtils.escaparLike(null));
+    }
+
+    @Test
+    void escapaAmbosComodinesLikeYConservaElTextoOrdinario() {
+        assertEquals("a\\%\\_\\%z", StringUtils.escaparLike("a%_%z"));
+        assertEquals("texto", StringUtils.escaparLike("texto"));
+    }
+
+    @Test
+    void capitalizaTextoConSeparadoresMixtos() {
+        assertEquals("Hola Mundo", StringUtils.capitalizar(" \tHOLA \n mUndo  "));
+    }
 }
