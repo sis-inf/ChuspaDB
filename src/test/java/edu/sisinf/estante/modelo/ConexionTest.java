@@ -82,3 +82,42 @@ class ConexionTest {
         );
     }
 }
+
+    @Test
+    void constructorCompletoAsignaValoresCorrectamente() {
+        Conexion c = new Conexion("Test", "host", 5432, "db", "user", "pass");
+        assertEquals("Test", c.getNombre());
+        assertEquals("host", c.getHost());
+        assertEquals(5432, c.getPuerto());
+        assertEquals("db", c.getBasedatos());
+        assertEquals("user", c.getUsuario());
+        assertEquals("pass", c.getPassword());
+    }
+
+    @Test
+    void gettersAndSettersFuncionan() {
+        Conexion c = new Conexion();
+        c.setNombre("DB");
+        c.setHost("127.0.0.1");
+        c.setPuerto(8080);
+        c.setBasedatos("prodb");
+        c.setUsuario("admin");
+        c.setPassword("secret");
+        
+        assertEquals("DB", c.getNombre());
+        assertEquals("127.0.0.1", c.getHost());
+        assertEquals(8080, c.getPuerto());
+        assertEquals("prodb", c.getBasedatos());
+        assertEquals("admin", c.getUsuario());
+        assertEquals("secret", c.getPassword());
+    }
+
+    @Test
+    void testToString() {
+        Conexion c = new Conexion("Test", "host", 3306, "db", "user", "pass");
+        String result = c.toString();
+        assertTrue(result.contains("Test"));
+        assertTrue(result.contains("host"));
+        assertTrue(result.contains("3306"));
+    }
+
