@@ -189,4 +189,39 @@ class SqlValidatorTest {
         assertFalse(SqlValidator.esLectura(null), "Null no debe lanzar excepción y ser false");
         assertFalse(SqlValidator.esDML(null), "Null no debe lanzar excepción y ser false");
     }
+
+    @Test
+    void rechazaSentenciasNulasYQueSoloContienenComentarios() {
+        assertFalse(SqlValidator.esSentenciaValida(null));
+        assertFalse(SqlValidator.esSentenciaValida("-- sin sentencia\n-- segundo comentario"));
+    }
+
+    @Test
+    void ignoraComillasYParentesisDeComentariosYLiterales() {
+        String sql = "-- comentario con ( y '\nSELECT ('O''Brien -- )') -- cierre con ) y '";
+        assertTrue(SqlValidator.esSentenciaValida(sql));
+        assertEquals(java.util.Optional.empty(), SqlValidator.validarBalanceo(sql));
+    }
+
+    @Test
+    void informaPosicionDeUnCierreSinApertura() {
+        String sql = "SELECT 1)";
+        assertFalse(SqlValidator.esSentenciaValida(sql));
+        assertEquals("Par\u00e9ntesis de cierre sin apertura cerca de la posici\u00f3n 9",
+                SqlValidator.validarBalanceo(sql).orElseThrow());
+    }
+
+    @Test
+    void rechazaUnLiteralSinCerrarAunqueIncluyaUnComentarioAparente() {
+        String sql = "SELECT 'texto -- )";
+        assertFalse(SqlValidator.esSentenciaValida(sql));
+        assertTrue(SqlValidator.validarBalanceo(sql).orElseThrow().contains("comilla simple sin cerrar"));
+    }
+
+    @Test
+    void detectaParentesisAbiertoSinCerrarTrasUnLiteralCompleto() {
+        String sql = "SELECT ('texto'";
+        assertFalse(SqlValidator.esSentenciaValida(sql));
+        assertTrue(SqlValidator.validarBalanceo(sql).orElseThrow().endsWith("8"));
+    }
 }
