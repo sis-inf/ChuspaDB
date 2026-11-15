@@ -44,6 +44,10 @@ public class ConexionDAOMySQL implements IConexionDAO {
      */
     @Override
     public String construirUrl(Conexion conexion) {
+        if (conexion == null) {
+            throw new IllegalArgumentException("El objeto de conexión no puede ser nulo.");
+        }
+        
         String puerto = (conexion.getPuerto() != null)
                 ? conexion.getPuerto().toString()
                 : PUERTO_DEFAULT;
@@ -59,6 +63,9 @@ public class ConexionDAOMySQL implements IConexionDAO {
 
     @Override
     public Connection abrir(Conexion conexion) throws ErrorConexion, SQLException {
+        if (conexion == null) {
+            throw new ErrorConexion("Los datos de conexión a MySQL no pueden ser nulos.");
+        }
         if (conexion.getTipoMotor() != TipoMotor.MYSQL) {
             throw new ErrorConexion("El motor de la conexión no es MySQL.");
         }
@@ -69,12 +76,19 @@ public class ConexionDAOMySQL implements IConexionDAO {
             throw new ErrorConexion("El nombre de la base de datos no puede estar vacío.");
         }
 
-        this.ultimaConexion = conexion;
-
         String url = construirUrl(conexion);
-        return DriverManager.getConnection(url,
-                conexion.getUsuario(),
-                conexion.getPassword());
+        try {
+            Connection conn = DriverManager.getConnection(url,
+                    conexion.getUsuario(),
+                    conexion.getPassword());
+            this.ultimaConexion = conexion;
+            return conn;
+        } catch (SQLException e) {
+            logger.error("Error al abrir conexión MySQL en host '{}' y base de datos '{}'",
+                    conexion.getHost(), conexion.getBasedatos(), e);
+            throw new ErrorConexion("No se pudo establecer la conexión con MySQL en '"
+                    + conexion.getHost() + "': " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -106,6 +120,10 @@ public class ConexionDAOMySQL implements IConexionDAO {
             while (rs.next()) {
                 tablas.add(rs.getString(1));
             }
+        } catch (SQLException e) {
+            logger.error("Error SQL al consultar las tablas de la base de datos MySQL '{}'", nombreBaseDatos, e);
+            throw new ErrorConexion("Error al obtener las tablas de la base de datos '"
+                    + nombreBaseDatos + "': " + e.getMessage(), e);
         }
 
         return tablas;
@@ -113,8 +131,13 @@ public class ConexionDAOMySQL implements IConexionDAO {
 
     @Override
     public boolean probar(Conexion conexion) {
+        if (conexion == null) {
+            logger.warn("Se intentó probar una conexión MySQL nula.");
+            return false;
+        }
+        
         try (Connection conn = abrir(conexion)) {
-            return conn.isValid(3);
+            return conn != null && conn.isValid(3);
         } catch (Exception e) {
             logger.error("Error al probar la conexión con MySQL para host: {}", conexion.getHost(), e);
             return false;
