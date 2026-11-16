@@ -270,12 +270,12 @@ public class App extends Application {
             throw new IllegalArgumentException("La ventana propietaria (owner) no puede ser nula.");
         }
 
+        URL recurso = Objects.requireNonNull(
+                getClass().getResource("/fxml/DialogoNuevaConexion.fxml"),
+                "No se encontró /fxml/DialogoNuevaConexion.fxml"
+        );
+        
         try {
-            URL recurso = Objects.requireNonNull(
-                    getClass().getResource("/fxml/DialogoNuevaConexion.fxml"),
-                    "No se encontró /fxml/DialogoNuevaConexion.fxml"
-            );
-
             FXMLLoader loader = new FXMLLoader(recurso);
 
             Parent root = loader.load();
@@ -339,7 +339,7 @@ public class App extends Application {
 
         try {
 
-            if (conexionActiva != null) {
+            if (conexionActiva != null && !conexionActiva.isClosed()) {
                 logger.debug("Cerrando conexión activa previa antes de abrir '{}'.", conexion.getNombre());
                 conexionActiva.close();
             }
@@ -384,6 +384,10 @@ public class App extends Application {
                     conexion.getNombre()
             );
             logger.debug("Conexión '{}' establecida con {} esquemas cargados.", conexion.getNombre(), esquemas.size());
+
+        } catch (IllegalStateException e) {
+
+            throw e;
 
         } catch (ErrorConexion e) {
 
