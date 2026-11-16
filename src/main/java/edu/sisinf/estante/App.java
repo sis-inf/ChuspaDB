@@ -29,10 +29,12 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.net.URL;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class App extends Application {
 
@@ -56,7 +58,12 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
+        if (stage == null) {
+            logger.error("El escenario principal (Stage) recibido en start() es nulo.");
+            throw new IllegalArgumentException("El escenario principal (Stage) no puede ser nulo.");
+        }
 
+        logger.debug("Iniciando configuración y componentes principales de ChuspaDB.");
         ConfiguracionApp.asegurarDirectorioHome();
 
         daos = new HashMap<>();
@@ -84,16 +91,18 @@ public class App extends Application {
         exploradorEsquemas = new ExploradorEsquemas();
         exportadorCSV = new ExportadorCSV();
 
-        FXMLLoader principalLoader = new FXMLLoader(
-                getClass().getResource(
-                        "/fxml/VentanaPrincipal.fxml"
-                )
+        URL fxmlPrincipal = Objects.requireNonNull(
+                getClass().getResource("/fxml/VentanaPrincipal.fxml"),
+                "No se encontró el recurso /fxml/VentanaPrincipal.fxml"
         );
+        FXMLLoader principalLoader = new FXMLLoader(fxmlPrincipal);
 
         Parent root = principalLoader.load();
 
         VentanaPrincipalController principalController =
-                principalLoader.getController();
+            Objects.requireNonNull(
+                principalLoader.getController(),"No se pudo inicializar VentanaPrincipalController"
+            );
 
         cargarPanelArbol(principalController);
 
@@ -110,29 +119,30 @@ public class App extends Application {
         );
 
         Scene scene = new Scene(root);
-
-        scene.getStylesheets().add(
-                getClass()
-                        .getResource("/css/chuspadb.css")
-                        .toExternalForm()
+        URL cssUrl = Objects.requireNonNull(
+                getClass().getResource("/css/chuspadb.css"),
+                "No se encontró la hoja de estilos /css/chuspadb.css"
         );
-
+        scene.getStylesheets().add(cssUrl.toExternalForm());
+        
         stage.setTitle("ChuspaDB");
 
         stage.setScene(scene);
 
         stage.show();
+        logger.debug("Interfaz principal de ChuspaDB iniciada correctamente.");
     }
 
     private void cargarPanelArbol(
             VentanaPrincipalController principal
     ) throws Exception {
-
-        FXMLLoader loader = new FXMLLoader(
-                getClass().getResource(
-                        "/fxml/PanelArbolConexiones.fxml"
-                )
+        Objects.requireNonNull(principal, "VentanaPrincipalController no puede ser nulo.");
+        URL recurso = Objects.requireNonNull(
+                getClass().getResource("/fxml/PanelArbolConexiones.fxml"),
+                "No se encontró /fxml/PanelArbolConexiones.fxml"
         );
+        
+        FXMLLoader loader = new FXMLLoader(recurso);
 
         Parent root = loader.load();
 
@@ -142,17 +152,19 @@ public class App extends Application {
                 .getContenedorArbol()
                 .getChildren()
                 .add(root);
+        logger.debug("Panel de árbol de conexiones cargado.");
     }
 
     private void cargarPanelEditor(
             VentanaPrincipalController principal
     ) throws Exception {
-
-        FXMLLoader loader = new FXMLLoader(
-                getClass().getResource(
-                        "/fxml/PanelEditorSQL.fxml"
-                )
+        Objects.requireNonNull(principal, "VentanaPrincipalController no puede ser nulo.");
+        URL recurso = Objects.requireNonNull(
+                getClass().getResource("/fxml/PanelEditorSQL.fxml"),
+                "No se encontró /fxml/PanelEditorSQL.fxml"
         );
+        
+        FXMLLoader loader = new FXMLLoader(recurso);
 
         Parent root = loader.load();
 
@@ -162,17 +174,19 @@ public class App extends Application {
                 .getContenedorEditor()
                 .getChildren()
                 .add(root);
+        logger.debug("Panel de editor SQL cargado.");
     }
 
     private void cargarPanelResultado(
             VentanaPrincipalController principal
     ) throws Exception {
-
-        FXMLLoader loader = new FXMLLoader(
-                getClass().getResource(
-                        "/fxml/PanelResultadoQuery.fxml"
-                )
+        Objects.requireNonNull(principal, "VentanaPrincipalController no puede ser nulo.");
+        URL recurso = Objects.requireNonNull(
+                getClass().getResource("/fxml/PanelResultadoQuery.fxml"),
+                "No se encontró /fxml/PanelResultadoQuery.fxml"
         );
+        
+        FXMLLoader loader = new FXMLLoader(recurso);
 
         Parent root = loader.load();
 
@@ -182,17 +196,19 @@ public class App extends Application {
                 .getContenedorResultado()
                 .getChildren()
                 .add(root);
+        logger.debug("Panel de resultados de query cargado.");
     }
 
     private void cargarBarraEstado(
             VentanaPrincipalController principal
     ) throws Exception {
-
-        FXMLLoader loader = new FXMLLoader(
-                getClass().getResource(
-                        "/fxml/BarraEstado.fxml"
-                )
+        Objects.requireNonNull(principal, "VentanaPrincipalController no puede ser nulo.");
+        URL recurso = Objects.requireNonNull(
+                getClass().getResource("/fxml/BarraEstado.fxml"),
+                "No se encontró /fxml/BarraEstado.fxml"
         );
+
+        FXMLLoader loader = new FXMLLoader(recurso);
 
         Parent root = loader.load();
 
@@ -202,12 +218,15 @@ public class App extends Application {
                 .getContenedorBarraEstado()
                 .getChildren()
                 .add(root);
+        logger.debug("Barra de estado cargada.");
     }
 
     private void conectarHandlers(
             Stage stage,
             VentanaPrincipalController principal
     ) {
+        Objects.requireNonNull(stage, "Stage no puede ser nulo al conectar handlers.");
+        Objects.requireNonNull(principal, "VentanaPrincipalController no puede ser nulo al conectar handlers.");
 
         principal
                 .getMenuNuevaConexion()
@@ -235,24 +254,29 @@ public class App extends Application {
 
         resultadoController
                 .setOnExportar(this::exportarCSV);
+        logger.debug("Manejadores de eventos conectados correctamente.");
     }
 
     private void refrescarConexiones() {
-
+        logger.debug("Refrescando lista de conexiones guardadas.");
         arbolController.cargarConexiones(
                 repositorio.listar()
         );
     }
 
     private void abrirDialogoNuevaConexion(Stage owner) {
+        if (owner == null) {
+            logger.warn("Se intentó abrir el diálogo de nueva conexión con Stage propietario nulo.");
+            throw new IllegalArgumentException("La ventana propietaria (owner) no puede ser nula.");
+        }
 
         try {
-
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource(
-                            "/fxml/DialogoNuevaConexion.fxml"
-                    )
+            URL recurso = Objects.requireNonNull(
+                    getClass().getResource("/fxml/DialogoNuevaConexion.fxml"),
+                    "No se encontró /fxml/DialogoNuevaConexion.fxml"
             );
+
+            FXMLLoader loader = new FXMLLoader(recurso);
 
             Parent root = loader.load();
 
@@ -286,6 +310,7 @@ public class App extends Application {
 
                     controller.setConexionResultado(conexion);
 
+                    logger.debug("Nueva conexión '{}' guardada correctamente.", conexion.getNombre());
                     dialog.close();
 
                 } catch (Exception e) {
@@ -293,7 +318,7 @@ public class App extends Application {
                     controller.mostrarEstado(obtenerMensajeError(e));
                 }
             });
-
+            
             dialog.showAndWait();
 
         } catch (Exception e) {
@@ -307,16 +332,25 @@ public class App extends Application {
     }
 
     private void abrirConexion(Conexion conexion) {
+        if (conexion == null) {
+            logger.warn("Se intentó abrir una conexión nula.");
+            throw new IllegalArgumentException("La conexión seleccionada no puede ser nula.");
+        }
 
         try {
 
             if (conexionActiva != null) {
+                logger.debug("Cerrando conexión activa previa antes de abrir '{}'.", conexion.getNombre());
                 conexionActiva.close();
             }
 
             IConexionDAO dao =
                     daos.get(conexion.getTipoMotor());
+            if (dao == null) {
+                throw new ErrorConexion("No existe un DAO soportado para el motor: " + conexion.getTipoMotor());
+            }
 
+            logger.debug("Intentando abrir conexión '{}' con motor {}.", conexion.getNombre(), conexion.getTipoMotor());
             conexionActiva = dao.abrir(conexion);
 
             conexionInfoActiva = conexion;
@@ -328,6 +362,9 @@ public class App extends Application {
 
             TreeItem<Object> nodo =
                     arbolController.getNodoSeleccionado();
+            if (nodo == null) {
+                throw new IllegalStateException("No hay un nodo seleccionado en el árbol de conexiones.");
+            }
 
             nodo.getChildren().clear();
 
@@ -346,6 +383,7 @@ public class App extends Application {
             barraEstadoController.setConexion(
                     conexion.getNombre()
             );
+            logger.debug("Conexión '{}' establecida con {} esquemas cargados.", conexion.getNombre(), esquemas.size());
 
         } catch (ErrorConexion e) {
 
@@ -366,9 +404,19 @@ public class App extends Application {
     }
 
     private void ejecutarSQL(String sql) {
+        if (sql == null || sql.isBlank()) {
+            logger.warn("Se intentó ejecutar una consulta SQL nula o vacía.");
+            editorController.ocultarSpinner();
+            mostrarError(
+                    "Consulta inválida",
+                    "La sentencia SQL está vacía",
+                    "Ingrese una sentencia SQL válida antes de ejecutar."
+            );
+            return;
+        }
 
-        if (conexionActiva == null) {
-
+        if (conexionActiva == null || conexionInfoActiva == null || daoActivo == null) {
+            logger.warn("Intento de ejecutar SQL sin una conexión activa válida.");
             mostrarError(
                     "Sin conexión",
                     "No existe conexión activa",
@@ -381,16 +429,18 @@ public class App extends Application {
         }
 
         if (SqlValidator.esDestructiva(sql)) {
-
+            logger.debug("Consulta SQL destructiva detectada; solicitando confirmación.");
             boolean confirmar =
                     DialogoConfirmacionDML.confirmar(sql);
 
             if (!confirmar) {
+                logger.debug("Ejecución de consulta destructiva cancelada por el usuario.");
                 editorController.ocultarSpinner();
                 return;
             }
         }
-
+        
+        logger.debug("Enviando consulta SQL a ejecución asíncrona.");
         ejecutorQueryAsync.ejecutar(
                 sql,
                 conexionInfoActiva,
@@ -401,6 +451,11 @@ public class App extends Application {
     }
 
     private void manejarResultadoQuery(ResultadoQuery resultado) {
+        if (resultado == null) {
+            logger.warn("Se recibió un ResultadoQuery nulo.");
+            editorController.ocultarSpinner();
+            throw new IllegalArgumentException("El resultado de la consulta no puede ser nulo.");
+        }
 
         resultadoController.mostrar(resultado);
 
@@ -427,13 +482,18 @@ public class App extends Application {
         }
 
         editorController.ocultarSpinner();
+        logger.debug("Resultado de query procesado (tipo: {}, tiempo: {} ms).",
+                resultado.getTipo(), resultado.getTiempoMs());
     }
 
     private void manejarErrorQuery(Throwable error) {
+        Throwable causa = (error != null)
+                ? error
+                : new RuntimeException("Error desconocido durante la ejecución de la consulta.");
 
         ResultadoQuery resultado =
                 ResultadoQuery.deError(
-                        obtenerMensajeError(error),
+                        obtenerMensajeError(causa),
                         0
                 );
 
@@ -441,6 +501,15 @@ public class App extends Application {
     }
 
     private void exportarCSV(ResultadoQuery resultado) {
+        if (resultado == null) {
+            logger.warn("Se intentó exportar a CSV un ResultadoQuery nulo.");
+            mostrarError(
+                    "Error exportando",
+                    "No hay resultados para exportar",
+                    "Ejecute una consulta válida antes de exportar a CSV."
+            );
+            return;
+        }
 
         try {
 
@@ -458,6 +527,7 @@ public class App extends Application {
                     chooser.showSaveDialog(null);
 
             if (archivo == null) {
+                logger.debug("Exportación a CSV cancelada por el usuario.");
                 return;
             }
 
@@ -465,6 +535,7 @@ public class App extends Application {
                     resultado,
                     archivo
             );
+            logger.debug("Resultados exportados correctamente a '{}'.", archivo.getAbsolutePath());
 
         } catch (Exception e) {
 
@@ -477,6 +548,10 @@ public class App extends Application {
     }
 
     private String obtenerMensajeError(Throwable e) {
+        if (e == null) {
+            logger.error("Error en la interfaz de usuario (excepción nula).");
+            return "Ocurrió un error inesperado. Consulte los logs para más detalles.";
+        }
 
         logger.error("Error en la interfaz de usuario", e);
 
@@ -505,6 +580,11 @@ public class App extends Application {
     }
 
     public static void main(String[] args) {
+        if (args == null) {
+            logger.error("El arreglo de argumentos (args) recibido en main() es nulo.");
+            throw new IllegalArgumentException("Los argumentos de inicio (args) no pueden ser nulos.");
+        }
+        logger.debug("Iniciando aplicación ChuspaDB con {} argumentos.", args.length);
         launch(args);
     }
 }
