@@ -26,13 +26,25 @@ public class EjecutorQuery {
      * @param conexion Conexión activa a la base de datos (responsabilidad del consumidor).
      * @param sql      Cadena SQL a ejecutar.
      * @return ResultadoQuery con los datos obtenidos o conteo de filas afectadas.
-     * @throws ErrorQuery si ocurre un error durante la ejecución SQL.
+     * @throws ErrorQuery si faltan la conexión o la sentencia SQL, si la conexión está
+     *                    cerrada o si falla la ejecución.
      */
     public ResultadoQuery ejecutar(Connection conexion, String sql) throws ErrorQuery {
+        if (conexion == null) {
+            throw new ErrorQuery("Se requiere una conexión JDBC para ejecutar la consulta.");
+        }
+        if (sql == null || sql.isBlank()) {
+            throw new ErrorQuery("La sentencia SQL no puede estar vacía.");
+        }
+
+        SqlValidator.TipoQuery tipoQuery = SqlValidator.tipo(sql);
         long tiempoInicio = System.currentTimeMillis();
 
         try {
-            SqlValidator.TipoQuery tipoQuery = SqlValidator.tipo(sql);
+            if (conexion.isClosed()) {
+                throw new ErrorQuery("La conexión JDBC está cerrada.");
+            }
+            logger.debug("Ejecutando consulta de tipo {}.", tipoQuery);
 
             if (tipoQuery == SqlValidator.TipoQuery.SELECT) {
 
@@ -71,7 +83,7 @@ public class EjecutorQuery {
             }
 
         } catch (SQLException e) {
-            logger.error("Error al ejecutar la consulta SQL: {}", sql, e);
+            logger.error("Falló la consulta de tipo {} (SQLState: {}).", tipoQuery, e.getSQLState());
             throw new ErrorQuery(e.getMessage(), e);
         }
     }
