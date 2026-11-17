@@ -1,11 +1,14 @@
 package edu.sisinf.chuspadb.servicio;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.sisinf.chuspadb.core.ErrorPersistencia;
 import edu.sisinf.chuspadb.dao.IConexionDAO;
 import edu.sisinf.chuspadb.modelo.Conexion;
 import edu.sisinf.chuspadb.modelo.ImportacionResultado;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -31,9 +34,11 @@ import java.util.regex.Pattern;
  */
 public class ImportadorJSON {
 
+    private static final Logger logger = LoggerFactory.getLogger(ImportadorJSON.class);
     private static final Pattern IDENTIFICADOR_SEGURO = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper()
+            .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
 
     /**
      * Importa los datos del JSON a la tabla indicada.
@@ -43,8 +48,8 @@ public class ImportadorJSON {
      * @param conexion    datos de conexión a la base de datos
      * @param dao         DAO para abrir la conexión JDBC
      * @return {@link ImportacionResultado} con el resumen de la operación
-     * @throws ErrorPersistencia si el JSON no es un array no vacío de objetos
-     *                           (el mensaje indica qué se encontró) o si falla la lectura
+     * @throws ErrorPersistencia si un argumento es inválido, el JSON está mal formado,
+     *                           falla la lectura o no se puede utilizar la conexión JDBC
      */
     public ImportacionResultado importar(
             Path archivoJson,
@@ -52,9 +57,21 @@ public class ImportadorJSON {
             Conexion conexion,
             IConexionDAO dao
     ) {
+        if (archivoJson == null) {
+            throw new ErrorPersistencia("Se requiere la ruta del archivo JSON.");
+        }
+        validarIdentificador(tabla, "tabla");
+        if (conexion == null) {
+            throw new ErrorPersistencia("Se requieren los datos de conexión para importar JSON.");
+        }
+        if (dao == null) {
+            throw new ErrorPersistencia("Se requiere un DAO para importar JSON.");
+        }
+
         int insertadas = 0;
         int fallidas = 0;
         List<String> errores = new ArrayList<>();
+        logger.debug("Iniciando importación JSON.");
 
         try (Reader reader = Files.newBufferedReader(archivoJson, StandardCharsets.UTF_8)) {
 
@@ -75,6 +92,9 @@ public class ImportadorJSON {
             String sql = construirInsert(tabla, columnas);
 
             try (Connection conn = dao.abrir(conexion)) {
+                if (conn == null || conn.isClosed()) {
+                    throw new ErrorPersistencia("El DAO no devolvió una conexión JDBC abierta.");
+                }
                 for (int f = 0; f < raiz.size(); f++) {
                     JsonNode fila = raiz.get(f);
 
@@ -89,6 +109,8 @@ public class ImportadorJSON {
                     } catch (SQLException e) {
                         fallidas++;
                         errores.add("Fila " + (f + 1) + ": " + e.getMessage());
+                        logger.debug("Falló la fila {} de la importación JSON (SQLState: {}).",
+                                f + 1, e.getSQLState());
                     }
                 }
             }
@@ -99,10 +121,11 @@ public class ImportadorJSON {
             throw new ErrorPersistencia("Error al leer el archivo JSON: " + e.getMessage(), e);
         } catch (SQLException e) {
             throw new ErrorPersistencia("Error de base de datos al importar JSON: " + e.getMessage(), e);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             throw new ErrorPersistencia("Error al importar JSON: " + e.getMessage(), e);
         }
 
+        logger.debug("Importación JSON finalizada: {} insertadas, {} fallidas.", insertadas, fallidas);
         return new ImportacionResultado(insertadas, fallidas, errores);
     }
 
@@ -155,7 +178,6 @@ public class ImportadorJSON {
      * Construye la sentencia INSERT con placeholders para cada columna.
      */
     private String construirInsert(String tabla, List<String> columnas) {
-        validarIdentificador(tabla, "tabla");
         for (String columna : columnas) {
             validarIdentificador(columna, "columna");
         }
