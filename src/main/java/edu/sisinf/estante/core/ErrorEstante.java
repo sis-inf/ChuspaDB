@@ -14,3 +14,16 @@ public class ErrorChuspaDB extends RuntimeException {
         super(message, cause);
     }
 }
+/**
+ * Alias de compatibilidad para el nombre ErrorChuspaDB dentro de este paquete.
+ */
+class ErrorChuspaDB extends ErrorEstante {
+
+    public ErrorChuspaDB(String message) {
+        super(message);
+    }
+
+    public ErrorChuspaDB(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
