@@ -30,3 +30,43 @@
 | Tabla | Estructura que almacena datos en filas y columnas. |
 | Validación de SQL | Proceso de verificación de sentencias SQL para detectar errores antes de su ejecución. |
 
+
+## Identificadores y componentes de ChuspaDB
+
+| Término | Definición |
+|---|---|
+| ChuspaDB | Aplicación Java para consultar y gestionar bases de datos. |
+| Artefacto Maven | Identificador del proyecto: `edu.sisinf:chuspadb`, formado por el `groupId` `edu.sisinf` y el `artifactId` `chuspadb`. |
+| Paquete principal | Espacio de nombres `edu.sisinf.chuspadb` utilizado por la aplicación. |
+| Launcher | Clase de entrada `edu.sisinf.chuspadb.Launcher`, configurada para iniciar ChuspaDB. |
+
+## Comandos Maven
+
+Ejecutar desde la carpeta raíz de ChuspaDB, donde se encuentra `pom.xml`.
+
+Compilar el artefacto `chuspadb`:
+
+```bash
+mvn -DartifactId=chuspadb compile
+```
+
+Ejecutar las pruebas del artefacto `chuspadb`:
+
+```bash
+mvn -DartifactId=chuspadb test
+```
+
+Empaquetar el artefacto `chuspadb`:
+
+```bash
+mvn -DartifactId=chuspadb package
+```
+
+Iniciar ChuspaDB con JavaFX:
+
+```bash
+mvn -DartifactId=chuspadb javafx:run
+```
+
+El `artifactId` se define en `pom.xml`; la opción `-DartifactId=chuspadb`
+no cambia el nombre del artefacto ni selecciona un módulo.
