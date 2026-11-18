@@ -4,7 +4,7 @@
 | :--- | :--- | :--- |
 | `DBConfig` | `DBConfigTest.java` | `edu.sisinf.chuspadb.config` |
 | `ConnectionFlow` | `ConnectionFlowTest.java` | `edu.sisinf.chuspadb.core` |
-| `ErrorEstante` | `ErrorEstanteTest.java` | `edu.sisinf.chuspadb.core` |
+| `ErrorChuspaDB` | `ErrorEstanteTest.java` | `edu.sisinf.chuspadb.core` |
 | `ConexionDAOMySQL` | `ConexionDAOMySQLTest.java` | `edu.sisinf.chuspadb.dao` |
 | `ConexionDAOPostgreSQL` | `ConexionDAOPostgreSQLTest.java` | `edu.sisinf.chuspadb.dao` |
 | `ConexionDAOSQLite` | `ConexionDAOSQLiteTest.java` | `edu.sisinf.chuspadb.dao` |
