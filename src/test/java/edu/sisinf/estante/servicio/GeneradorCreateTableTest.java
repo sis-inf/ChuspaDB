@@ -12,6 +12,7 @@ import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -474,5 +475,16 @@ class GeneradorCreateTableTest {
                 invocation -> nullableValues[columnIndex[0]]);
 
         return GeneradorCreateTable.generar(TABLE_NAME, new Conexion(), dao, motor);
+    }
+
+    @Test
+    void generar_debeDevolverUnDdlNoNuloYConContenido() throws SQLException {
+        String ddl = ddl(TipoMotor.MYSQL, new String[]{"id"}, new String[][]{
+                {"id", "INT", "11", "NO", "NO"},
+                {"nombre", "VARCHAR", "100", "YES", "NO"}});
+
+        assertNotNull(ddl);
+        assertFalse(ddl.isBlank());
+        assertTrue(ddl.startsWith("CREATE TABLE `usuarios` ("));
     }
 }
