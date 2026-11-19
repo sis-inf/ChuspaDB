@@ -46,6 +46,9 @@ public class ConexionDAOSQLite implements IConexionDAO {
      */
     @Override
     public String construirUrl(Conexion conexion) {
+        if (conexion == null) {
+            throw new IllegalArgumentException("El objeto de conexión no puede ser nulo.");
+        }
         return "jdbc:sqlite:" + conexion.getBasedatos();
     }
 
@@ -59,6 +62,9 @@ public class ConexionDAOSQLite implements IConexionDAO {
      */
     @Override
     public Connection abrir(Conexion conexion) throws ErrorConexion, SQLException {
+        if (conexion == null) {
+            throw new ErrorConexion("Los datos de conexión a SQLite no pueden ser nulos.");
+        }
 
         if (conexion.getTipoMotor() != TipoMotor.SQLITE) {
             throw new ErrorConexion("El motor de la conexión no es SQLite.");
@@ -68,10 +74,17 @@ public class ConexionDAOSQLite implements IConexionDAO {
             throw new ErrorConexion("La ruta de la base de datos no puede estar vacía.");
         }
 
-        this.ultimaConexion = conexion;
-
         String url = construirUrl(conexion);
-        return DriverManager.getConnection(url);
+
+        try {
+            Connection conn = DriverManager.getConnection(url);
+            this.ultimaConexion = conexion;
+            return conn;
+        } catch (SQLException e) {
+            logger.error("Error al abrir conexión SQLite en ruta '{}'", conexion.getBasedatos(), e);
+            throw new ErrorConexion("No se pudo establecer la conexión con SQLite en '"
+                    + conexion.getBasedatos() + "': " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -92,6 +105,11 @@ public class ConexionDAOSQLite implements IConexionDAO {
             while (rs.next()) {
                 tablas.add(rs.getString("name"));
             }
+        } catch (SQLException e) {
+            logger.error("Error SQL al consultar las tablas de la base de datos SQLite '{}'",
+                    ultimaConexion.getBasedatos(), e);
+            throw new ErrorConexion("Error al obtener las tablas de SQLite en '"
+                    + ultimaConexion.getBasedatos() + "': " + e.getMessage(), e);
         }
 
         return tablas;
@@ -105,8 +123,12 @@ public class ConexionDAOSQLite implements IConexionDAO {
      */
     @Override
     public boolean probar(Conexion conexion) {
+        if (conexion == null) {
+            logger.warn("Se intentó probar una conexión SQLite nula.");
+            return false;
+        }
         try (Connection conn = abrir(conexion)) {
-            return conn.isValid(3);
+            return conn != null && conn.isValid(3);
         } catch (Exception e) {
             logger.error("Error al probar la conexión con SQLite en: {}", conexion.getBasedatos(), e);
             return false;
