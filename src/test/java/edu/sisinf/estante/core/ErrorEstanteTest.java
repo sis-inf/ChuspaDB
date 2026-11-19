@@ -4,30 +4,36 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ErrorChuspaDBTest {
+class ErrorEstanteTest {
 
     @Test
     void errorConexionDebeExtenderErrorChuspaDB() {
-        ErrorConexion error = new ErrorConexion("Error de conexión");
+        Throwable causa = new RuntimeException("Causa original");
+        ErrorConexion error = new ErrorConexion("Error de conexión", causa);
 
         assertTrue(error instanceof ErrorChuspaDB);
         assertEquals("Error de conexión", error.getMessage());
+        assertSame(causa, error.getCause());
     }
 
     @Test
     void errorPersistenciaDebeExtenderErrorChuspaDB() {
-        ErrorPersistencia error = new ErrorPersistencia("Error de persistencia");
+        Throwable causa = new RuntimeException("Causa original");
+        ErrorPersistencia error = new ErrorPersistencia("Error de persistencia", causa);
 
         assertTrue(error instanceof ErrorChuspaDB);
         assertEquals("Error de persistencia", error.getMessage());
+        assertSame(causa, error.getCause());
     }
 
     @Test
     void errorQueryDebeExtenderErrorChuspaDB() {
-        ErrorQuery error = new ErrorQuery("Error de consulta");
+        Throwable causa = new RuntimeException("Causa original");
+        ErrorQuery error = new ErrorQuery("Error de consulta", causa);
 
         assertTrue(error instanceof ErrorChuspaDB);
         assertEquals("Error de consulta", error.getMessage());
+        assertSame(causa, error.getCause());
     }
 
     @Test
