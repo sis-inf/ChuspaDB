@@ -2,26 +2,26 @@
 
 | Clase probada | Archivo de prueba | Paquete |
 | :--- | :--- | :--- |
-| `DBConfig` | `DBConfigTest.java` | `edu.sisinf.estante.config` |
-| `ConnectionFlow` | `ConnectionFlowTest.java` | `edu.sisinf.estante.core` |
-| `ErrorEstante` | `ErrorEstanteTest.java` | `edu.sisinf.estante.core` |
-| `ConexionDAOMySQL` | `ConexionDAOMySQLTest.java` | `edu.sisinf.estante.dao` |
-| `ConexionDAOPostgreSQL` | `ConexionDAOPostgreSQLTest.java` | `edu.sisinf.estante.dao` |
-| `ConexionDAOSQLite` | `ConexionDAOSQLiteTest.java` | `edu.sisinf.estante.dao` |
-| `QueryResult` | `QueryResultTest.java` | `edu.sisinf.estante.dto` |
-| `ColumnaInfo` | `ColumnaInfoTest.java` | `edu.sisinf.estante.modelo` |
-| `Conexion` | `ConexionTest.java` | `edu.sisinf.estante.modelo` |
-| `FavoritoQuery` | `FavoritoQueryTest.java` | `edu.sisinf.estante.modelo` |
-| `EjecutorQuery` | `EjecutorQueryTest.java` | `edu.sisinf.estante.servicio` |
-| `ExportadorCSV` | `ExportadorCSVTest.java` | `edu.sisinf.estante.servicio` |
-| `ExportadorJSON` | `ExportadorJSONTest.java` | `edu.sisinf.estante.servicio` |
-| `GeneradorCreateTable` | `GeneradorCreateTableTest.java` | `edu.sisinf.estante.servicio` |
-| `GeneradorSQL` | `GeneradorSQLTest.java` | `edu.sisinf.estante.servicio` |
-| `HistorialQuerys` | `HistorialQuerysTest.java` | `edu.sisinf.estante.servicio` |
-| `ImportadorCSV` | `ImportadorCSVTest.java` | `edu.sisinf.estante.servicio` |
-| `ImportadorJSON` | `ImportadorJSONTest.java` | `edu.sisinf.estante.servicio` |
-| `SqlValidator` | `SqlValidatorTest.java` | `edu.sisinf.estante.util` |
-| `StringUtils` | `StringUtilsTest.java` | `edu.sisinf.estante.util` |
+| `DBConfig` | `DBConfigTest.java` | `edu.sisinf.chuspadb.config` |
+| `ConnectionFlow` | `ConnectionFlowTest.java` | `edu.sisinf.chuspadb.core` |
+| `ErrorChuspaDB` | `ErrorEstanteTest.java` | `edu.sisinf.chuspadb.core` |
+| `ConexionDAOMySQL` | `ConexionDAOMySQLTest.java` | `edu.sisinf.chuspadb.dao` |
+| `ConexionDAOPostgreSQL` | `ConexionDAOPostgreSQLTest.java` | `edu.sisinf.chuspadb.dao` |
+| `ConexionDAOSQLite` | `ConexionDAOSQLiteTest.java` | `edu.sisinf.chuspadb.dao` |
+| `QueryResult` | `QueryResultTest.java` | `edu.sisinf.chuspadb.dto` |
+| `ColumnaInfo` | `ColumnaInfoTest.java` | `edu.sisinf.chuspadb.modelo` |
+| `Conexion` | `ConexionTest.java` | `edu.sisinf.chuspadb.modelo` |
+| `FavoritoQuery` | `FavoritoQueryTest.java` | `edu.sisinf.chuspadb.modelo` |
+| `EjecutorQuery` | `EjecutorQueryTest.java` | `edu.sisinf.chuspadb.servicio` |
+| `ExportadorCSV` | `ExportadorCSVTest.java` | `edu.sisinf.chuspadb.servicio` |
+| `ExportadorJSON` | `ExportadorJSONTest.java` | `edu.sisinf.chuspadb.servicio` |
+| `GeneradorCreateTable` | `GeneradorCreateTableTest.java` | `edu.sisinf.chuspadb.servicio` |
+| `GeneradorSQL` | `GeneradorSQLTest.java` | `edu.sisinf.chuspadb.servicio` |
+| `HistorialQuerys` | `HistorialQuerysTest.java` | `edu.sisinf.chuspadb.servicio` |
+| `ImportadorCSV` | `ImportadorCSVTest.java` | `edu.sisinf.chuspadb.servicio` |
+| `ImportadorJSON` | `ImportadorJSONTest.java` | `edu.sisinf.chuspadb.servicio` |
+| `SqlValidator` | `SqlValidatorTest.java` | `edu.sisinf.chuspadb.util` |
+| `StringUtils` | `StringUtilsTest.java` | `edu.sisinf.chuspadb.util` |
 
 ## Clases con cobertura menor al 50%
 
@@ -32,6 +32,17 @@ No fue posible determinar este dato debido a que no se encuentra disponible un r
 Para obtener los porcentajes reales de cobertura se requiere generar un reporte JaCoCo mediante:
 
 ```bash
-mvn test jacoco:report
+mvn clean verify
 ```
 
+## Meta de cobertura
+
+El proyecto ChuspaDB establece una cobertura minima del 60 % de instrucciones, configurada en pom.xml mediante JaCoCo.
+
+Para ejecutar las pruebas, verificar la cobertura y generar el reporte:
+
+```bash
+mvn clean verify
+```
+
+El reporte HTML se genera en target/site/jacoco/index.html cuando la ejecucion finaliza correctamente.
