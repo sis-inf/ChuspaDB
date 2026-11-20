@@ -54,7 +54,7 @@ public class HistorialQuerys {
             LOGGER.log(Level.WARNING, "Duración negativa recibida al registrar query: {0} ms", duracionMs);
             throw new IllegalArgumentException("La duración en milisegundos no puede ser negativa.");
         }
-        
+
         if (historial.size() >= LIMITE) {
             EntradaHistorial descartada = historial.pollFirst();
             LOGGER.log(Level.FINE, "Límite de historial alcanzado ({0}). Entrada más antigua descartada: {1}",
@@ -101,7 +101,7 @@ public class HistorialQuerys {
         historial.clear();
         LOGGER.log(Level.FINE, "Historial de queries limpiado ({0} entradas eliminadas).", totalPrevio);
     }
-    
+
     /**
      * Retorna solo las entradas que coincidan con la base de datos indicada,
      * ignorando mayúsculas y minúsculas.
@@ -118,7 +118,7 @@ public class HistorialQuerys {
         String baseLimpia = baseDatos.trim();
         List<EntradaHistorial> filtradas = new ArrayList<>();
         for (EntradaHistorial entrada : historial) {
-            if (entrada != null && baseLimpia.equalsIgnoreCase(entrada.getBaseDatos())) {
+            if (entrada != null && baseLimpia.equalsIgnoreCase(entrada.baseDatos())) {
                 filtradas.add(entrada);
             }
         }
@@ -135,7 +135,7 @@ public class HistorialQuerys {
     public List<EntradaHistorial> obtenerSoloExitosas() {
         List<EntradaHistorial> filtradas = new ArrayList<>();
         for (EntradaHistorial entrada : historial) {
-            if (entrada != null && entrada.isExitosa()) {
+            if (entrada != null && entrada.exitosa()) {
                 filtradas.add(entrada);
             }
         }
