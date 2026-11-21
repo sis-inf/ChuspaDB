@@ -1,5 +1,7 @@
 package edu.sisinf.chuspadb.controller;
 
+import edu.sisinf.chuspadb.core.ErrorConexion;
+import edu.sisinf.chuspadb.core.ErrorQuery;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -7,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
+import java.util.Objects;
 
 /**
  * Controller de la barra de estado al pie de la ventana principal.
@@ -105,11 +108,15 @@ public class BarraEstadoController {
     }
 
     /**
-     * Actualiza el label de mensaje libre.
+     * Actualiza el label de mensaje libre y registra trazas si el texto corresponde a un fallo SQL o de conexión.
      *
      * @param mensaje Mensaje a mostrar. Si es {@code null}, muestra texto vacío.
      */
     public void setMensaje(String mensaje) {
+        final String textoSeguro = (mensaje != null) ? mensaje : "";
+        if (esMensajeDeError(textoSeguro)) {
+            logger.warn("BarraEstadoController recibió notificación de error de ejecución/conexión: {}", textoSeguro);
+        }
         ejecutarEnHiloUI(() -> {
             if (labelMensaje == null) {
                 logger.warn("labelMensaje no está inicializado en BarraEstadoController.");
@@ -117,6 +124,61 @@ public class BarraEstadoController {
             }
             labelMensaje.setText(mensaje != null ? mensaje : "");
         });
+    }
+    /**
+     * Procesa y muestra en la barra de estado una excepción originada en la capa de datos
+     * ({@link ErrorQuery}, {@link ErrorConexion} o {@link SQLException}), extrayendo su causa raíz.
+     *
+     * @param error Excepción capturada durante una operación de base de datos.
+     */
+    public void mostrarError(Throwable error) {
+        if (error == null) {
+            setMensaje("Error desconocido en la operación de base de datos.");
+            return;
+        }
+
+        Throwable causaRaiz = obtenerCausaRaiz(error);
+        String detalle;
+
+        if (error instanceof ErrorQuery || causaRaiz instanceof ErrorQuery) {
+            logger.error("Error de consulta SQL en BarraEstadoController: {}", error.getMessage(), error);
+            detalle = "Error en consulta SQL: " + extraerMensajeLimpio(error, causaRaiz);
+        } else if (error instanceof ErrorConexion || causaRaiz instanceof ErrorConexion) {
+            logger.error("Error de conexión BD en BarraEstadoController: {}", error.getMessage(), error);
+            detalle = "Error de conexión: " + extraerMensajeLimpio(error, causaRaiz);
+        } else if (causaRaiz instanceof SQLException sqlEx) {
+            logger.error("SQLException capturada (SQLState={}, ErrorCode={}): {}",
+                    sqlEx.getSQLState(), sqlEx.getErrorCode(), sqlEx.getMessage(), sqlEx);
+            detalle = "Error SQL [" + (sqlEx.getSQLState() != null ? sqlEx.getSQLState() : "N/A") + "]: "
+                    + sqlEx.getMessage();
+        } else {
+            logger.error("Error inesperado reportado a BarraEstadoController.", error);
+            detalle = "Error: " + extraerMensajeLimpio(error, causaRaiz);
+        }
+
+        setMensaje(detalle);
+    }
+
+    /**
+     * Ejecuta una operación síncrona fuera del hilo de JavaFX para evitar congelar la interfaz gráfica,
+     * informando el estado inicial, capturando errores de base de datos y restaurando la UI al finalizar.
+     *
+     * @param mensajeProgreso Mensaje a mostrar mientras la tarea se ejecuta en segundo plano.
+     * @param operacion       Tarea síncrona a ejecutar fuera del JavaFX Application Thread.
+     */
+    public void ejecutarSinBloquearUI(String mensajeProgreso, Runnable operacion) {
+        Objects.requireNonNull(operacion, "La operación a ejecutar no puede ser nula.");
+        setMensaje(mensajeProgreso != null && !mensajeProgreso.isBlank() ? mensajeProgreso : "Procesando...");
+
+        Thread hiloTrabajo = new Thread(() -> {
+            try {
+                operacion.run();
+            } catch (Exception e) {
+                mostrarError(e);
+            }
+        }, "chuspadb-barra-estado-worker");
+        hiloTrabajo.setDaemon(true);
+        hiloTrabajo.start();
     }
 
     /**
@@ -131,29 +193,38 @@ public class BarraEstadoController {
         });
     }
     private void ejecutarEnHiloUI(Runnable accion) {
-        Runnable tareaSegura = () -> {
-            try {
-                accion.run();
-            } catch (Exception e) {
-                if (e.getCause() instanceof SQLException sqlEx) {
-                    logger.error("Error SQL capturado al actualizar la barra de estado (SQLState={}): {}",
-                            sqlEx.getSQLState(), sqlEx.getMessage(), sqlEx);
-                } else {
-                    logger.error("Error inesperado al actualizar la interfaz de BarraEstadoController.", e);
-                }
-            }
-        };
-
         try {
             if (Platform.isFxApplicationThread()) {
-                tareaSegura.run();
+                accion.run();
             } else {
-                Platform.runLater(tareaSegura);
+                Platform.runLater(accion);
             }
         } catch (IllegalStateException e) {
-            // Permite que pruebas unitarias sin toolkit JavaFX inicializado ejecuten sin bloquearse
             logger.debug("Toolkit JavaFX no inicializado; ejecutando actualización directa en el hilo actual.");
-            tareaSegura.run();
+            accion.run();
         }
+    }
+    private boolean esMensajeDeError(String texto) {
+        String lower = texto.toLowerCase();
+        return lower.contains("error") || lower.contains("fallo") || lower.contains("excepción")
+                || lower.contains("exception") || lower.contains("sql");
+    }
+
+    private Throwable obtenerCausaRaiz(Throwable error) {
+        Throwable actual = error;
+        while (actual.getCause() != null && actual.getCause() != actual) {
+            actual = actual.getCause();
+        }
+        return actual;
+    }
+
+    private String extraerMensajeLimpio(Throwable error, Throwable causaRaiz) {
+        if (error.getMessage() != null && !error.getMessage().isBlank()) {
+            return error.getMessage();
+        }
+        if (causaRaiz != null && causaRaiz.getMessage() != null && !causaRaiz.getMessage().isBlank()) {
+            return causaRaiz.getMessage();
+        }
+        return error.getClass().getSimpleName();
     }
 }
