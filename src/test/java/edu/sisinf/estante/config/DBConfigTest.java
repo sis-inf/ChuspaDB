@@ -6,85 +6,73 @@ import static org.junit.jupiter.api.Assertions.*;
 class DBConfigTest {
 
     @Test
-    void toJdbcUrl_debeRetornarUrlValida() {
-        DBConfig config = new DBConfig("localhost", 3306, "chuspadb_db", "admin", "1234");
-        String url = config.toJdbcUrl();
-        assertNotNull(url);
-        assertEquals("jdbc:mysql://localhost:3306/chuspadb_db", url);
-    }
-    
-    @Test
-    void toJdbcUrl_debeRetornarUrlValida_enPuertosLimite() {
-        DBConfig configMin = new DBConfig("127.0.0.1", 1, "test_db", "root", "pass");
-        DBConfig configMax = new DBConfig("127.0.0.1", 65535, "test_db", "root", "");
+    void constructorConParametros_debeAsignarTodosLosCampos() {
+        DBConfig config = new DBConfig(
+                "jdbc:mysql://localhost:3306/chuspadb_db",
+                "admin",
+                "1234",
+                "com.mysql.cj.jdbc.Driver"
+        );
 
-        assertNotNull(configMin.toJdbcUrl());
-        assertEquals("jdbc:mysql://127.0.0.1:1/test_db", configMin.toJdbcUrl());
-
-        assertNotNull(configMax.toJdbcUrl());
-        assertEquals("jdbc:mysql://127.0.0.1:65535/test_db", configMax.toJdbcUrl());
+        assertNotNull(config);
+        assertEquals("jdbc:mysql://localhost:3306/chuspadb_db", config.getUrl());
+        assertEquals("admin", config.getUsuario());
+        assertEquals("1234", config.getPassword());
+        assertEquals("com.mysql.cj.jdbc.Driver", config.getDriver());
     }
 
     @Test
-    void constructor_debeLanzarExcepcion_cuandoPuertoEsCero() {
-        assertThrows(IllegalArgumentException.class, () ->
-            new DBConfig("localhost", 0, "chuspadb_db", "admin", "1234")
-        );
-    }
-    
-    @Test
-    void constructor_debeLanzarExcepcion_cuandoPuertoEsNegativo() {
-        assertThrows(IllegalArgumentException.class, () ->
-            new DBConfig("localhost", -1, "chuspadb_db", "admin", "1234")
-        );
-        assertThrows(IllegalArgumentException.class, () ->
-            new DBConfig("localhost", -3306, "chuspadb_db", "admin", "1234")
-        );
+    void constructorVacio_debeInicializarCamposEnNulo() {
+        DBConfig config = new DBConfig();
+
+        assertNotNull(config);
+        assertNull(config.getUrl());
+        assertNull(config.getUsuario());
+        assertNull(config.getPassword());
+        assertNull(config.getDriver());
     }
 
     @Test
-    void constructor_debeLanzarExcepcion_cuandoPuertoSuperaMaximo() {
-        assertThrows(IllegalArgumentException.class, () ->
-            new DBConfig("localhost", 65536, "chuspadb_db", "admin", "1234")
-        );
+    void settersYGetters_debenActualizarYRetornarValoresCorrectamente() {
+        DBConfig config = new DBConfig();
+
+        config.setUrl("jdbc:postgresql://127.0.0.1:5432/estante");
+        config.setUsuario("postgres");
+        config.setPassword("secreto");
+        config.setDriver("org.postgresql.Driver");
+
+        assertEquals("jdbc:postgresql://127.0.0.1:5432/estante", config.getUrl());
+        assertEquals("postgres", config.getUsuario());
+        assertEquals("secreto", config.getPassword());
+        assertEquals("org.postgresql.Driver", config.getDriver());
     }
 
     @Test
-    void constructor_debeLanzarExcepcion_cuandoCamposVacios() {
-        assertThrows(IllegalArgumentException.class, () ->
-            new DBConfig("", 3306, "chuspadb_db", "admin", "1234")
+    void constructor_debeManejarValoresNulosSinLanzarExcepcion() {
+        DBConfig config = assertDoesNotThrow(() ->
+                new DBConfig(null, null, null, null)
         );
-        assertThrows(IllegalArgumentException.class, () ->
-            new DBConfig("localhost", 3306, "", "admin", "1234")
-        );
-        assertThrows(IllegalArgumentException.class, () ->
-            new DBConfig("localhost", 3306, "chuspadb_db", "", "1234")
-        );
+
+        assertNotNull(config);
+        assertNull(config.getUrl());
+        assertNull(config.getUsuario());
+        assertNull(config.getPassword());
+        assertNull(config.getDriver());
     }
 
     @Test
-    void constructor_debeLanzarExcepcion_cuandoCamposSoloEspacios() {
-        assertThrows(IllegalArgumentException.class, () ->
-            new DBConfig("   ", 3306, "chuspadb_db", "admin", "1234")
-        );
-        assertThrows(IllegalArgumentException.class, () ->
-            new DBConfig("localhost", 3306, "   ", "admin", "1234")
-        );
-        assertThrows(IllegalArgumentException.class, () ->
-            new DBConfig("localhost", 3306, "chuspadb_db", "   ", "1234")
-        );
-    }
+    void settersYConstructor_debenPermitirCadenasVaciasYConEspacios() {
+        DBConfig config = new DBConfig("", "   ", "", "  ");
 
-    @Test
-    void constructor_debeLanzarExcepcion_cuandoParametrosSonNulos() {
-        assertThrows(IllegalArgumentException.class, () ->
-            new DBConfig(null, 3306, "chuspadb_db", "admin", "1234")
-        );
-        assertThrows(IllegalArgumentException.class, () ->
-            new DBConfig("localhost", 3306, null, "admin", "1234")
-        );
-        assertThrows(IllegalArgumentException.class, () ->
-            new DBConfig("localhost", 3306, "chuspadb_db", null, "1234")
-        );
+        assertEquals("", config.getUrl());
+        assertEquals("   ", config.getUsuario());
+        assertEquals("", config.getPassword());
+        assertEquals("  ", config.getDriver());
+
+        config.setUrl("jdbc:sqlite:memoria.db");
+        config.setPassword("");
+
+        assertEquals("jdbc:sqlite:memoria.db", config.getUrl());
+        assertEquals("", config.getPassword());
     }
 }
