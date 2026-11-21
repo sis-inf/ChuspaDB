@@ -2,6 +2,7 @@ package edu.sisinf.chuspadb.dao;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -9,6 +10,7 @@ import static org.mockito.Mockito.when;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
@@ -407,5 +409,311 @@ class ConexionDAOMySQLTest {
         ConexionDAOMySQL dao = new ConexionDAOMySQL();
 
         assertThrows(ErrorConexion.class, () -> dao.getTablas("base_inexistente"));
+    }
+
+    // ---------------------------------------------------------------
+    // Valores nulos
+    // ---------------------------------------------------------------
+
+    @Test
+    void construirUrlLanzaExcepcionSiLaConexionEsNula() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> dao.construirUrl(null));
+
+        assertNotNull(error.getMessage());
+    }
+
+    @Test
+    void abrirLanzaErrorConexionSiLaConexionEsNula() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        ErrorConexion error = assertThrows(ErrorConexion.class, () -> dao.abrir(null));
+
+        assertNotNull(error.getMessage());
+    }
+
+    @Test
+    void abrirFallaSiElHostEsNulo() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        Conexion conexion = conexionValida();
+        conexion.setHost(null);
+
+        assertThrows(ErrorConexion.class, () -> dao.abrir(conexion));
+    }
+
+    @Test
+    void abrirFallaSiLaBaseDeDatosEsNulaOSoloEspacios() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        Conexion sinBase = conexionValida();
+        sinBase.setBasedatos(null);
+        Conexion baseConEspacios = conexionValida();
+        baseConEspacios.setBasedatos("   ");
+
+        assertThrows(ErrorConexion.class, () -> dao.abrir(sinBase));
+        assertThrows(ErrorConexion.class, () -> dao.abrir(baseConEspacios));
+    }
+
+    @Test
+    void probarDevuelveFalseSiLaConexionEsNula() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        assertFalse(dao.probar(null));
+    }
+
+    // ---------------------------------------------------------------
+    // Errores del driver
+    // ---------------------------------------------------------------
+
+    @Test
+    void abrirEnvuelveLaSQLExceptionEnErrorConexion() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+        SQLException causa = new SQLException("Access denied");
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))
+                    .thenThrow(causa);
+
+            ErrorConexion error = assertThrows(ErrorConexion.class,
+                    () -> dao.abrir(conexionValida()));
+
+            assertSame(causa, error.getCause());
+            assertTrue(error.getMessage().contains("localhost"),
+                    "El mensaje debe incluir el host: " + error.getMessage());
+            assertTrue(error.getMessage().contains("Access denied"),
+                    "El mensaje debe incluir el motivo: " + error.getMessage());
+        }
+    }
+
+    @Test
+    void getTablasFallaSiUnaAperturaPreviaTuvoError() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+        SQLException causa = new SQLException("sin servidor");
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))
+                    .thenThrow(causa);
+
+            assertThrows(ErrorConexion.class, () -> dao.abrir(conexionValida()));
+        }
+
+        // Como abrir fallo, no quedo ninguna conexion guardada.
+        assertThrows(ErrorConexion.class, () -> dao.getTablas("prueba"));
+    }
+
+    @Test
+    void getTablasEnvuelveLaSQLExceptionEnErrorConexion() throws Exception {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+        Connection conexionSimulada = mock(Connection.class);
+        SQLException causa = new SQLException("Unknown database");
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))
+                    .thenReturn(conexionSimulada)
+                    .thenThrow(causa);
+
+            dao.abrir(conexionValida());
+
+            ErrorConexion error = assertThrows(ErrorConexion.class, () -> dao.getTablas("prueba"));
+
+            assertSame(causa, error.getCause());
+            assertTrue(error.getMessage().contains("prueba"),
+                    "El mensaje debe incluir la base: " + error.getMessage());
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // probar: resultados de isValid
+    // ---------------------------------------------------------------
+
+    @Test
+    void probarDevuelveTrueSiLaConexionEsValida() throws Exception {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+        Connection conexionSimulada = mock(Connection.class);
+        when(conexionSimulada.isValid(3)).thenReturn(true);
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))
+                    .thenReturn(conexionSimulada);
+
+            assertTrue(dao.probar(conexionValida()));
+        }
+    }
+
+    @Test
+    void probarDevuelveFalseSiLaConexionNoEsValida() throws Exception {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+        Connection conexionSimulada = mock(Connection.class);
+        when(conexionSimulada.isValid(3)).thenReturn(false);
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))
+                    .thenReturn(conexionSimulada);
+
+            assertFalse(dao.probar(conexionValida()));
+        }
+    }
+
+    @Test
+    void probarDevuelveFalseSiElDriverDevuelveConexionNula() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))
+                    .thenReturn(null);
+
+            assertFalse(dao.probar(conexionValida()));
+        }
+    }
+
+    @Test
+    void probarDevuelveFalseSiElMotorNoEsMySQL() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        Conexion conexion = conexionValida();
+        conexion.setTipoMotor(TipoMotor.SQLITE);
+
+        assertFalse(dao.probar(conexion));
+    }
+
+    // ---------------------------------------------------------------
+    // Datos que recibe el driver
+    // ---------------------------------------------------------------
+
+    @Test
+    void abrirPasaUrlUsuarioYPasswordAlDriver() throws Exception {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+        Conexion conexion = conexionValida();
+        Connection conexionSimulada = mock(Connection.class);
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))
+                    .thenReturn(conexionSimulada);
+
+            dao.abrir(conexion);
+
+            driver.verify(() -> DriverManager.getConnection(
+                    eq(dao.construirUrl(conexion)), eq("root"), eq("secreta")));
+        }
+    }
+
+    @Test
+    void getTablasUsaLaBaseIndicadaYElComandoShowTables() throws Exception {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+        Connection conexionSimulada = mock(Connection.class);
+        Statement sentencia = mock(Statement.class);
+        ResultSet filas = mock(ResultSet.class);
+
+        when(conexionSimulada.createStatement()).thenReturn(sentencia);
+        when(sentencia.executeQuery(anyString())).thenReturn(filas);
+        when(filas.next()).thenReturn(false);
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))
+                    .thenReturn(conexionSimulada);
+
+            dao.abrir(conexionValida());
+            dao.getTablas("otra_base");
+
+            driver.verify(() -> DriverManager.getConnection(
+                    eq("jdbc:mysql://localhost:3306/otra_base?" + PARAMS_SIN_SSL),
+                    eq("root"), eq("secreta")));
+            org.mockito.Mockito.verify(sentencia).executeQuery("SHOW TABLES IN otra_base");
+        }
+    }
+
+    @Test
+    void getTablasUsaLosDatosDeLaUltimaConexionAbierta() throws Exception {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+        Connection conexionSimulada = mock(Connection.class);
+        Statement sentencia = mock(Statement.class);
+        ResultSet filas = mock(ResultSet.class);
+
+        when(conexionSimulada.createStatement()).thenReturn(sentencia);
+        when(sentencia.executeQuery(anyString())).thenReturn(filas);
+        when(filas.next()).thenReturn(false);
+
+        Conexion primera = conexionValida();
+        Conexion segunda = conexionConSsl("db.ejemplo.com", 3307, "ventas");
+        segunda.setUsuario("admin");
+        segunda.setPassword("clave2");
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))
+                    .thenReturn(conexionSimulada);
+
+            dao.abrir(primera);
+            dao.abrir(segunda);
+            dao.getTablas("prueba");
+
+            driver.verify(() -> DriverManager.getConnection(
+                    eq("jdbc:mysql://db.ejemplo.com:3307/prueba?" + PARAMS_CON_SSL),
+                    eq("admin"), eq("clave2")));
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // getTablas: limites del nombre y resultados
+    // ---------------------------------------------------------------
+
+    @Test
+    void getTablasRechazaElNombreInvalidoAunqueNoHayaConexion() {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+
+        ErrorConexion error = assertThrows(ErrorConexion.class, () -> dao.getTablas("mi-base"));
+
+        assertTrue(error.getMessage().contains("mi-base"),
+                "El mensaje debe indicar el nombre invalido: " + error.getMessage());
+    }
+
+    @Test
+    void getTablasAceptaNombresValidosEnLosLimites() throws Exception {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+        Connection conexionSimulada = mock(Connection.class);
+        Statement sentencia = mock(Statement.class);
+        ResultSet filas = mock(ResultSet.class);
+
+        when(conexionSimulada.createStatement()).thenReturn(sentencia);
+        when(sentencia.executeQuery(anyString())).thenReturn(filas);
+        when(filas.next()).thenReturn(false);
+
+        String[] validos = {"a", "Z", "1", "123", "_", "Base_2024", "a".repeat(64)};
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))
+                    .thenReturn(conexionSimulada);
+
+            dao.abrir(conexionValida());
+
+            for (String nombre : validos) {
+                assertNotNull(dao.getTablas(nombre), "Debia aceptar el nombre: " + nombre);
+            }
+        }
+    }
+
+    @Test
+    void getTablasDevuelveListaVaciaSiLaBaseNoTieneTablas() throws Exception {
+        ConexionDAOMySQL dao = new ConexionDAOMySQL();
+        Connection conexionSimulada = mock(Connection.class);
+        Statement sentencia = mock(Statement.class);
+        ResultSet filas = mock(ResultSet.class);
+
+        when(conexionSimulada.createStatement()).thenReturn(sentencia);
+        when(sentencia.executeQuery(anyString())).thenReturn(filas);
+        when(filas.next()).thenReturn(false);
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(anyString(), anyString(), anyString()))
+                    .thenReturn(conexionSimulada);
+
+            dao.abrir(conexionValida());
+            List<String> tablas = dao.getTablas("vacia");
+
+            assertNotNull(tablas);
+            assertTrue(tablas.isEmpty());
+        }
     }
 }
