@@ -16,57 +16,38 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.SQLInvalidAuthorizationSpecException;
+import java.sql.SQLNonTransientConnectionException;
+import java.sql.SQLTimeoutException;
+import java.sql.SQLTransientConnectionException;
 import java.util.Map;
 
 /**
  * Controller del diálogo modal para crear una nueva conexión.
  *
- * <p>Este controller no contiene lógica de persistencia. Gestiona la UI y construye
- * el objeto {@link Conexion} con los datos ingresados por el usuario.</p>
- *
- * <p>El handler de "Guardar" se inyecta desde fuera del controller. El de "Probar"
- * está registrado en el FXML ({@code onAction="#handleProbarConexion"}) y prueba la
- * conexión real en segundo plano con {@link ConnectionProvider}, usando la URL que
- * arma el DAO recibido en {@link #setDaos}.</p>
+ * Gestiona la interfaz y construye el objeto Conexion.
+ * Las pruebas de conexión se ejecutan en segundo plano
+ * para evitar bloquear el hilo de JavaFX.
  */
 public class DialogoNuevaConexionController {
 
-    // --------------------------------------------------------
-    // FXML fields
-    // --------------------------------------------------------
-
-    @FXML private TextField           campoNombre;
+    @FXML private TextField campoNombre;
     @FXML private ComboBox<TipoMotor> comboMotor;
-    @FXML private TextField           campoHost;
-    @FXML private TextField           campoPuerto;
-    @FXML private TextField           campoBaseDatos;
-    @FXML private TextField           campoUsuario;
-    @FXML private PasswordField       campoPassword;
-    @FXML private CheckBox            checkBoxSSL;
-    @FXML private Label               etiquetaEstado;
-    @FXML private Button              botonProbar;
-    @FXML private Button              botonGuardar;
-    @FXML private Button              botonCancelar;
+    @FXML private TextField campoHost;
+    @FXML private TextField campoPuerto;
+    @FXML private TextField campoBaseDatos;
+    @FXML private TextField campoUsuario;
+    @FXML private PasswordField campoPassword;
+    @FXML private CheckBox checkBoxSSL;
+    @FXML private Label etiquetaEstado;
+    @FXML private Button botonProbar;
+    @FXML private Button botonGuardar;
+    @FXML private Button botonCancelar;
 
-    /** Resultado del diálogo. Es null si el usuario canceló. */
     private Conexion conexionResultado;
-
-    /** DAOs por motor, inyectados desde App para probar la conexión. */
     private Map<TipoMotor, IConexionDAO> daos;
 
-    // --------------------------------------------------------
-    // Initialization
-    // --------------------------------------------------------
-
-    /**
-     * Inicializa el diálogo:
-     * <ul>
-     * <li>Llena el ComboBox con los valores de {@link TipoMotor}.</li>
-     * <li>Selecciona SQLITE por defecto y deshabilita los campos que no aplican.</li>
-     * <li>Registra el listener del ComboBox para habilitar/deshabilitar campos.</li>
-     * <li>Conecta el botón "Cancelar" para cerrar el diálogo.</li>
-     * </ul>
-     */
     @FXML
     public void initialize() {
         comboMotor.getItems().addAll(TipoMotor.values());
@@ -74,22 +55,13 @@ public class DialogoNuevaConexionController {
         actualizarCamposSegunMotor(TipoMotor.SQLITE);
 
         comboMotor.valueProperty().addListener(
-                (observable, oldValue, newValue) -> actualizarCamposSegunMotor(newValue)
+                (observable, oldValue, newValue) ->
+                        actualizarCamposSegunMotor(newValue)
         );
 
         botonCancelar.setOnAction(event -> cerrar());
     }
 
-    // --------------------------------------------------------
-    // Private helpers
-    // --------------------------------------------------------
-
-    /**
-     * Habilita o deshabilita los campos de red según el motor seleccionado.
-     * SQLite no requiere host, puerto, usuario, password ni SSL.
-     *
-     * @param motor motor seleccionado en el ComboBox
-     */
     private void actualizarCamposSegunMotor(TipoMotor motor) {
         boolean esSqlite = motor == TipoMotor.SQLITE;
         campoHost.setDisable(esSqlite);
@@ -99,23 +71,10 @@ public class DialogoNuevaConexionController {
         checkBoxSSL.setDisable(esSqlite);
     }
 
-    /**
-     * Cierra el diálogo sin guardar.
-     * El resultado queda como {@code null}.
-     */
     private void cerrar() {
         ((Stage) botonCancelar.getScene().getWindow()).close();
     }
 
-    // --------------------------------------------------------
-    // Public API
-    // --------------------------------------------------------
-
-    /**
-     * Valida los campos obligatorios del formulario según el motor seleccionado.
-     *
-     * @return {@code true} si el formulario es válido; {@code false} en caso contrario
-     */
     public boolean validarFormulario() {
         String error = obtenerErrorValidacion();
 
@@ -123,16 +82,10 @@ public class DialogoNuevaConexionController {
             return true;
         }
 
-        etiquetaEstado.setText("❌ " + error);
-        etiquetaEstado.setStyle("-fx-text-fill: #e74c3c;");
+        mostrarError(error);
         return false;
     }
 
-    /**
-     * Obtiene el primer error de validación encontrado.
-     *
-     * @return mensaje de error o {@code null} si los datos son válidos
-     */
     private String obtenerErrorValidacion() {
         TipoMotor motor = comboMotor.getValue();
 
@@ -145,7 +98,8 @@ public class DialogoNuevaConexionController {
         }
 
         if (motor == TipoMotor.SQLITE) {
-            if (campoBaseDatos.getText() == null || campoBaseDatos.getText().isBlank()) {
+            if (campoBaseDatos.getText() == null
+                    || campoBaseDatos.getText().isBlank()) {
                 return "El archivo de SQLite es obligatorio.";
             }
             return null;
@@ -160,12 +114,14 @@ public class DialogoNuevaConexionController {
         }
 
         String puertoTexto = campoPuerto.getText();
+
         if (puertoTexto == null || puertoTexto.isBlank()) {
             return "El puerto es obligatorio.";
         }
 
         try {
             int puerto = Integer.parseInt(puertoTexto.strip());
+
             if (puerto < 1 || puerto > 65535) {
                 return "El puerto debe estar entre 1 y 65535.";
             }
@@ -176,17 +132,6 @@ public class DialogoNuevaConexionController {
         return null;
     }
 
-    /**
-     * Construye un objeto {@link Conexion} con los valores actuales del formulario.
-     *
-     * <ul>
-     * <li>Si el campo "Puerto" está vacío, el puerto del objeto será {@code null}.</li>
-     * <li>Si el campo "Puerto" contiene un valor no numérico, el puerto será {@code null}.</li>
-     * <li>Los demás campos se copian directamente desde los controles.</li>
-     * </ul>
-     *
-     * @return objeto {@link Conexion} armado con los datos del formulario
-     */
     public Conexion construirConexion() {
         Conexion conexion = new Conexion();
         conexion.setNombre(campoNombre.getText());
@@ -198,6 +143,7 @@ public class DialogoNuevaConexionController {
         conexion.setUsarSSL(checkBoxSSL.isSelected());
 
         String puertoTexto = campoPuerto.getText();
+
         if (puertoTexto != null && !puertoTexto.isBlank()) {
             try {
                 conexion.setPuerto(Integer.parseInt(puertoTexto.strip()));
@@ -211,85 +157,64 @@ public class DialogoNuevaConexionController {
         return conexion;
     }
 
-    /**
-     * Devuelve la conexión resultado del diálogo.
-     * Es {@code null} si el usuario canceló sin guardar.
-     *
-     * @return conexión guardada o {@code null}
-     */
     public Conexion getConexionResultado() {
         return conexionResultado;
     }
 
-    /**
-     * Establece la conexión resultado del diálogo.
-     * La integración llama a este método tras validar y persistir la conexión.
-     *
-     * @param conexion conexión a establecer como resultado
-     */
     public void setConexionResultado(Conexion conexion) {
         this.conexionResultado = conexion;
     }
 
-    /**
-     * Registra la acción que debe ejecutarse al presionar el botón "Guardar".
-     *
-     * @param accion acción de guardado definida por la integración
-     */
     public void setOnGuardar(Runnable accion) {
         botonGuardar.setOnAction(event -> accion.run());
     }
 
-    /**
-     * Muestra un mensaje en el área de estado del diálogo.
-     *
-     * @param mensaje mensaje que se mostrará al usuario
-     */
     public void mostrarEstado(String mensaje) {
         etiquetaEstado.setText(mensaje);
     }
 
-    /**
-     * Establece los DAOs por motor que usa el botón "Probar".
-     *
-     * @param daos DAOs de conexión indexados por motor
-     */
     public void setDaos(Map<TipoMotor, IConexionDAO> daos) {
         this.daos = daos;
     }
 
-    /**
-     * Handler del botón "Probar", registrado en el FXML
-     * ({@code onAction="#handleProbarConexion"}).
-     * Valida el formulario y prueba la conexión real con {@link ConnectionProvider}
-     * en un hilo de fondo, para no congelar la interfaz. Muestra un icono de éxito
-     * si conecta o el mensaje de error JDBC si falla.
-     */
     @FXML
     private void handleProbarConexion() {
         if (!validarFormulario()) {
             return;
         }
 
+        if (daos == null) {
+            mostrarError("No se configuraron los controladores de conexión.");
+            return;
+        }
+
+        Conexion conexion = construirConexion();
+        IConexionDAO dao = daos.get(conexion.getTipoMotor());
+
+        if (dao == null) {
+            mostrarError("No existe un controlador para el motor seleccionado.");
+            return;
+        }
+
         DBConfig config;
+
         try {
-            Conexion conexion = construirConexion();
-            IConexionDAO dao = daos.get(conexion.getTipoMotor());
             config = new DBConfig(
                     dao.construirUrl(conexion),
                     conexion.getUsuario(),
                     conexion.getPassword(),
-                    driverDe(conexion.getTipoMotor()));
-        } catch (Exception e) {
-            etiquetaEstado.setText("❌ " + e.getMessage());
-            etiquetaEstado.setStyle("-fx-text-fill: #e74c3c;");
+                    driverDe(conexion.getTipoMotor())
+            );
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            mostrarError("Configuración de conexión inválida: " + e.getMessage());
             return;
         }
 
         Task<Long> prueba = new Task<>() {
             @Override
-            protected Long call() throws Exception {
+            protected Long call() throws SQLException {
                 long inicio = System.currentTimeMillis();
+
                 try (Connection ignored = ConnectionProvider.abrir(config)) {
                     return System.currentTimeMillis() - inicio;
                 }
@@ -298,16 +223,18 @@ public class DialogoNuevaConexionController {
 
         prueba.setOnSucceeded(event -> {
             botonProbar.setDisable(false);
-            etiquetaEstado.setText("✅ Conexión exitosa (" + prueba.getValue() + " ms)");
+            etiquetaEstado.setText(
+                    "✅ Conexión exitosa (" + prueba.getValue() + " ms)"
+            );
             etiquetaEstado.setStyle("-fx-text-fill: #27ae60;");
         });
 
         prueba.setOnFailed(event -> {
             botonProbar.setDisable(false);
-            Throwable error = prueba.getException();
-            etiquetaEstado.setText("❌ No se pudo conectar: "
-                    + (error != null ? error.getMessage() : "error desconocido"));
-            etiquetaEstado.setStyle("-fx-text-fill: #e74c3c;");
+            mostrarError(
+                    "No se pudo conectar: "
+                            + describirErrorConexion(prueba.getException())
+            );
         });
 
         botonProbar.setDisable(true);
@@ -319,12 +246,56 @@ public class DialogoNuevaConexionController {
         hilo.start();
     }
 
-    /**
-     * Devuelve la clase del driver JDBC para el motor indicado.
-     *
-     * @param motor motor seleccionado
-     * @return nombre completo de la clase del driver
-     */
+    private void mostrarError(String mensaje) {
+        etiquetaEstado.setText("❌ " + mensaje);
+        etiquetaEstado.setStyle("-fx-text-fill: #e74c3c;");
+    }
+
+    private static String describirErrorConexion(Throwable error) {
+        Throwable causa = error;
+
+        while (causa != null && !(causa instanceof SQLException)) {
+            causa = causa.getCause();
+        }
+
+        if (causa instanceof SQLException sql) {
+            String estado = sql.getSQLState();
+
+            if (sql instanceof SQLTimeoutException
+                    || (estado != null && estado.startsWith("HYT"))) {
+                return "Tiempo de espera agotado al conectar con la base de datos.";
+            }
+
+            if (sql instanceof SQLInvalidAuthorizationSpecException
+                    || (estado != null && estado.startsWith("28"))) {
+                return "Credenciales incorrectas o acceso no autorizado.";
+            }
+
+            if (sql instanceof SQLTransientConnectionException) {
+                return "Fallo temporal de conexión. Intente nuevamente.";
+            }
+
+            if (sql instanceof SQLNonTransientConnectionException
+                    || (estado != null && estado.startsWith("08"))) {
+                return "No se pudo establecer la conexión con el servidor.";
+            }
+
+            String mensaje = sql.getMessage() != null
+                    ? sql.getMessage()
+                    : "Error SQL sin descripción.";
+
+            return "Error SQL: " + mensaje
+                    + (estado != null ? " [SQLState: " + estado + "]" : "")
+                    + (sql.getErrorCode() != 0
+                    ? " [Código: " + sql.getErrorCode() + "]"
+                    : "");
+        }
+
+        return error != null && error.getMessage() != null
+                ? error.getMessage()
+                : "Error desconocido al probar la conexión.";
+    }
+
     private static String driverDe(TipoMotor motor) {
         return switch (motor) {
             case SQLITE -> "org.sqlite.JDBC";
