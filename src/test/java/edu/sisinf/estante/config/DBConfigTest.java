@@ -6,12 +6,12 @@ import static org.junit.jupiter.api.Assertions.*;
 class DBConfigTest {
 
     @Test
-    void constructorConParametros_debeAsignarTodosLosCampos() {
+    void constructorConParametros_debeAsignarYNormalizarCamposValidos() {
         DBConfig config = new DBConfig(
-                "jdbc:mysql://localhost:3306/chuspadb_db",
-                "admin",
+                "  jdbc:mysql://localhost:3306/chuspadb_db  ",
+                "  admin  ",
                 "1234",
-                "com.mysql.cj.jdbc.Driver"
+                "  com.mysql.cj.jdbc.Driver  "
         );
 
         assertNotNull(config);
@@ -19,6 +19,20 @@ class DBConfigTest {
         assertEquals("admin", config.getUsuario());
         assertEquals("1234", config.getPassword());
         assertEquals("com.mysql.cj.jdbc.Driver", config.getDriver());
+    }
+
+    @Test
+    void constructorConParametros_debeNormalizarPasswordNuloACadenaVacia() {
+        DBConfig config = new DBConfig(
+                "jdbc:sqlite:memoria.db",
+                "",
+                null,
+                "org.sqlite.JDBC"
+        );
+
+        assertNotNull(config);
+        assertEquals("", config.getUsuario());
+        assertEquals("", config.getPassword());
     }
 
     @Test
@@ -48,31 +62,78 @@ class DBConfigTest {
     }
 
     @Test
-    void constructor_debeManejarValoresNulosSinLanzarExcepcion() {
-        DBConfig config = assertDoesNotThrow(() ->
-                new DBConfig(null, null, null, null)
-        );
+    void setUrl_debeLanzarExcepcionConValoresNulosVaciosOSinPrefijoJdbc() {
+        DBConfig config = new DBConfig();
 
-        assertNotNull(config);
-        assertNull(config.getUrl());
-        assertNull(config.getUsuario());
-        assertNull(config.getPassword());
-        assertNull(config.getDriver());
+        assertThrows(IllegalArgumentException.class, () -> config.setUrl(null));
+        assertThrows(IllegalArgumentException.class, () -> config.setUrl(""));
+        assertThrows(IllegalArgumentException.class, () -> config.setUrl("   "));
+        assertThrows(IllegalArgumentException.class, () -> config.setUrl("mysql://localhost:3306/db"));
     }
 
     @Test
-    void settersYConstructor_debenPermitirCadenasVaciasYConEspacios() {
-        DBConfig config = new DBConfig("", "   ", "", "  ");
+    void setUsuario_debeLanzarExcepcionSiEsNuloYPermitirVacio() {
+        DBConfig config = new DBConfig();
 
-        assertEquals("", config.getUrl());
-        assertEquals("   ", config.getUsuario());
+        assertThrows(IllegalArgumentException.class, () -> config.setUsuario(null));
+
+        assertDoesNotThrow(() -> config.setUsuario("   "));
+        assertEquals("", config.getUsuario());
+    }
+
+    @Test
+    void setPassword_debeNormalizarNuloACadenaVaciaSinLanzarExcepcion() {
+        DBConfig config = new DBConfig();
+
+        assertDoesNotThrow(() -> config.setPassword(null));
         assertEquals("", config.getPassword());
-        assertEquals("  ", config.getDriver());
+    }
 
-        config.setUrl("jdbc:sqlite:memoria.db");
-        config.setPassword("");
+    @Test
+    void setDriver_debeLanzarExcepcionConValoresNulosOVacios() {
+        DBConfig config = new DBConfig();
 
-        assertEquals("jdbc:sqlite:memoria.db", config.getUrl());
+        assertThrows(IllegalArgumentException.class, () -> config.setDriver(null));
+        assertThrows(IllegalArgumentException.class, () -> config.setDriver(""));
+        assertThrows(IllegalArgumentException.class, () -> config.setDriver("   "));
+    }
+
+    @Test
+    void constructorConParametros_debeLanzarExcepcionAnteEntradasInvalidas() {
+        assertThrows(IllegalArgumentException.class, () ->
+                new DBConfig(null, "admin", "1234", "com.mysql.cj.jdbc.Driver"));
+        assertThrows(IllegalArgumentException.class, () ->
+                new DBConfig("http://localhost:3306/db", "admin", "1234", "com.mysql.cj.jdbc.Driver"));
+        assertThrows(IllegalArgumentException.class, () ->
+                new DBConfig("jdbc:mysql://localhost:3306/db", null, "1234", "com.mysql.cj.jdbc.Driver"));
+        assertThrows(IllegalArgumentException.class, () ->
+                new DBConfig("jdbc:mysql://localhost:3306/db", "admin", "1234", ""));
+    }
+
+    @Test
+    void validar_debeLanzarIllegalStateExceptionSiConfiguracionEsIncompleta() {
+        DBConfig vacia = new DBConfig();
+        assertThrows(IllegalStateException.class, vacia::validar);
+
+        DBConfig sinDriver = new DBConfig();
+        sinDriver.setUrl("jdbc:mysql://localhost:3306/db");
+        sinDriver.setUsuario("admin");
+        assertThrows(IllegalStateException.class, sinDriver::validar);
+
+        DBConfig sinUsuario = new DBConfig();
+        sinUsuario.setUrl("jdbc:mysql://localhost:3306/db");
+        sinUsuario.setDriver("com.mysql.cj.jdbc.Driver");
+        assertThrows(IllegalStateException.class, sinUsuario::validar);
+    }
+
+    @Test
+    void validar_debeCompletarConExitoCuandoLosCamposObligatoriosEstanConfigurados() {
+        DBConfig config = new DBConfig();
+        config.setUrl("jdbc:mysql://localhost:3306/db");
+        config.setDriver("com.mysql.cj.jdbc.Driver");
+        config.setUsuario("admin");
+
+        assertDoesNotThrow(config::validar);
         assertEquals("", config.getPassword());
     }
 }
