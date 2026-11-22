@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Controller de la barra de estado al pie de la ventana principal.
@@ -19,6 +22,11 @@ import java.util.Objects;
  */
 public class BarraEstadoController {
     private static final Logger logger = LoggerFactory.getLogger(BarraEstadoController.class);
+    private static final ExecutorService WORKER_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
+        Thread hilo = new Thread(runnable, "chuspadb-barra-estado-worker");
+        hilo.setDaemon(true);
+        return hilo;
+    });
 
     @FXML private Label labelConexion;
     @FXML private Label labelTiempo;
@@ -114,15 +122,13 @@ public class BarraEstadoController {
      */
     public void setMensaje(String mensaje) {
         final String textoSeguro = (mensaje != null) ? mensaje : "";
-        if (esMensajeDeError(textoSeguro)) {
-            logger.warn("BarraEstadoController recibió notificación de error de ejecución/conexión: {}", textoSeguro);
-        }
+        clasificarYRegistrarMensaje(textoSeguro);
         ejecutarEnHiloUI(() -> {
             if (labelMensaje == null) {
                 logger.warn("labelMensaje no está inicializado en BarraEstadoController.");
                 return;
             }
-            labelMensaje.setText(mensaje != null ? mensaje : "");
+            labelMensaje.setText(textoSeguro);
         });
     }
     /**
@@ -141,10 +147,10 @@ public class BarraEstadoController {
         String detalle;
 
         if (error instanceof ErrorQuery || causaRaiz instanceof ErrorQuery) {
-            logger.error("Error de consulta SQL en BarraEstadoController: {}", error.getMessage(), error);
+            logger.error("ErrorQuery recibido en BarraEstadoController: {}", error.getMessage(), error);
             detalle = "Error en consulta SQL: " + extraerMensajeLimpio(error, causaRaiz);
         } else if (error instanceof ErrorConexion || causaRaiz instanceof ErrorConexion) {
-            logger.error("Error de conexión BD en BarraEstadoController: {}", error.getMessage(), error);
+            logger.error("ErrorConexion recibido en BarraEstadoController: {}", error.getMessage(), error);
             detalle = "Error de conexión: " + extraerMensajeLimpio(error, causaRaiz);
         } else if (causaRaiz instanceof SQLException sqlEx) {
             logger.error("SQLException capturada (SQLState={}, ErrorCode={}): {}",
@@ -156,31 +162,25 @@ public class BarraEstadoController {
             detalle = "Error: " + extraerMensajeLimpio(error, causaRaiz);
         }
 
-        setMensaje(detalle);
+        actualizarEtiquetaErrorDirecto(detalle);
     }
-
-    /**
-     * Ejecuta una operación síncrona fuera del hilo de JavaFX para evitar congelar la interfaz gráfica,
-     * informando el estado inicial, capturando errores de base de datos y restaurando la UI al finalizar.
-     *
-     * @param mensajeProgreso Mensaje a mostrar mientras la tarea se ejecuta en segundo plano.
-     * @param operacion       Tarea síncrona a ejecutar fuera del JavaFX Application Thread.
-     */
-    public void ejecutarSinBloquearUI(String mensajeProgreso, Runnable operacion) {
+    public CompletableFuture<Void> ejecutarSinBloquearUI(String mensajeProgreso, Runnable operacion) {
         Objects.requireNonNull(operacion, "La operación a ejecutar no puede ser nula.");
-        setMensaje(mensajeProgreso != null && !mensajeProgreso.isBlank() ? mensajeProgreso : "Procesando...");
+        String avisoInicial = (mensajeProgreso != null && !mensajeProgreso.isBlank())
+                ? mensajeProgreso
+                : "Procesando operación de base de datos...";
+        setMensaje(avisoInicial);
 
-        Thread hiloTrabajo = new Thread(() -> {
+        return CompletableFuture.runAsync(() -> {
             try {
                 operacion.run();
             } catch (Exception e) {
                 mostrarError(e);
+                throw e;
             }
-        }, "chuspadb-barra-estado-worker");
-        hiloTrabajo.setDaemon(true);
-        hiloTrabajo.start();
+        }, WORKER_EXECUTOR);
     }
-
+    
     /**
      * Limpia los labels de tiempo, filas y mensaje.
      * El label de conexión no se modifica.
@@ -204,10 +204,30 @@ public class BarraEstadoController {
             accion.run();
         }
     }
-    private boolean esMensajeDeError(String texto) {
+    private void clasificarYRegistrarMensaje(String texto) {
+        if (texto.isEmpty()) {
+            return;
+        }
         String lower = texto.toLowerCase();
-        return lower.contains("error") || lower.contains("fallo") || lower.contains("excepción")
-                || lower.contains("exception") || lower.contains("sql");
+        if (lower.contains("conexión") || lower.contains("conexion") || lower.contains("conectar")
+                || lower.contains("timeout") || lower.contains("driver")) {
+            logger.error("Fallo de conexión reportado a BarraEstadoController: {}", texto);
+        } else if (lower.contains("sql") || lower.contains("query") || lower.contains("consulta")
+                || lower.contains("syntax") || lower.contains("error")) {
+            logger.error("Fallo de ejecución SQL reportado a BarraEstadoController: {}", texto);
+        } else {
+            logger.debug("Mensaje de estado en BarraEstadoController: {}", texto);
+        }
+    }
+
+    private void actualizarEtiquetaErrorDirecto(String detalle) {
+        ejecutarEnHiloUI(() -> {
+            if (labelMensaje == null) {
+                logger.warn("labelMensaje no está inicializado en BarraEstadoController.");
+                return;
+            }
+            labelMensaje.setText(detalle);
+        });
     }
 
     private Throwable obtenerCausaRaiz(Throwable error) {
