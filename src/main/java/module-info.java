@@ -9,9 +9,9 @@
 module edu.sisinf.chuspadb {
 
     // ── Dependencias de plataforma ────────────────────────────────────────────
-    requires javafx.controls;
+    requires transitive javafx.controls;
     requires javafx.fxml;
-    requires java.sql;
+    requires transitive java.sql;
     requires mysql.connector.j;
     requires org.postgresql.jdbc;
     requires org.xerial.sqlitejdbc;
@@ -35,6 +35,9 @@ module edu.sisinf.chuspadb {
 
     /** Permite a Jackson serializar / deserializar los DTOs. */
     opens edu.sisinf.chuspadb.dto to com.fasterxml.jackson.databind;
+
+    /** Permite a Jackson serializar / deserializar parámetros de configuración JDBC. */
+    opens edu.sisinf.chuspadb.config to com.fasterxml.jackson.databind;
 
     // ── Exportaciones públicas del módulo ─────────────────────────────────────
     exports edu.sisinf.chuspadb;
