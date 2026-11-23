@@ -5,15 +5,26 @@ import edu.sisinf.chuspadb.core.ErrorPersistencia;
 import edu.sisinf.chuspadb.modelo.ResultadoQuery;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.MockedConstruction;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mockConstruction;
 
 /**
  * Tests unitarios para ExportadorCSV.
@@ -26,21 +37,28 @@ class ExportadorCSVTest {
     Path directorioTemp;
 
     /**
-     * Verifica que la primera línea del CSV contiene las cabeceras.
+     * Verifica que el archivo CSV generado contiene cabeceras y filas exactas.
      */
     @Test
-    void exportar_debeGenerarCabeceraEnPrimeraLinea() throws IOException {
+    void exportar_debeGenerarContenidoCsvExacto() throws IOException {
         ResultadoQuery resultado = ResultadoQuery.deLectura(
-                List.of("id", "nombre", "email"),
-                List.of(List.of(1, "Ana", "ana@mail.com")),
+                List.of("id", "nombre"),
+                List.of(
+                        List.of(1, "Ana"),
+                        List.of(2, "Luis")
+                ),
                 10L
         );
 
         File archivo = directorioTemp.resolve("test.csv").toFile();
         exportador.exportar(resultado, archivo);
 
-        List<String> lineas = Files.readAllLines(archivo.toPath());
-        assertEquals("id,nombre,email", lineas.get(0));
+        String contenido = Files.readString(
+                archivo.toPath(),
+                StandardCharsets.UTF_8
+        );
+
+        assertEquals("id,nombre\n1,Ana\n2,Luis\n", contenido);
     }
 
     /**
@@ -134,9 +152,12 @@ class ExportadorCSVTest {
         File archivo = directorioTemp.resolve("comas.csv").toFile();
         exportador.exportar(resultado, archivo);
 
-        String contenido = Files.readString(archivo.toPath());
+        String contenido = Files.readString(
+                archivo.toPath(),
+                StandardCharsets.UTF_8
+        );
 
-        assertTrue(contenido.contains("\"Ana, María\""));
+        assertEquals("nombre\n\"Ana, María\"\n", contenido);
     }
 
     /**
@@ -153,9 +174,12 @@ class ExportadorCSVTest {
         File archivo = directorioTemp.resolve("comillas.csv").toFile();
         exportador.exportar(resultado, archivo);
 
-        String contenido = Files.readString(archivo.toPath());
+        String contenido = Files.readString(
+                archivo.toPath(),
+                StandardCharsets.UTF_8
+        );
 
-        assertTrue(contenido.contains("\"Dijo \"\"hola\"\"\""));
+        assertEquals("comentario\n\"Dijo \"\"hola\"\"\"\n", contenido);
     }
 
     /**
@@ -172,11 +196,65 @@ class ExportadorCSVTest {
         File archivo = directorioTemp.resolve("saltos.csv").toFile();
         exportador.exportar(resultado, archivo);
 
-        String contenido = Files.readString(archivo.toPath());
+        String contenido = Files.readString(
+                archivo.toPath(),
+                StandardCharsets.UTF_8
+        );
 
-        assertTrue(contenido.contains(
-                "\"Primera línea\nSegunda línea\""
-        ));
+        assertEquals(
+                "descripcion\n\"Primera línea\nSegunda línea\"\n",
+                contenido
+        );
+    }
+
+    /**
+     * Verifica que una celda con CRLF conserva ambos caracteres dentro de comillas.
+     */
+    @Test
+    void exportar_debeEscaparSaltosDeLineaCrlf() throws IOException {
+        ResultadoQuery resultado = ResultadoQuery.deLectura(
+                List.of("descripcion"),
+                List.of(List.of("Primera línea\r\nSegunda línea")),
+                10L
+        );
+
+        File archivo = directorioTemp.resolve("saltos-crlf.csv").toFile();
+        exportador.exportar(resultado, archivo);
+
+        String contenido = Files.readString(
+                archivo.toPath(),
+                StandardCharsets.UTF_8
+        );
+
+        assertEquals(
+                "descripcion\n\"Primera línea\r\nSegunda línea\"\n",
+                contenido
+        );
+    }
+
+    /**
+     * Verifica el escape combinado de comas, comillas y saltos de línea.
+     */
+    @Test
+    void exportar_debeEscaparCaracteresEspecialesCombinados() throws IOException {
+        ResultadoQuery resultado = ResultadoQuery.deLectura(
+                List.of("descripcion"),
+                List.of(List.of("Parte 1, \"citada\"\nParte 2")),
+                10L
+        );
+
+        File archivo = directorioTemp.resolve("combinados.csv").toFile();
+        exportador.exportar(resultado, archivo);
+
+        String contenido = Files.readString(
+                archivo.toPath(),
+                StandardCharsets.UTF_8
+        );
+
+        assertEquals(
+                "descripcion\n\"Parte 1, \"\"citada\"\"\nParte 2\"\n",
+                contenido
+        );
     }
 
     /**
@@ -187,8 +265,48 @@ class ExportadorCSVTest {
         ResultadoQuery resultado = ResultadoQuery.deEscritura(5, 10L);
         File archivo = directorioTemp.resolve("test.csv").toFile();
 
-        assertThrows(ErrorPersistencia.class, () ->
+        ErrorPersistencia error = assertThrows(ErrorPersistencia.class, () ->
                 exportador.exportar(resultado, archivo)
         );
+
+        assertEquals(
+                "Solo se pueden exportar resultados de lectura",
+                error.getMessage()
+        );
+        assertFalse(archivo.exists());
+    }
+
+    /**
+     * Verifica que un fallo de E/S se envuelve en ErrorPersistencia.
+     */
+    @Test
+    void exportar_debeEnvolverFalloDeEntradaSalida() {
+        ResultadoQuery resultado = ResultadoQuery.deLectura(
+                List.of("id"),
+                List.of(List.of(1)),
+                10L
+        );
+        File archivo = directorioTemp.resolve("fallo.csv").toFile();
+        IOException causa = new IOException("Fallo simulado de escritura");
+
+        try (MockedConstruction<FileOutputStream> construccion =
+                     mockConstruction(
+                             FileOutputStream.class,
+                             (stream, context) -> {
+                                 doThrow(causa).when(stream).write(
+                                         any(byte[].class),
+                                         anyInt(),
+                                         anyInt()
+                                 );
+                             })) {
+            ErrorPersistencia error = assertThrows(
+                    ErrorPersistencia.class,
+                    () -> exportador.exportar(resultado, archivo)
+            );
+
+            assertEquals("Error al exportar archivo CSV", error.getMessage());
+            assertSame(causa, error.getCause());
+            assertEquals(1, construccion.constructed().size());
+        }
     }
 }
