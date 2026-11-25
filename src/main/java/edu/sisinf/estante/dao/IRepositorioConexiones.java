@@ -47,4 +47,22 @@ public interface IRepositorioConexiones {
      * @throws ErrorPersistencia si no existe una conexión con el id indicado o si ocurre un error de persistencia.
      */
     void eliminar(String id) throws ErrorPersistencia;
+
+    default Conexion obtenerPorIdOReportar(String id)
+            throws ErrorPersistencia {
+
+        if (id == null || id.isBlank()) {
+            throw new ErrorPersistencia(
+                    "El identificador de la conexión no puede ser nulo ni estar vacío."
+            );
+        }
+
+        String identificador = id.trim();
+
+        return buscarPorId(identificador)
+                .orElseThrow(() -> new ErrorPersistencia(
+                        "No se encontró ninguna conexión registrada con el identificador: '"
+                                + identificador + "'."
+                ));
+    }
 }
