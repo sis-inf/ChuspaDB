@@ -1,9 +1,12 @@
 package edu.sisinf.chuspadb.controller;
 
+import edu.sisinf.chuspadb.core.ErrorConexion;
 import edu.sisinf.chuspadb.core.ErrorPersistencia;
+import edu.sisinf.chuspadb.core.ErrorQuery;
 import edu.sisinf.chuspadb.modelo.ResultadoQuery;
 import edu.sisinf.chuspadb.servicio.ExportadorExcel;
 import edu.sisinf.chuspadb.servicio.ExportadorJSON;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -20,10 +23,17 @@ import javafx.scene.control.ToolBar;
 import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 /**
@@ -31,7 +41,14 @@ import java.util.function.Consumer;
  */
 public class PanelResultadoQueryController {
 
+    private static final Logger logger = LoggerFactory.getLogger(PanelResultadoQueryController.class);
     private static final int TAMANO_PAGINA_INICIAL = 50;
+
+    private static final ExecutorService EXPORT_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
+        Thread hilo = new Thread(runnable, "chuspadb-resultado-export-worker");
+        hilo.setDaemon(true);
+        return hilo;
+    });
 
     @FXML
     private TableView<List<Object>> tablaResultado;
@@ -66,9 +83,11 @@ public class PanelResultadoQueryController {
 
         MenuItem itemCsv = new MenuItem("Exportar a CSV...");
         itemCsv.setOnAction(event -> {
-            if (onExportar != null && resultadoActual != null) {
-                onExportar.accept(resultadoActual);
+            if (onExportar == null || resultadoActual == null) {
+                logger.warn("Exportación CSV omitida: callback o resultadoActual no disponibles.");
+                return;
             }
+            ejecutarExportacionAsincrona("Exportando resultado a CSV...", () -> onExportar.accept(resultadoActual));
         });
 
         MenuItem itemJson = new MenuItem("Exportar a JSON...");
@@ -173,35 +192,76 @@ public class PanelResultadoQueryController {
     // ------------------------------------------------------------------
 
     private void exportarJSON() {
-
-        try {
-            File archivo = elegirArchivo("JSON", "*.json");
-
-            if (archivo == null) {
-                return;
-            }
-
-            exportadorJSON.exportar(resultadoActual, archivo);
-
-        } catch (Exception e) {
-            mostrarError("No se pudo exportar JSON", obtenerMensaje(e));
+        if (resultadoActual == null) {
+            logger.warn("Intento de exportar a JSON sin un resultado activo.");
+            return;
         }
+
+        File archivo = elegirArchivo("JSON", "*.json");
+        if (archivo == null) {
+            return;
+        }
+
+        final ResultadoQuery snapshot = resultadoActual;
+        ejecutarExportacionAsincrona("Exportando resultado a JSON...", () -> {
+            try {
+                exportadorJSON.exportar(snapshot, archivo);
+            } catch (ErrorPersistencia e) {
+                logger.error("ErrorPersistencia al exportar JSON en '{}': {}", archivo.getAbsolutePath(), e.getMessage(), e);
+                ejecutarEnHiloUI(() -> mostrarError("No se pudo exportar JSON", obtenerMensaje(e)));
+            } catch (Exception e) {
+                logger.error("Error inesperado al exportar JSON en '{}'", archivo.getAbsolutePath(), e);
+                ejecutarEnHiloUI(() -> mostrarError("No se pudo exportar JSON", obtenerMensaje(e)));
+            }
+        });
     }
 
     private void exportarExcel() {
-
-        try {
-            File archivo = elegirArchivo("Excel", "*.xlsx");
-
-            if (archivo == null) {
-                return;
-            }
-
-            exportadorExcel.exportar(resultadoActual, archivo);
-
-        } catch (Exception e) {
-            mostrarError("No se pudo exportar Excel", obtenerMensaje(e));
+        if (resultadoActual == null) {
+            logger.warn("Intento de exportar a Excel sin un resultado activo.");
+            return;
         }
+
+        File archivo = elegirArchivo("Excel", "*.xlsx");
+        if (archivo == null) {
+            return;
+        }
+
+        final ResultadoQuery snapshot = resultadoActual;
+        ejecutarExportacionAsincrona("Exportando resultado a Excel...", () -> {
+            try {
+                exportadorExcel.exportar(snapshot, archivo);
+            } catch (ErrorPersistencia e) {
+                logger.error("ErrorPersistencia al exportar Excel en '{}': {}", archivo.getAbsolutePath(), e.getMessage(), e);
+                ejecutarEnHiloUI(() -> mostrarError("No se pudo exportar Excel", obtenerMensaje(e)));
+            } catch (Exception e) {
+                logger.error("Error inesperado al exportar Excel en '{}'", archivo.getAbsolutePath(), e);
+                ejecutarEnHiloUI(() -> mostrarError("No se pudo exportar Excel", obtenerMensaje(e)));
+            }
+        });
+    }
+    private void ejecutarExportacionAsincrona(String mensajeProgreso, Runnable tareaExportacion) {
+        final String estadoPrevio = labelEstado != null ? labelEstado.getText() : "";
+        if (botonExportar != null) {
+            botonExportar.setDisable(true);
+        }
+        if (labelEstado != null) {
+            labelEstado.setText(mensajeProgreso);
+        }
+
+        CompletableFuture.runAsync(tareaExportacion, EXPORT_EXECUTOR)
+                .whenComplete((ok, ex) -> ejecutarEnHiloUI(() -> {
+                    if (ex != null) {
+                        logger.error("Fallo en tarea de exportación en segundo plano.", ex);
+                        mostrarError("Error durante la exportación", obtenerMensaje(ex));
+                    }
+                    if (botonExportar != null) {
+                        botonExportar.setDisable(resultadoActual == null);
+                    }
+                    if (labelEstado != null && mensajeProgreso.equals(labelEstado.getText())) {
+                        labelEstado.setText(estadoPrevio);
+                    }
+                }));
     }
 
     private File elegirArchivo(String descripcion, String extension) {
@@ -219,19 +279,37 @@ public class PanelResultadoQueryController {
         return chooser.showSaveDialog(ventana);
     }
 
-    private String obtenerMensaje(Exception e) {
-        return e instanceof ErrorPersistencia && e.getCause() != null
-                ? e.getCause().getMessage()
-                : e.getMessage();
+    private String obtenerMensaje(Throwable e) {
+        if (e == null) {
+            return "Error desconocido.";
+        }
+        Throwable actual = e;
+        while (actual.getCause() != null && actual.getCause() != actual) {
+            actual = actual.getCause();
+        }
+        if (actual instanceof SQLException sqlEx) {
+            return "Error SQL [" + (sqlEx.getSQLState() != null ? sqlEx.getSQLState() : "N/A") + "]: "
+                    + sqlEx.getMessage();
+        }
+        if (e instanceof ErrorPersistencia && e.getCause() != null && e.getCause().getMessage() != null) {
+            return e.getCause().getMessage();
+        }
+        return (actual.getMessage() != null && !actual.getMessage().isBlank())
+                ? actual.getMessage()
+                : actual.getClass().getSimpleName();
     }
 
     private void mostrarError(String encabezado, String mensaje) {
-
-        Alert alerta = new Alert(Alert.AlertType.ERROR);
-        alerta.setTitle("Error exportando");
-        alerta.setHeaderText(encabezado);
-        alerta.setContentText(mensaje);
-        alerta.showAndWait();
+        try {
+            Alert alerta = new Alert(Alert.AlertType.ERROR);
+            alerta.setTitle("Error exportando");
+            alerta.setHeaderText(encabezado);
+            alerta.setContentText(mensaje);
+            alerta.showAndWait();
+        } catch (IllegalStateException e) {
+            logger.debug("Toolkit JavaFX no inicializado; omitiendo diálogo modal de alerta: {} - {}",
+                    encabezado, mensaje);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -239,65 +317,139 @@ public class PanelResultadoQueryController {
     // ------------------------------------------------------------------
 
     public void mostrar(ResultadoQuery resultado) {
-        this.resultadoActual = resultado;
+        ejecutarEnHiloUI(() -> {
+            if (resultado == null || resultado.getTipo() == null) {
+                logger.warn("Se recibió un ResultadoQuery nulo o sin tipo definido en PanelResultadoQueryController.");
+                this.resultadoActual = null;
+                limpiarTablaYPaginacion();
+                if (labelEstado != null) {
+                    labelEstado.setText("Error: Resultado de consulta inválido o vacío.");
+                }
+                if (botonExportar != null) {
+                    botonExportar.setDisable(true);
+                }
+                return;
+            }
 
-        tablaResultado.getColumns().clear();
-        tablaResultado.getItems().clear();
+            this.resultadoActual = resultado;
+            limpiarTablaYPaginacion();
 
+            switch (resultado.getTipo()) {
+
+                case LECTURA:
+                    List<String> columnas = resultado.getColumnas() != null
+                            ? resultado.getColumnas()
+                            : Collections.emptyList();
+
+                    for (int i = 0; i < columnas.size(); i++) {
+                        final int indice = i;
+
+                        TableColumn<List<Object>, Object> columna =
+                                new TableColumn<>(columnas.get(i));
+
+                        columna.setCellValueFactory(data -> {
+                            List<Object> fila = data.getValue();
+                            Object valor = (fila != null && indice < fila.size()) ? fila.get(indice) : null;
+                            return new ReadOnlyObjectWrapper<>(valor);
+                        });
+
+                        tablaResultado.getColumns().add(columna);
+                    }
+
+                    todasLasFilas = resultado.getFilas() != null
+                            ? resultado.getFilas()
+                            : new ArrayList<>();
+                    mostrarPagina();
+
+                    labelEstado.setText(
+                            todasLasFilas.size()
+                                    + " filas (" +
+                                    resultado.getTiempoMs() +
+                                    " ms)"
+                    );
+
+                    botonExportar.setDisable(false);
+                    break;
+
+                case ESCRITURA:
+                    labelEstado.setText(
+                            resultado.getFilasAfectadas()
+                                    + " filas afectadas (" +
+                                    resultado.getTiempoMs() +
+                                    " ms)"
+                    );
+
+                    botonExportar.setDisable(true);
+                    break;
+
+                case ERROR:
+                    String detalleError = (resultado.getMensaje() != null && !resultado.getMensaje().isBlank())
+                            ? resultado.getMensaje()
+                            : "Fallo desconocido al ejecutar la consulta SQL.";
+                    logger.error("Error de ejecución SQL recibido en PanelResultadoQueryController: {}", detalleError);
+                    labelEstado.setText("Error SQL: " + detalleError);
+                    botonExportar.setDisable(true);
+                    break;
+            }
+        });
+    }
+
+    public void mostrarErrorSql(Throwable error) {
+        if (error == null) {
+            logger.warn("mostrarErrorSql recibió una excepción nula.");
+            return;
+        }
+
+        String mensajeFormateado;
+        if (error instanceof ErrorQuery) {
+            logger.error("ErrorQuery capturado en PanelResultadoQueryController: {}", error.getMessage(), error);
+            mensajeFormateado = "Error en consulta SQL: " + obtenerMensaje(error);
+        } else if (error instanceof ErrorConexion) {
+            logger.error("ErrorConexion capturado en PanelResultadoQueryController: {}", error.getMessage(), error);
+            mensajeFormateado = "Error de conexión BD: " + obtenerMensaje(error);
+        } else if (error instanceof SQLException sqlEx) {
+            logger.error("SQLException capturada (SQLState={}, ErrorCode={}): {}",
+                    sqlEx.getSQLState(), sqlEx.getErrorCode(), sqlEx.getMessage(), sqlEx);
+            mensajeFormateado = "Error SQL [" + (sqlEx.getSQLState() != null ? sqlEx.getSQLState() : "N/A") + "]: "
+                    + sqlEx.getMessage();
+        } else {
+            logger.error("Error inesperado de ejecución SQL en PanelResultadoQueryController.", error);
+            mensajeFormateado = "Error SQL: " + obtenerMensaje(error);
+        }
+
+        final String textoFinal = mensajeFormateado;
+        ejecutarEnHiloUI(() -> {
+            this.resultadoActual = null;
+            limpiarTablaYPaginacion();
+            if (labelEstado != null) {
+                labelEstado.setText(textoFinal);
+            }
+            if (botonExportar != null) {
+                botonExportar.setDisable(true);
+            }
+        });
+    }
+
+    private void limpiarTablaYPaginacion() {
+        if (tablaResultado != null) {
+            tablaResultado.getColumns().clear();
+            tablaResultado.getItems().clear();
+        }
         todasLasFilas = new ArrayList<>();
         paginaActual = 0;
         habilitarPaginacion(false);
+    }
 
-        switch (resultado.getTipo()) {
-
-            case LECTURA:
-                List<String> columnas = resultado.getColumnas();
-
-                for (int i = 0; i < columnas.size(); i++) {
-                    final int indice = i;
-
-                    TableColumn<List<Object>, Object> columna =
-                            new TableColumn<>(columnas.get(i));
-
-                    columna.setCellValueFactory(data ->
-                            new ReadOnlyObjectWrapper<>(
-                                    data.getValue().get(indice)
-                            ));
-
-                    tablaResultado.getColumns().add(columna);
-                }
-
-                todasLasFilas = resultado.getFilas();
-                mostrarPagina();
-
-                labelEstado.setText(
-                        resultado.getFilas().size()
-                                + " filas (" +
-                                resultado.getTiempoMs() +
-                                " ms)"
-                );
-
-                botonExportar.setDisable(false);
-                break;
-
-            case ESCRITURA:
-                labelEstado.setText(
-                        resultado.getFilasAfectadas()
-                                + " filas afectadas (" +
-                                resultado.getTiempoMs() +
-                                " ms)"
-                );
-
-                botonExportar.setDisable(true);
-                break;
-
-            case ERROR:
-                labelEstado.setText(
-                        "Error: " + resultado.getMensaje()
-                );
-
-                botonExportar.setDisable(true);
-                break;
+    private void ejecutarEnHiloUI(Runnable accion) {
+        try {
+            if (Platform.isFxApplicationThread()) {
+                accion.run();
+            } else {
+                Platform.runLater(accion);
+            }
+        } catch (IllegalStateException e) {
+            logger.debug("Toolkit JavaFX no inicializado; ejecutando actualización directa.");
+            accion.run();
         }
     }
 
