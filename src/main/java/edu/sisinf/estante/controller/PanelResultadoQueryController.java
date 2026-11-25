@@ -87,7 +87,12 @@ public class PanelResultadoQueryController {
                 logger.warn("Exportación CSV omitida: callback o resultadoActual no disponibles.");
                 return;
             }
-            ejecutarExportacionAsincrona("Exportando resultado a CSV...", () -> onExportar.accept(resultadoActual));
+            try {
+                onExportar.accept(resultadoActual);
+            } catch (Exception e) {
+                logger.error("Error al invocar exportación CSV desde PanelResultadoQueryController.", e);
+                mostrarError("No se pudo exportar CSV", obtenerMensaje(e));
+            }
         });
 
         MenuItem itemJson = new MenuItem("Exportar a JSON...");
@@ -383,12 +388,13 @@ public class PanelResultadoQueryController {
                     break;
 
                 case ERROR:
-                    String detalleError = (resultado.getMensaje() != null && !resultado.getMensaje().isBlank())
-                            ? resultado.getMensaje()
-                            : "Fallo desconocido al ejecutar la consulta SQL.";
-                    logger.error("Error de ejecución SQL recibido en PanelResultadoQueryController: {}", detalleError);
-                    labelEstado.setText("Error SQL: " + detalleError);
-                    botonExportar.setDisable(true);
+                    String mensajeClasificado = clasificarYRegistrarErrorResultado(resultado.getMensaje());
+                    if (labelEstado != null) {
+                        labelEstado.setText(mensajeClasificado);
+                    }
+                    if (botonExportar != null) {
+                        botonExportar.setDisable(true);
+                    }
                     break;
             }
         });
@@ -428,6 +434,27 @@ public class PanelResultadoQueryController {
                 botonExportar.setDisable(true);
             }
         });
+    }
+        private String clasificarYRegistrarErrorResultado(String mensajeBruto) {
+        String detalle = (mensajeBruto != null && !mensajeBruto.isBlank())
+                ? mensajeBruto.trim()
+                : "Fallo desconocido al ejecutar la consulta SQL.";
+        String lower = detalle.toLowerCase();
+
+        if (lower.contains("errorconexion") || lower.contains("conexión") || lower.contains("conexion")
+                || lower.contains("conectar") || lower.contains("timeout") || lower.contains("08001")) {
+            logger.error("Fallo de conexión BD recibido en PanelResultadoQueryController.mostrar(): {}", detalle);
+            return detalle.startsWith("Error") ? detalle : "Error de conexión BD: " + detalle;
+        }
+
+        if (lower.contains("errorquery") || lower.contains("sqlexception") || lower.contains("sqlstate")
+                || lower.contains("syntax") || lower.contains("consulta") || lower.contains("sql")) {
+            logger.error("Error de consulta SQL recibido en PanelResultadoQueryController.mostrar(): {}", detalle);
+            return detalle.startsWith("Error") ? detalle : "Error en consulta SQL: " + detalle;
+        }
+
+        logger.error("Error de ejecución SQL recibido en PanelResultadoQueryController.mostrar(): {}", detalle);
+        return detalle.startsWith("Error") ? detalle : "Error SQL: " + detalle;
     }
 
     private void limpiarTablaYPaginacion() {
