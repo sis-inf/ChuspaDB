@@ -1,7 +1,12 @@
 package edu.sisinf.chuspadb.dao;
 
+import edu.sisinf.chuspadb.core.ErrorConexion;
 import edu.sisinf.chuspadb.core.ErrorPersistencia;
+import edu.sisinf.chuspadb.core.ErrorQuery;
 import edu.sisinf.chuspadb.modelo.Conexion;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,21 +53,28 @@ public interface IRepositorioConexiones {
      */
     void eliminar(String id) throws ErrorPersistencia;
 
-    default Conexion obtenerPorIdOReportar(String id)
-            throws ErrorPersistencia {
-
-        if (id == null || id.isBlank()) {
-            throw new ErrorPersistencia(
-                    "El identificador de la conexión no puede ser nulo ni estar vacío."
+    default void cerrarRecursosJdbc(Connection conexion, Statement sentencia)
+            throws ErrorConexion, ErrorQuery {
+        try (Connection conn = conexion) {
+            if (sentencia != null) {
+                try (Statement stmt = sentencia) {
+                    // Cierre determinista de la sentencia mediante try-with-resources.
+                } catch (SQLException e) {
+                    throw new ErrorQuery(
+                            "Error al cerrar la sentencia JDBC en IRepositorioConexiones: " + e.getMessage(),
+                            e);
+                }
+            }
+            if (conn != null) {
+                // Cierre determinista de la conexión mediante try-with-resources.
+            }
+        } catch (ErrorQuery e) {
+            throw e;
+        } catch (SQLException e) {
+            throw new ErrorConexion(
+                    "Error al cerrar la conexión JDBC en IRepositorioConexiones: " + e.getMessage(),
+                    e
             );
         }
-
-        String identificador = id.trim();
-
-        return buscarPorId(identificador)
-                .orElseThrow(() -> new ErrorPersistencia(
-                        "No se encontró ninguna conexión registrada con el identificador: '"
-                                + identificador + "'."
-                ));
     }
 }
