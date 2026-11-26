@@ -3,6 +3,7 @@ package edu.sisinf.chuspadb.dao;
 import edu.sisinf.chuspadb.modelo.Conexion;
 import edu.sisinf.chuspadb.modelo.TipoMotor;
 import edu.sisinf.chuspadb.core.ErrorConexion;
+import edu.sisinf.chuspadb.core.ErrorQuery;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -66,6 +67,9 @@ public class ConexionDAOPostgreSQL implements IConexionDAO {
      */
     @Override
     public Connection abrir(Conexion conexion) throws ErrorConexion, SQLException {
+        if (conexion == null) {
+            throw new ErrorConexion("Los datos de conexión no pueden ser nulos.");
+        }
         if (conexion.getTipoMotor() != TipoMotor.POSTGRESQL) {
             throw new ErrorConexion("El motor de la conexión no es PostgreSQL.");
         }
@@ -82,18 +86,33 @@ public class ConexionDAOPostgreSQL implements IConexionDAO {
             throw new ErrorConexion("La contraseña de PostgreSQL no puede estar vacía.");
         }
 
-        this.ultimaConexion = conexion;
-
         String url = construirUrl(conexion);
-        return DriverManager.getConnection(url,
-                conexion.getUsuario(),
-                conexion.getPassword());
+        
+        try {
+            Connection conn = DriverManager.getConnection(
+                    url,
+                    conexion.getUsuario(),
+                    conexion.getPassword()
+            );
+            this.ultimaConexion = conexion;
+            return conn;
+        } catch (SQLException e) {
+            logger.error(
+                    "Error al abrir conexión PostgreSQL. Host: {}, SQLState: {}",
+                    conexion.getHost(),e.getSQLState(),e
+            );
+            throw new ErrorConexion("No se pudo establecer la conexión con PostgreSQL en el host: "
+                            + conexion.getHost(),e);
+        }
     }
 
     @Override
     public List<String> getTablas(String nombreBaseDatos) throws SQLException, ErrorConexion {
         if (ultimaConexion == null) {
             throw new ErrorConexion("No hay una conexión activa. Debe abrir una conexión antes de listar las tablas.");
+        }
+        if (nombreBaseDatos == null || nombreBaseDatos.isBlank()) {
+            throw new ErrorConexion("El nombre de la base de datos no puede estar vacío.");
         }
 
         List<String> tablas = new ArrayList<>();
@@ -106,8 +125,26 @@ public class ConexionDAOPostgreSQL implements IConexionDAO {
                 ultimaConexion.getHost(),
                 puerto,
                 nombreBaseDatos);
+        Connection conexion;
 
-        try (Connection conn = DriverManager.getConnection(url, ultimaConexion.getUsuario(), ultimaConexion.getPassword());
+        try {
+            conexion = DriverManager.getConnection(
+                    url,
+                    ultimaConexion.getUsuario(),
+                    ultimaConexion.getPassword()
+            );
+
+        } catch (SQLException e) {
+            logger.error(
+                    "Error de conexión al obtener las tablas de PostgreSQL. Base de datos: {}, SQLState: {}",
+                    nombreBaseDatos,e.getSQLState(),e
+            );
+
+            throw new ErrorConexion(
+                    "No se pudo conectar a PostgreSQL para obtener las tablas de la base de datos: "
+                            + nombreBaseDatos,e);
+        }
+        try (Connection conn = conexion;
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(
                      "SELECT tablename FROM pg_tables WHERE schemaname='public'")) {
@@ -115,8 +152,21 @@ public class ConexionDAOPostgreSQL implements IConexionDAO {
             while (rs.next()) {
                 tablas.add(rs.getString("tablename"));
             }
-        }
 
+        } catch (SQLException e) {
+            logger.error(
+                    "Error al consultar las tablas de PostgreSQL. Base de datos: {}, SQLState: {}",
+                    nombreBaseDatos,
+                    e.getSQLState(),
+                    e
+            );
+
+            throw new ErrorQuery(
+                    "No se pudieron consultar las tablas de la base de datos: "
+                            + nombreBaseDatos,
+                    e
+            );
+        }
         return tablas;
     }
 
@@ -128,10 +178,14 @@ public class ConexionDAOPostgreSQL implements IConexionDAO {
      */
     @Override
     public boolean probar(Conexion conexion) {
+        String host = (conexion != null)
+                ? conexion.getHost()
+                : "desconocido";
         try (Connection conn = abrir(conexion)) {
             return conn.isValid(3);
        } catch (Exception e) {
-         logger.error("Error al probar la conexión con PostgreSQL para host: {}", conexion.getHost(), e);
+         logger.error("Error de conexión al probar PostgreSQL. Host: {}. Motivo: {}",
+                    host,e.getMessage(),e);
          return false;
       }
     }
