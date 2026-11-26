@@ -5,7 +5,12 @@ import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.sisinf.chuspadb.dao.IConexionDAO;
 import edu.sisinf.chuspadb.modelo.Conexion;
@@ -19,6 +24,8 @@ import javafx.concurrent.Task;
  * Permite cancelar la consulta en ejecución mediante {@link #cancelarConsultaActiva()}.
  */
 public class EjecutorQueryAsync {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(EjecutorQueryAsync.class);
 
     /**
      * Error entregado a {@code onError} cuando el usuario cancela la consulta.
@@ -48,6 +55,9 @@ public class EjecutorQueryAsync {
     /** Indica que el usuario pidió cancelar la consulta en curso. */
     private volatile boolean cancelacionSolicitada;
 
+    /** Evita lanzar dos consultas a la vez sobre el mismo ejecutor (comparten estado). */
+    private final AtomicBoolean enEjecucion = new AtomicBoolean(false);
+
     public EjecutorQueryAsync() {
         this.ejecutorQuery = new EjecutorQuery();
     }
@@ -58,11 +68,14 @@ public class EjecutorQueryAsync {
      * Si la consulta se cancela con {@link #cancelarConsultaActiva()}, {@code onError}
      * recibe una {@link ConsultaCancelada}.
      *
-     * @param sql       Sentencia SQL a ejecutar.
-     * @param conexion  Datos de la conexión utilizados para abrir la conexión JDBC.
-     * @param dao       DAO utilizado para abrir la conexión JDBC.
-     * @param onSuccess Callback invocado con el resultado de la consulta en el hilo de la UI.
-     * @param onError   Callback invocado con la excepción en el hilo de la UI si la consulta falla.
+     * @param sql       Sentencia SQL a ejecutar. No puede ser nula ni estar vacía.
+     * @param conexion  Datos de la conexión utilizados para abrir la conexión JDBC. No puede ser nulo.
+     * @param dao       DAO utilizado para abrir la conexión JDBC. No puede ser nulo.
+     * @param onSuccess Callback invocado con el resultado de la consulta en el hilo de la UI (opcional).
+     * @param onError   Callback invocado con la excepción en el hilo de la UI si la consulta falla (opcional).
+     * @throws NullPointerException     si {@code sql}, {@code conexion} o {@code dao} son nulos.
+     * @throws IllegalArgumentException si {@code sql} está vacío.
+     * @throws IllegalStateException    si ya hay una consulta en ejecución en este ejecutor.
      */
     public void ejecutar(
             String sql,
@@ -71,35 +84,62 @@ public class EjecutorQueryAsync {
             Consumer<ResultadoQuery> onSuccess,
             Consumer<Throwable> onError) {
 
+        Objects.requireNonNull(sql, "sql no puede ser nulo");
+        if (sql.isBlank()) {
+            throw new IllegalArgumentException("sql no puede estar vacío");
+        }
+        Objects.requireNonNull(conexion, "conexion no puede ser nula");
+        Objects.requireNonNull(dao, "dao no puede ser nulo");
+
+        if (!enEjecucion.compareAndSet(false, true)) {
+            LOGGER.warn("Se intentó ejecutar una consulta mientras otra sigue en curso");
+            throw new IllegalStateException("Ya hay una consulta en ejecución en este ejecutor");
+        }
+        cancelacionSolicitada = false;
+        LOGGER.debug("Iniciando consulta asíncrona");
+
         Task<ResultadoQuery> task = new Task<>() {
             @Override
             protected ResultadoQuery call() throws Exception {
-                cancelacionSolicitada = false;
-                ResultadoQuery resultado;
+                try {
+                    ResultadoQuery resultado;
 
-                // El try-with-resources cierra la conexión al terminar, incluso si hay
-                // excepción o cancelación.
-                try (Connection connection = dao.abrir(conexion)) {
-                    try {
-                        resultado = ejecutorQuery.ejecutar(envolver(connection), sql);
-                    } finally {
-                        liberarStatement();
+                    // El try-with-resources cierra la conexión al terminar, incluso si hay
+                    // excepción o cancelación.
+                    try (Connection connection = dao.abrir(conexion)) {
+                        if (connection == null) {
+                            throw new IllegalStateException("El DAO devolvió una conexión nula");
+                        }
+                        try {
+                            resultado = ejecutorQuery.ejecutar(envolver(connection), sql);
+                        } finally {
+                            liberarStatement();
+                        }
+                    } catch (Exception e) {
+                        // Al cancelar, el driver lanza una SQLException (a veces envuelta
+                        // por EjecutorQuery). Se distingue por la bandera, no por el mensaje,
+                        // porque cada driver redacta distinto el error.
+                        if (cancelacionSolicitada) {
+                            LOGGER.debug("Consulta cancelada por el usuario");
+                            throw new ConsultaCancelada(e);
+                        }
+                        LOGGER.error("Error al ejecutar la consulta", e);
+                        throw e;
                     }
-                } catch (Exception e) {
-                    // Al cancelar, el driver lanza una SQLException (a veces envuelta
-                    // por EjecutorQuery). Se distingue por la bandera, no por el mensaje,
-                    // porque cada driver redacta distinto el error.
+
+                    // Si se canceló pero el driver igual devolvió un resultado, se descarta.
                     if (cancelacionSolicitada) {
-                        throw new ConsultaCancelada(e);
+                        LOGGER.debug("Consulta cancelada; se descarta el resultado");
+                        throw new ConsultaCancelada();
                     }
-                    throw e;
+                    if (resultado == null) {
+                        throw new IllegalStateException("La ejecución no devolvió ningún resultado");
+                    }
+                    LOGGER.debug("Consulta finalizada correctamente");
+                    return resultado;
+                } finally {
+                    enEjecucion.set(false);
                 }
-
-                // Si se canceló pero el driver igual devolvió un resultado, se descarta.
-                if (cancelacionSolicitada) {
-                    throw new ConsultaCancelada();
-                }
-                return resultado;
             }
         };
 
@@ -117,13 +157,21 @@ public class EjecutorQueryAsync {
             Throwable error = task.getException();
             if (onError != null) {
                 Platform.runLater(() -> onError.accept(error));
+            } else {
+                LOGGER.warn("La consulta falló y no hay callback onError registrado", error);
             }
         });
 
         // Configuración e inicio del hilo de fondo
         Thread backgroundThread = new Thread(task);
         backgroundThread.setDaemon(true); // Evita que el hilo bloquee el cierre de la aplicación
-        backgroundThread.start();
+        try {
+            backgroundThread.start();
+        } catch (RuntimeException | Error e) {
+            enEjecucion.set(false); // el hilo no arrancó: se libera el ejecutor
+            LOGGER.error("No se pudo iniciar el hilo de la consulta", e);
+            throw e;
+        }
     }
 
     /**
@@ -138,15 +186,18 @@ public class EjecutorQueryAsync {
 
         Statement statement = statementActivo;
         if (statement == null) {
+            LOGGER.debug("No hay consulta activa que cancelar");
             return false;
         }
 
         try {
             statement.cancel();
+            LOGGER.debug("Cancelación solicitada al driver");
             return true;
         } catch (SQLException e) {
             // El statement pudo terminar o cerrarse justo antes de cancelar;
             // no es un error para el usuario.
+            LOGGER.debug("No se pudo cancelar el statement (probablemente ya terminó)", e);
             return false;
         }
     }
@@ -156,6 +207,7 @@ public class EjecutorQueryAsync {
      * ya que ese objeto no es accesible desde esta clase.
      */
     private Connection envolver(Connection real) {
+        Objects.requireNonNull(real, "real no puede ser nula");
         return (Connection) Proxy.newProxyInstance(
                 Connection.class.getClassLoader(),
                 new Class<?>[] { Connection.class },
@@ -186,6 +238,7 @@ public class EjecutorQueryAsync {
                 statement.close();
             } catch (SQLException ignorada) {
                 // Cierre en el mejor esfuerzo: la conexión se cierra enseguida de todos modos.
+                LOGGER.debug("Error al cerrar el statement (ignorado)", ignorada);
             }
         }
     }
