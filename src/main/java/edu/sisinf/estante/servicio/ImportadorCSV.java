@@ -15,6 +15,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -29,6 +31,8 @@ import java.util.regex.Pattern;
  * comillas dobles pueden contener el delimitador y saltos de línea.
  */
 public class ImportadorCSV {
+
+    private static final Logger LOGGER = Logger.getLogger(ImportadorCSV.class.getName());
 
     /** Delimitadores de campo admitidos. */
     public enum Delimitador {
@@ -77,10 +81,10 @@ public class ImportadorCSV {
     /**
      * Importa los datos del CSV a la tabla indicada usando el delimitador dado.
      *
-     * @param archivoCsv ruta al archivo CSV
-     * @param tabla      nombre de la tabla destino
-     * @param conexion   datos de conexión a la base de datos
-     * @param dao        DAO para abrir la conexión JDBC
+     * @param archivoCsv  ruta al archivo CSV
+     * @param tabla       nombre de la tabla destino
+     * @param conexion    datos de conexión a la base de datos
+     * @param dao         DAO para abrir la conexión JDBC
      * @param delimitador delimitador a usar; si es {@code null}, se detecta a partir
      *                    de la línea de encabezado (y si no se puede deducir, se usa la coma)
      * @return {@link ImportacionResultado} con el resumen de la operación
@@ -92,6 +96,20 @@ public class ImportadorCSV {
             IConexionDAO dao,
             Delimitador delimitador
     ) {
+        if (archivoCsv == null) {
+            throw new IllegalArgumentException("La ruta del archivo CSV no puede ser nula.");
+        }
+        validarIdentificador(tabla, "tabla");
+        if (conexion == null) {
+            throw new IllegalArgumentException("Los datos de conexión no pueden ser nulos.");
+        }
+        if (dao == null) {
+            throw new IllegalArgumentException("El DAO de conexión no puede ser nulo.");
+        }
+
+        LOGGER.log(Level.FINE, "Iniciando importación CSV desde ''{0}'' hacia la tabla ''{1}''.",
+                new Object[]{archivoCsv, tabla});
+
         int insertadas = 0;
         int fallidas = 0;
         List<String> errores = new ArrayList<>();
@@ -99,6 +117,10 @@ public class ImportadorCSV {
         try (BufferedReader reader = Files.newBufferedReader(
                      archivoCsv, StandardCharsets.UTF_8);
              Connection conn = dao.abrir(conexion)) {
+
+            if (conn == null || conn.isClosed()) {
+                throw new SQLException("No se pudo establecer una conexión JDBC activa.");
+            }
 
             // Primera línea: cabeceras
             Registro cabecera = leerRegistro(reader);
@@ -112,6 +134,8 @@ public class ImportadorCSV {
                     ? delimitador
                     : detectarDelimitador(textoCabecera);
             char separador = usado.getCaracter();
+
+            LOGGER.log(Level.FINE, "Delimitador utilizado para la importación: {0}", usado);
 
             String[] columnas = parsearLinea(textoCabecera, separador);
             String sql = construirInsert(tabla, columnas);
@@ -136,6 +160,8 @@ public class ImportadorCSV {
                     insertadas++;
                 } catch (SQLException e) {
                     fallidas++;
+                    LOGGER.log(Level.WARNING, "Error al insertar registro en línea {0}: {1}",
+                            new Object[]{numeroLinea, e.getMessage()});
                     errores.add("Línea " + numeroLinea + ": " + e.getMessage());
                 }
 
@@ -143,14 +169,21 @@ public class ImportadorCSV {
             }
 
         } catch (ErrorPersistencia e) {
+            LOGGER.log(Level.WARNING, "Error de persistencia durante la importación CSV: {0}", e.getMessage());
             throw e;
         } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Error de lectura del archivo CSV: {0}", e.getMessage());
             throw new ErrorPersistencia("Error al leer el archivo CSV: " + e.getMessage(), e);
         } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Error SQL al importar CSV: {0}", e.getMessage());
             throw new ErrorPersistencia("Error de base de datos al importar CSV: " + e.getMessage(), e);
         } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Error inesperado al importar CSV: {0}", e.getMessage());
             throw new ErrorPersistencia("Error al importar CSV: " + e.getMessage(), e);
         }
+
+        LOGGER.log(Level.FINE, "Importación CSV completada en ''{0}''. Insertadas: {1}, Fallidas: {2}.",
+                new Object[]{tabla, insertadas, fallidas});
 
         return new ImportacionResultado(insertadas, fallidas, errores);
     }
