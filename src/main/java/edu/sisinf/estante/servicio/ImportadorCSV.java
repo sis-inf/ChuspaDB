@@ -68,7 +68,6 @@ public class ImportadorCSV {
      * @param conexion   datos de conexión a la base de datos
      * @param dao        DAO para abrir la conexión JDBC
      * @return {@link ImportacionResultado} con el resumen de la operación
-     * @throws IllegalArgumentException si alguno de los argumentos obligatorios es nulo o vacío
      */
     public ImportacionResultado importar(
             Path archivoCsv,
@@ -89,7 +88,6 @@ public class ImportadorCSV {
      * @param delimitador delimitador a usar; si es {@code null}, se detecta a partir
      *                    de la línea de encabezado (y si no se puede deducir, se usa la coma)
      * @return {@link ImportacionResultado} con el resumen de la operación
-     * @throws IllegalArgumentException si alguno de los argumentos obligatorios es nulo o vacío
      */
     public ImportacionResultado importar(
             Path archivoCsv,
@@ -101,9 +99,7 @@ public class ImportadorCSV {
         if (archivoCsv == null) {
             throw new IllegalArgumentException("La ruta del archivo CSV no puede ser nula.");
         }
-        if (tabla == null || tabla.trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre de la tabla destino no puede ser nulo ni estar vacío.");
-        }
+        validarIdentificador(tabla, "tabla");
         if (conexion == null) {
             throw new IllegalArgumentException("Los datos de conexión no pueden ser nulos.");
         }
@@ -142,10 +138,6 @@ public class ImportadorCSV {
             LOGGER.log(Level.FINE, "Delimitador utilizado para la importación: {0}", usado);
 
             String[] columnas = parsearLinea(textoCabecera, separador);
-            if (columnas.length == 0) {
-                throw new ErrorPersistencia("El archivo CSV no contiene columnas válidas en la cabecera.");
-            }
-
             String sql = construirInsert(tabla, columnas);
 
             int numeroLinea = 1 + cabecera.lineas();
