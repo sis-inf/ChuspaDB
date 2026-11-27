@@ -2,6 +2,7 @@ package edu.sisinf.chuspadb.modelo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Representa los datos de conexion necesarios para establecer
@@ -30,12 +31,12 @@ public class Conexion {
 
     public Conexion(String nombre, String host, Integer puerto,
                     String basedatos, String usuario, String password) {
-        this.nombre    = nombre;
-        this.host      = host;
-        this.puerto    = puerto;
-        this.basedatos = basedatos;
-        this.usuario   = usuario;
-        this.password  = password;
+        this.nombre = Objects.requireNonNull(nombre, "El nombre no puede ser nulo");
+        this.host = Objects.requireNonNull(host, "El host no puede ser nulo");
+        this.puerto = Objects.requireNonNull(puerto, "El puerto no puede ser nulo");
+        this.basedatos = Objects.requireNonNull(basedatos, "La base de datos no puede ser nula");
+        this.usuario = Objects.requireNonNull(usuario, "El usuario no puede ser nulo");
+        this.password = Objects.requireNonNull(password, "La contraseña no puede ser nula");
     }
 
     public String getId()                  { return id; }
@@ -93,12 +94,38 @@ public class Conexion {
     public void setEtiquetas(List<String> etiquetas) {
         this.etiquetas = etiquetas != null ? etiquetas : new ArrayList<>();
     }
-
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+    
+        if (!(obj instanceof Conexion)) {
+            return false;
+        }
+    
+        Conexion otra = (Conexion) obj;
+    
+        return id != null && id.equals(otra.id);
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
     @Override
     public String toString() {
-        return nombre + "@" + host + ":" + puerto + "/" + basedatos;
+        return "Conexion{" +
+                "id='" + id + '\'' +
+                ", nombre='" + nombre + '\'' +
+                ", host='" + host + '\'' +
+                ", puerto=" + puerto +
+                ", basedatos='" + basedatos + '\'' +
+                ", usuario='" + usuario + '\'' +
+                ", tipoMotor=" + tipoMotor +
+                ", usarSSL=" + usarSSL +
+                '}';
     }
-
     /**
      * Crea una copia de la conexión actual con un nuevo nombre.
      * @param nuevoNombre El nombre que tendrá la nueva conexión clonada.
