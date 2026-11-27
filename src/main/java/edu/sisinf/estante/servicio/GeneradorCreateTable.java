@@ -1,7 +1,3 @@
-// ============================================================
-// ARCHIVO: GeneradorCreateTable.java
-// RUTA: src/main/java/edu/sisinf/chuspadb/servicio/GeneradorCreateTable.java
-// ============================================================
 package edu.sisinf.chuspadb.servicio;
 
 import edu.sisinf.chuspadb.dao.IConexionDAO;
@@ -14,6 +10,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Genera una sentencia DDL CREATE TABLE a partir de la estructura de una tabla existente.
@@ -31,6 +29,8 @@ import java.util.List;
  * servidor o guardar el esquema como un script.</p>
  */
 public class GeneradorCreateTable {
+
+    private static final Logger LOGGER = Logger.getLogger(GeneradorCreateTable.class.getName());
 
     /** Máximo de caracteres de un VARCHAR en PostgreSQL. */
     private static final int POSTGRESQL_MAX_VARCHAR = 10_485_760;
@@ -59,13 +59,36 @@ public class GeneradorCreateTable {
      * @param dao       implementación del DAO que coincide con el motor objetivo
      * @param motor     motor de base de datos objetivo (MYSQL, POSTGRESQL o SQLITE)
      * @return cadena DDL que comienza con {@code CREATE TABLE tableName (}
-     * @throws SQLException si no se puede recuperar la metadatos
+     * @throws IllegalArgumentException si alguno de los argumentos obligatorios es nulo o inválido
+     * @throws SQLException             si no se pueden recuperar los metadatos o la tabla no existe
      */
     public static String generar(String tableName, Conexion conexion,
                                  IConexionDAO dao, TipoMotor motor) throws SQLException {
+        if (tableName == null || tableName.trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre de la tabla no puede ser nulo ni estar vacío.");
+        }
+        if (conexion == null) {
+            throw new IllegalArgumentException("La configuración de conexión no puede ser nula.");
+        }
+        if (dao == null) {
+            throw new IllegalArgumentException("El DAO de conexión no puede ser nulo.");
+        }
+        if (motor == null) {
+            throw new IllegalArgumentException("El motor de base de datos objetivo no puede ser nulo.");
+        }
+
+        LOGGER.log(Level.FINE, "Iniciando generación de DDL CREATE TABLE para la tabla ''{0}'' en motor {1}.",
+                new Object[]{tableName, motor});
 
         try (Connection connection = dao.abrir(conexion)) {
+            if (connection == null || connection.isClosed()) {
+                throw new SQLException("No se pudo establecer una conexión JDBC activa.");
+            }
+
             DatabaseMetaData metadata = connection.getMetaData();
+            if (metadata == null) {
+                throw new SQLException("No se pudieron obtener los metadatos de la base de datos.");
+            }
 
             List<String> primaryKeys = getPrimaryKeys(metadata, tableName);
 
@@ -73,12 +96,23 @@ public class GeneradorCreateTable {
             Definiciones definiciones =
                     getColumnDefinitions(metadata, tableName, motor, primaryKeys);
 
+            if (definiciones.columnas().isEmpty()) {
+                throw new SQLException("La tabla '" + tableName + "' no existe o no contiene columnas.");
+            }
+
             // Si la PK ya quedó declarada en la columna, no se repite al final de la tabla.
             List<String> pkDeTabla = definiciones.pkEnLinea() ? new ArrayList<>() : primaryKeys;
 
-            return buildDDL(tableName, definiciones.columnas(), pkDeTabla, motor);
+            String ddl = buildDDL(tableName, definiciones.columnas(), pkDeTabla, motor);
+            LOGGER.log(Level.FINE, "DDL CREATE TABLE generado correctamente para la tabla ''{0}''.", tableName);
+            return ddl;
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Error SQL al generar CREATE TABLE para la tabla ''{0}'': {1}",
+                    new Object[]{tableName, e.getMessage()});
+            throw e;
         }
     }
+
     // Metodos ayudantes privados (Helpers)
     /**
      * Recupera los nombres de las columnas que forman la clave primaria para la tabla dada.
@@ -133,6 +167,10 @@ public class GeneradorCreateTable {
                 int    columnSize = rs.getInt("COLUMN_SIZE");
                 String nullable   = rs.getString("IS_NULLABLE");
                 boolean autoincremental = "YES".equals(rs.getString("IS_AUTOINCREMENT"));
+
+                if (columnName == null || columnName.trim().isEmpty() || typeName == null) {
+                    throw new SQLException("Metadatos de columna incompletos o inválidos para la tabla: " + tableName);
+                }
 
                 String definicion;
 
