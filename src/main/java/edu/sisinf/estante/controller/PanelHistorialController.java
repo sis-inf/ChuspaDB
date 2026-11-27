@@ -48,6 +48,19 @@ import java.util.function.Consumer;
  * de forma específica los errores SQL y de dominio, y mantiene el estado de
  * la pantalla (carga en curso, botón de limpiar, mensaje de error).</p>
  *
+ * <p>Ejemplo de integración (por ejemplo, desde la ventana principal, que es quien
+ * conoce el historial de la sesión, la barra de estado y el editor):</p>
+ * <pre>{@code
+ * PanelHistorialController panel = loader.getController();
+ * panel.setOnQuerySeleccionada(query -> mostrarEnEditor(query));
+ * panel.setOnError(barraEstado::setMensaje);
+ * panel.cargarHistorialAsync(historialQuerys::obtenerTodos);
+ * }</pre>
+ *
+ * <p>Nota: en este momento ninguna clase de la aplicación carga
+ * {@code PanelHistorial.fxml}; este controlador expone los puntos de integración
+ * para cuando el panel se agregue a la ventana principal.</p>
+ *
  * <p>Archivos relacionados:</p>
  * <ul>
  *   <li>Vista: {@code src/main/resources/fxml/PanelHistorial.fxml}</li>
