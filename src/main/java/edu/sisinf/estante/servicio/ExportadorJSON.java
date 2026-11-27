@@ -16,6 +16,9 @@ import java.util.List;
  */
 public class ExportadorJSON {
 
+    private static final System.Logger LOGGER =
+            System.getLogger(ExportadorJSON.class.getName());
+
     /**
      * Exporta un resultado de consulta a un archivo JSON.
      *
@@ -27,8 +30,19 @@ public class ExportadorJSON {
      * @param archivo   archivo destino
      */
     public void exportar(ResultadoQuery resultado, File archivo) {
+        if (resultado == null) {
+            LOGGER.log(System.Logger.Level.WARNING, "Intento de exportación JSON con resultado nulo");
+            throw new ErrorPersistencia("El resultado de la consulta no puede ser nulo");
+        }
+
+        if (archivo == null) {
+            LOGGER.log(System.Logger.Level.WARNING, "Intento de exportación JSON con archivo destino nulo");
+            throw new ErrorPersistencia("El archivo de destino no puede ser nulo");
+        }
 
         if (resultado.getTipo() != ResultadoQuery.Tipo.LECTURA) {
+            LOGGER.log(System.Logger.Level.WARNING,
+                    "Tipo de resultado no válido para exportación JSON: {0}", resultado.getTipo());
             throw new ErrorPersistencia(
                     "Solo se pueden exportar resultados de lectura"
             );
@@ -36,6 +50,14 @@ public class ExportadorJSON {
 
         List<String> columnas = resultado.getColumnas();
         List<List<Object>> filas = resultado.getFilas();
+
+        if (columnas == null || filas == null) {
+            LOGGER.log(System.Logger.Level.WARNING, "Columnas o filas nulas en el resultado a exportar");
+            throw new ErrorPersistencia("Las columnas y filas del resultado no pueden ser nulas");
+        }
+
+        LOGGER.log(System.Logger.Level.INFO,
+                "Iniciando exportación JSON a {0} ({1} filas)", archivo.getPath(), filas.size());
 
         try (BufferedWriter writer =
                      new BufferedWriter(
@@ -81,7 +103,12 @@ public class ExportadorJSON {
             writer.write("]");
             writer.write("\n");
 
+            LOGGER.log(System.Logger.Level.INFO,
+                    "Exportación JSON completada correctamente en {0}", archivo.getPath());
+
         } catch (IOException e) {
+            LOGGER.log(System.Logger.Level.ERROR,
+                    "Error de E/S al exportar archivo JSON en " + archivo.getPath(), e);
             throw new ErrorPersistencia(
                     "Error al exportar archivo JSON",
                     e
@@ -125,6 +152,9 @@ public class ExportadorJSON {
      * @return cadena entre comillas con caracteres especiales escapados
      */
     private String escaparCadena(String texto) {
+        if (texto == null) {
+            return "\"\"";
+        }
 
         StringBuilder sb = new StringBuilder("\"");
 
