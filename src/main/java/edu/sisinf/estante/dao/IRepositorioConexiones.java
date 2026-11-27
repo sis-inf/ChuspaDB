@@ -1,7 +1,12 @@
 package edu.sisinf.chuspadb.dao;
 
+import edu.sisinf.chuspadb.core.ErrorConexion;
 import edu.sisinf.chuspadb.core.ErrorPersistencia;
+import edu.sisinf.chuspadb.core.ErrorQuery;
 import edu.sisinf.chuspadb.modelo.Conexion;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,4 +52,29 @@ public interface IRepositorioConexiones {
      * @throws ErrorPersistencia si no existe una conexión con el id indicado o si ocurre un error de persistencia.
      */
     void eliminar(String id) throws ErrorPersistencia;
+
+    default void cerrarRecursosJdbc(Connection conexion, Statement sentencia)
+            throws ErrorConexion, ErrorQuery {
+        try (Connection conn = conexion) {
+            if (sentencia != null) {
+                try (Statement stmt = sentencia) {
+                    // Cierre determinista de la sentencia mediante try-with-resources.
+                } catch (SQLException e) {
+                    throw new ErrorQuery(
+                            "Error al cerrar la sentencia JDBC en IRepositorioConexiones: " + e.getMessage(),
+                            e);
+                }
+            }
+            if (conn != null) {
+                // Cierre determinista de la conexión mediante try-with-resources.
+            }
+        } catch (ErrorQuery e) {
+            throw e;
+        } catch (SQLException e) {
+            throw new ErrorConexion(
+                    "Error al cerrar la conexión JDBC en IRepositorioConexiones: " + e.getMessage(),
+                    e
+            );
+        }
+    }
 }
