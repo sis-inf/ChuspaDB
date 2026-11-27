@@ -3,6 +3,7 @@ package edu.sisinf.chuspadb.dao;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -234,6 +236,196 @@ class RepositorioConexionesJSONTest {
     assertEquals("contenido original", Files.readString(padre, StandardCharsets.UTF_8));
   }
 
+  @Test
+  void guardarConexionNullLanzaNullPointerException() {
+    assertThrows(NullPointerException.class, () -> repositorio.guardar(null));
+
+    assertFalse(Files.exists(archivo));
+  }
+
+  @Test
+  void actualizarConexionNullLanzaNullPointerException() {
+    repositorio.guardar(crearConexion("principal", "Principal"));
+
+    assertThrows(NullPointerException.class, () -> repositorio.actualizar(null));
+
+    assertEquals(1, repositorio.listar().size());
+  }
+
+  @Test
+  void buscarPorIdCadenaVaciaDevuelveOptionalVacio() {
+    repositorio.guardar(crearConexion("principal", "Principal"));
+
+    assertTrue(repositorio.buscarPorId("").isEmpty());
+  }
+
+  @Test
+  void buscarPorIdDistingueMayusculasYMinusculas() {
+    repositorio.guardar(crearConexion("principal", "Principal"));
+
+    assertTrue(repositorio.buscarPorId("PRINCIPAL").isEmpty());
+    assertTrue(repositorio.buscarPorId("principal").isPresent());
+  }
+
+  @Test
+  void eliminarIdCadenaVaciaLanzaErrorYConservaLosDatos() {
+    repositorio.guardar(crearConexion("principal", "Principal"));
+
+    assertThrows(ErrorPersistencia.class, () -> repositorio.eliminar(""));
+
+    assertEquals(1, repositorio.listar().size());
+  }
+
+  @Test
+  void guardarSinIdentificadorGeneraUnUuidValido() {
+    Conexion conexion = crearConexion(null, "Nueva");
+
+    repositorio.guardar(conexion);
+
+    assertDoesNotThrow(() -> UUID.fromString(conexion.getId()));
+  }
+
+  @Test
+  void guardarDosConexionesSinIdentificadorGeneraIdentificadoresDistintos() {
+    Conexion primera = crearConexion(null, "Primera");
+    Conexion segunda = crearConexion(null, "Segunda");
+
+    repositorio.guardar(primera);
+    repositorio.guardar(segunda);
+
+    assertNotEquals(primera.getId(), segunda.getId());
+    assertEquals(2, repositorio.listar().size());
+  }
+
+  @Test
+  void listarArchivoVacioLanzaErrorDePersistencia() throws IOException {
+    Files.writeString(archivo, "", StandardCharsets.UTF_8);
+
+    assertThrows(ErrorPersistencia.class, repositorio::listar);
+  }
+
+  @Test
+  void listarJsonObjetoEnLugarDeArregloLanzaErrorDePersistencia() throws IOException {
+    Files.writeString(archivo, "{\"id\":\"principal\"}", StandardCharsets.UTF_8);
+
+    assertThrows(ErrorPersistencia.class, repositorio::listar);
+  }
+
+  @Test
+  void listarArregloVacioDevuelveListaVacia() throws IOException {
+    Files.writeString(archivo, "[]", StandardCharsets.UTF_8);
+
+    assertNotNull(repositorio.listar());
+    assertTrue(repositorio.listar().isEmpty());
+  }
+
+  @Test
+  void listarConRutaDeDirectorioLanzaErrorDePersistencia() {
+    RepositorioConexionesJSON otro = new RepositorioConexionesJSON(directorio.toFile());
+
+    assertThrows(ErrorPersistencia.class, otro::listar);
+  }
+
+  @Test
+  void listarJsonInvalidoConservaMensajeYCausaOriginal() throws IOException {
+    Files.writeString(archivo, "{", StandardCharsets.UTF_8);
+
+    ErrorPersistencia error = assertThrows(ErrorPersistencia.class, repositorio::listar);
+
+    assertEquals("Error al leer conexiones", error.getMessage());
+    assertNotNull(error.getCause());
+  }
+
+  @Test
+  void listarDevuelveUnaCopiaIndependienteDelArchivo() {
+    repositorio.guardar(crearConexion("principal", "Principal"));
+
+    List<Conexion> copia = repositorio.listar();
+    copia.clear();
+
+    assertEquals(1, repositorio.listar().size());
+  }
+
+  @Test
+  void guardarYRecuperarConservaCaracteresEspeciales() {
+    String nombre = "Conexión \"ñ\" áéíóú 日本";
+    repositorio.guardar(crearConexion("especial", nombre));
+
+    Conexion recuperada =
+        new RepositorioConexionesJSON(archivo.toFile()).buscarPorId("especial").orElseThrow();
+
+    assertEquals(nombre, recuperada.getNombre());
+  }
+
+  @Test
+  void guardarCienConexionesLasPersisteTodas() {
+    for (int i = 0; i < 100; i++) {
+      repositorio.guardar(crearConexion("conexion-" + i, "Conexion " + i));
+    }
+
+    RepositorioConexionesJSON otro = new RepositorioConexionesJSON(archivo.toFile());
+    assertEquals(100, otro.listar().size());
+    assertEquals("Conexion 99", otro.buscarPorId("conexion-99").orElseThrow().getNombre());
+  }
+
+  @Test
+  void getConexionesPorEtiquetaDevuelveSoloLasCoincidencias() {
+    Conexion produccion = crearConexion("prod", "Produccion");
+    produccion.setEtiquetas(List.of("produccion"));
+    Conexion desarrollo = crearConexion("dev", "Desarrollo");
+    desarrollo.setEtiquetas(List.of("desarrollo", "local"));
+    repositorio.guardar(produccion);
+    repositorio.guardar(desarrollo);
+
+    List<Conexion> resultado = repositorio.getConexionesPorEtiqueta("local");
+
+    assertEquals(1, resultado.size());
+    assertEquals("dev", resultado.get(0).getId());
+  }
+
+  @Test
+  void getConexionesPorEtiquetaSinCoincidenciasDevuelveListaVacia() {
+    repositorio.guardar(crearConexion("principal", "Principal"));
+
+    List<Conexion> resultado = repositorio.getConexionesPorEtiqueta("inexistente");
+
+    assertNotNull(resultado);
+    assertTrue(resultado.isEmpty());
+  }
+
+  @Test
+  void getConexionesPorEtiquetaDistingueMayusculasYMinusculas() {
+    repositorio.guardar(crearConexion("principal", "Principal"));
+
+    assertTrue(repositorio.getConexionesPorEtiqueta("PRUEBAS").isEmpty());
+    assertEquals(1, repositorio.getConexionesPorEtiqueta("pruebas").size());
+  }
+
+  @Test
+  void getConexionesPorEtiquetaIgnoraConexionesSinEtiquetas() throws IOException {
+    Files.writeString(
+        archivo,
+        "[{\"id\":\"sin-etiquetas\",\"nombre\":\"Sin etiquetas\"},"
+            + "{\"id\":\"con-etiquetas\",\"nombre\":\"Con etiquetas\","
+            + "\"etiquetas\":[\"pruebas\"]}]",
+        StandardCharsets.UTF_8);
+
+    List<Conexion> resultado =
+        assertDoesNotThrow(() -> repositorio.getConexionesPorEtiqueta("pruebas"));
+
+    assertEquals(1, resultado.size());
+    assertEquals("con-etiquetas", resultado.get(0).getId());
+  }
+
+  @Test
+  void getConexionesPorEtiquetaNullDevuelveListaVacia() {
+    repositorio.guardar(crearConexion("principal", "Principal"));
+
+    List<Conexion> resultado =
+        assertDoesNotThrow(() -> repositorio.getConexionesPorEtiqueta(null));
+
+    assertTrue(resultado.isEmpty());
+  }
   private Conexion crearConexion(String id, String nombre) {
     Conexion conexion =
         new Conexion("", "localhost", 3306, "pruebas", "usuario_prueba", "clave_prueba");
