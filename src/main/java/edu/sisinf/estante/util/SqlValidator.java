@@ -4,7 +4,6 @@ package edu.sisinf.chuspadb.util;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
 
 public class SqlValidator {
@@ -24,9 +23,11 @@ public class SqlValidator {
     }
 
     public static TipoQuery tipo(String query) {
-        Objects.requireNonNull(query, "La consulta SQL no puede ser null");
-
         LOGGER.log(System.Logger.Level.DEBUG, "Clasificando consulta SQL");
+
+        if (query == null) {
+            return TipoQuery.DESCONOCIDO;
+        }
 
         String normalizada = normalizar(query);
 
@@ -91,6 +92,10 @@ public class SqlValidator {
     }
 
     private static String normalizar(String query) {
+        if (query == null) {
+            return "";
+        }
+
         String normalizada = query.strip();
 
         while (normalizada.startsWith("--")) {
@@ -111,10 +116,12 @@ public class SqlValidator {
     }
 
     public static boolean esSentenciaValida(String query) {
-        Objects.requireNonNull(query, "La consulta SQL no puede ser null");
-
         LOGGER.log(System.Logger.Level.DEBUG,
                 "Validando estructura de sentencia SQL");
+
+        if (query == null) {
+            return false;
+        }
 
         return !normalizar(query).isEmpty()
                 && validarBalanceo(query).isEmpty();
@@ -128,7 +135,9 @@ public class SqlValidator {
      * @return mensaje de error o Optional.empty() si está balanceada
      */
     public static Optional<String> validarBalanceo(String query) {
-        Objects.requireNonNull(query, "La consulta SQL no puede ser null");
+        if (query == null) {
+            return Optional.empty();
+        }
 
         LOGGER.log(System.Logger.Level.DEBUG,
                 "Validando balanceo de la consulta SQL");
