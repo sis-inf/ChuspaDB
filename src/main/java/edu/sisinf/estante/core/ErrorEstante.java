@@ -1,16 +1,29 @@
 package edu.sisinf.chuspadb.core;
 
 /**
- * Excepcion base para todos los errores de dominio en ChuspaDB.
- * Todas las excepciones tipadas en la aplicacion deben extender de esta clase.
+ * Excepcion base del dominio de Estante/ChuspaDB.
  */
-public class ErrorChuspaDB extends RuntimeException {
+public class ErrorEstante extends RuntimeException {
 
-    public ErrorChuspaDB(String message) {
+    public ErrorEstante(String message) {
         super(message);
     }
 
-    public ErrorChuspaDB(String message, Throwable cause) {
+    public ErrorEstante(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+
+/**
+ * Alias de compatibilidad para el codigo que aun usa ErrorChuspaDB.
+ */
+class ErrorChuspaDB extends ErrorEstante {
+
+    ErrorChuspaDB(String message) {
+        super(message);
+    }
+
+    ErrorChuspaDB(String message, Throwable cause) {
         super(message, cause);
     }
 }
