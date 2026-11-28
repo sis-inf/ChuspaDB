@@ -56,6 +56,26 @@ public class ExportadorJSON {
             throw new ErrorPersistencia("Las columnas y filas del resultado no pueden ser nulas");
         }
 
+        for (String columna : columnas) {
+            if (columna == null) {
+                LOGGER.log(System.Logger.Level.WARNING, "Nombre de columna nulo en el resultado a exportar");
+                throw new ErrorPersistencia("Los nombres de las columnas no pueden ser nulos");
+            }
+        }
+
+        for (List<Object> fila : filas) {
+            if (fila == null) {
+                LOGGER.log(System.Logger.Level.WARNING, "Fila nula encontrada en el resultado a exportar");
+                throw new ErrorPersistencia("Las filas del resultado no pueden ser nulas");
+            }
+            if (fila.size() != columnas.size()) {
+                LOGGER.log(System.Logger.Level.WARNING,
+                        "Cantidad de elementos de fila ({0}) no coincide con columnas ({1})",
+                        fila.size(), columnas.size());
+                throw new ErrorPersistencia("Cada fila debe tener la misma cantidad de elementos que columnas");
+            }
+        }
+
         LOGGER.log(System.Logger.Level.INFO,
                 "Iniciando exportación JSON a {0} ({1} filas)", archivo.getPath(), filas.size());
 
@@ -153,7 +173,7 @@ public class ExportadorJSON {
      */
     private String escaparCadena(String texto) {
         if (texto == null) {
-            return "\"\"";
+            throw new ErrorPersistencia("El texto a escapar no puede ser nulo");
         }
 
         StringBuilder sb = new StringBuilder("\"");
