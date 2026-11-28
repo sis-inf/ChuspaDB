@@ -1,6 +1,5 @@
 package edu.sisinf.chuspadb.modelo;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -18,7 +17,7 @@ public class Esquema {
             throw new IllegalArgumentException("El nombre del esquema no puede ser nulo ni vacío");
         }
         this.nombre = nombre;
-        this.tablas = (tablas != null) ? new ArrayList<>(tablas) : new ArrayList<>();
+        this.tablas = tablas;
     }
 
     // Getters y Setters
