@@ -1,9 +1,10 @@
-package edu.sisinf.estante.modelo;
+package edu.sisinf.chuspadb.modelo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -30,6 +31,38 @@ class EsquemaTest {
     }
 
     @Test
+    void constructorConNombreNuloLanzaIllegalArgumentException() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new Esquema(null, new ArrayList<>())
+        );
+    }
+
+    @Test
+    void constructorConNombreVacioLanzaIllegalArgumentException() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new Esquema("", new ArrayList<>())
+        );
+    }
+
+    @Test
+    void constructorConNombreEnBlancoLanzaIllegalArgumentException() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new Esquema("   ", new ArrayList<>())
+        );
+    }
+
+    @Test
+    void constructorConListaNulaPermiteGuardarNombreYListaNula() {
+        Esquema esquema = new Esquema("public", null);
+
+        assertEquals("public", esquema.getNombre());
+        assertNull(esquema.getTablas());
+    }
+
+    @Test
     void settersReemplazanLosValoresPrevios() {
         List<Tabla> tablasIniciales = new ArrayList<>();
         Esquema esquema = new Esquema("public", tablasIniciales);
@@ -41,6 +74,17 @@ class EsquemaTest {
         assertEquals("ventas", esquema.getNombre());
         assertSame(tablasNuevas, esquema.getTablas());
         assertNotSame(tablasIniciales, esquema.getTablas());
+    }
+
+    @Test
+    void settersPermitenAsignarValoresNulos() {
+        Esquema esquema = new Esquema("public", new ArrayList<>());
+
+        esquema.setNombre(null);
+        esquema.setTablas(null);
+
+        assertNull(esquema.getNombre());
+        assertNull(esquema.getTablas());
     }
 
     @Test
