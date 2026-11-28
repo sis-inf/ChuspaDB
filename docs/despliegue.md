@@ -23,7 +23,7 @@ PostgreSQL no es un requisito obligatorio. Solo debe utilizarse si el usuario se
 ## Clonar el repositorio
 
 ```bash
-git clone https://github.com/sis-inf/ChuspaDB.git
+git clone [https://github.com/sis-inf/ChuspaDB.git](https://github.com/sis-inf/ChuspaDB.git)
 cd ChuspaDB
 ```
 
@@ -37,7 +37,7 @@ Para compilar el proyecto, ejecutar las pruebas y generar el paquete `.jar` de `
 mvn clean package
 ```
 
-El artefacto generado se ubica en el directorio `target/` bajo el nombre `chuspadb` (por ejemplo, `target/chuspadb-1.0-SNAPSHOT.jar`).
+El artefacto ejecutable generado con Maven Shade Plugin se ubica en el directorio `target/` bajo el nombre `target/chuspadb-0.1.0-shaded.jar`.
 
 Para ejecutar la aplicación directamente con Maven:
 
@@ -48,7 +48,7 @@ mvn clean javafx:run
 Para ejecutar el archivo `.jar` empaquetado:
 
 ```bash
-java -jar target/chuspadb-1.0-SNAPSHOT.jar
+java -jar target/chuspadb-0.1.0-shaded.jar
 ```
 
 Los pasos adicionales para configurar el entorno se encuentran detallados en la siguiente guía:
