@@ -18,6 +18,9 @@ public class Tabla {
         if (nombre == null || nombre.trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre de la tabla no puede ser nulo ni vacío");
         }
+        if (esquema == null || esquema.trim().isEmpty()) {
+            throw new IllegalArgumentException("El esquema de la tabla no puede ser nulo ni vacío");
+        }
         this.nombre = nombre;
         this.esquema = esquema;
         this.columnas = (columnas != null) ? new ArrayList<>(columnas) : new ArrayList<>();
