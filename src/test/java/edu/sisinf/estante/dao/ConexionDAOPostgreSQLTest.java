@@ -1,5 +1,7 @@
 package edu.sisinf.chuspadb.dao;
 
+import java.sql.SQLException;
+import edu.sisinf.chuspadb.core.ErrorQuery;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -91,6 +93,7 @@ class ConexionDAOPostgreSQLTest {
         Conexion conexion = conexionValida();
         conexion.setBasedatos("   ");
 
+
         assertThrows(ErrorConexion.class, () -> dao.abrir(conexion));
     }
 
@@ -104,6 +107,7 @@ class ConexionDAOPostgreSQLTest {
                     .thenReturn(conexionSimulada);
 
             Connection resultado = dao.abrir(conexionValida());
+            assertNotNull(resultado);
 
             assertSame(conexionSimulada, resultado);
         }
@@ -205,4 +209,135 @@ class ConexionDAOPostgreSQLTest {
         assertTrue(url.matches("jdbc:postgresql://[^:/]+:5432/[^/]+"),
                 "La URL con puerto omitido no respeta el formato esperado: " + url);
     }
+
+    @Test
+    void abrirFallaSiLaConexionEsNula() {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+
+        assertThrows(ErrorConexion.class, () -> dao.abrir(null));
+    }
+
+    @Test
+    void abrirFallaSiElHostEsNulo() {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+        Conexion conexion = conexionValida();
+        conexion.setHost(null);
+
+        assertThrows(ErrorConexion.class, () -> dao.abrir(conexion));
+    }
+
+    @Test
+    void abrirFallaSiLaBaseDeDatosEsNula() {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+        Conexion conexion = conexionValida();
+        conexion.setBasedatos(null);
+
+        assertThrows(ErrorConexion.class, () -> dao.abrir(conexion));
+    }
+
+    @Test
+    void abrirFallaSiElUsuarioEsNulo() {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+        Conexion conexion = conexionValida();
+        conexion.setUsuario(null);
+
+        assertThrows(ErrorConexion.class, () -> dao.abrir(conexion));
+    }
+
+    @Test
+    void abrirFallaSiLaPasswordEsNula() {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+        Conexion conexion = conexionValida();
+        conexion.setPassword(null);
+
+        assertThrows(ErrorConexion.class, () -> dao.abrir(conexion));
+    }
+
+    @Test
+    void abrirLanzaErrorConexionSiFallaElDriver() throws Exception {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(
+                    anyString(), anyString(), anyString()))
+                    .thenThrow(new SQLException("Error de conexión"));
+
+            ErrorConexion error = assertThrows(
+                    ErrorConexion.class,
+                    () -> dao.abrir(conexionValida()));
+
+            assertNotNull(error.getCause());
+            assertEquals("Error de conexión", error.getCause().getMessage());
+        }
+    }
+
+    @Test
+    void getTablasFallaSiElNombreDeBaseDeDatosEsNulo() throws Exception {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+        Connection conexionSimulada = mock(Connection.class);
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(
+                    anyString(), anyString(), anyString()))
+                    .thenReturn(conexionSimulada);
+
+            dao.abrir(conexionValida());
+
+            assertThrows(ErrorConexion.class, () -> dao.getTablas(null));
+        }
+    }
+
+    @Test
+    void getTablasFallaSiElNombreDeBaseDeDatosEstaVacio() throws Exception {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+        Connection conexionSimulada = mock(Connection.class);
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(
+                    anyString(), anyString(), anyString()))
+                    .thenReturn(conexionSimulada);
+
+            dao.abrir(conexionValida());
+
+            assertThrows(ErrorConexion.class, () -> dao.getTablas("   "));
+        }
+    }
+
+    @Test
+    void getTablasLanzaErrorQuerySiFallaLaConsulta() throws Exception {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+
+        Connection conexionInicial = mock(Connection.class);
+        Connection conexionConsulta = mock(Connection.class);
+        Statement sentencia = mock(Statement.class);
+
+        when(conexionConsulta.createStatement()).thenReturn(sentencia);
+        when(sentencia.executeQuery(anyString()))
+                .thenThrow(new SQLException("Error al consultar tablas"));
+
+        try (MockedStatic<DriverManager> driver = mockStatic(DriverManager.class)) {
+            driver.when(() -> DriverManager.getConnection(
+                    anyString(), anyString(), anyString()))
+                    .thenReturn(conexionInicial, conexionConsulta);
+
+            dao.abrir(conexionValida());
+
+            ErrorQuery error = assertThrows(
+                    ErrorQuery.class,
+                    () -> dao.getTablas("inventario"));
+
+            assertNotNull(error.getCause());
+            assertEquals(
+                    "Error al consultar tablas",
+                    error.getCause().getMessage());
+        }
+    }
+
+    @Test
+    void probarDevuelveFalseSiLaConexionEsNula() {
+        ConexionDAOPostgreSQL dao = new ConexionDAOPostgreSQL();
+
+        assertEquals(false, dao.probar(null));
+    }
+
 }
