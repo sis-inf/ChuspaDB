@@ -7,7 +7,7 @@ Para ejecutar el proyecto necesitas:
 - Java JDK
 - Maven
 - Git
-  
+
 El motor de base de datos es configurable según la necesidad del usuario.
 
 Motores soportados:
@@ -15,7 +15,7 @@ Motores soportados:
 - SQLite
 - MySQL
 - PostgreSQL
-  
+
 PostgreSQL no es un requisito obligatorio. Solo debe utilizarse si el usuario selecciona esa configuración específica de base de datos.
 
 ---
@@ -23,15 +23,35 @@ PostgreSQL no es un requisito obligatorio. Solo debe utilizarse si el usuario se
 ## Clonar el repositorio
 
 ```bash
-git clone https://github.com/sis-inf/ChuspaDB.git
+git clone [https://github.com/sis-inf/ChuspaDB.git](https://github.com/sis-inf/ChuspaDB.git)
 cd ChuspaDB
 ```
 
 ---
 
-## Compilación y ejecución
+## Compilación, empaquetado JAR y ejecución
 
-Los pasos para compilar, configurar y ejecutar el proyecto se encuentran detallados en la siguiente guía:
+Para compilar el proyecto, ejecutar las pruebas y generar el paquete `.jar` de `chuspadb` con Maven:
+
+```bash
+mvn clean package
+```
+
+El artefacto ejecutable generado con Maven Shade Plugin se ubica en el directorio `target/` bajo el nombre `target/chuspadb-0.1.0-shaded.jar`.
+
+Para ejecutar la aplicación directamente con Maven:
+
+```bash
+mvn clean javafx:run
+```
+
+Para ejecutar el archivo `.jar` empaquetado:
+
+```bash
+java -jar target/chuspadb-0.1.0-shaded.jar
+```
+
+Los pasos adicionales para configurar el entorno se encuentran detallados en la siguiente guía:
 
 [Guía de instalación](instalacion.md)
 
